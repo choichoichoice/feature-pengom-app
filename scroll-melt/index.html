@@ -360,7 +360,7 @@ details.dev button { font-size: 13px; padding: 10px; border-radius: 12px; backgr
           <div class="rv-line rv-muted" id="r-raised"></div>
         </div>
         <details class="dev">
-          <summary>테스트 도구</summary>
+          <summary>테스트 도구 <span id="d-ver"></span></summary>
           <div class="row">
             <button id="d-next">다음 날로 넘기기</button>
             <button id="d-reset">처음부터 다시</button>
@@ -966,6 +966,7 @@ details.dev button { font-size: 13px; padding: 10px; border-radius: 12px; backgr
   $("d-practice").onclick = openFeed;
   $("d-next").onclick = nextDay;
   $("d-reset").onclick = () => { S = fresh(); save(); go("promise"); };
+  try { $("d-ver").textContent = NATIVE && NATIVE.appVersion ? "· v" + NATIVE.appVersion() : "· 웹 미리보기"; } catch (e) {}
   if (NATIVE) {
     $("d-next").hidden = true;
     window.__pengomNativeRefresh = nativeSync;

@@ -68,6 +68,9 @@ class MainActivity : Activity() {
 
         @JavascriptInterface fun isCounting(): Boolean = Perms.all(this@MainActivity)
 
+        @JavascriptInterface fun appVersion(): String =
+            try { packageManager.getPackageInfo(packageName, 0).versionName ?: "" } catch (e: Exception) { "" }
+
         @JavascriptInterface fun setPromise(budgetMin: Int, reason: String, th: String, overTh: String) =
             store.setPromise(budgetMin, reason, th, overTh)
 
