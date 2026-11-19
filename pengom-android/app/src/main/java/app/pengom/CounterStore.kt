@@ -3,7 +3,7 @@ package app.pengom
 import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 /**
  * 오늘 쇼츠 앱을 본 시간(초), 아침 약속(예산 분·이유·개입 지점 분)을 폰 안에만 저장한다.
@@ -21,7 +21,8 @@ class CounterStore(context: Context) {
 
     private val p = context.applicationContext.getSharedPreferences("pengom", Context.MODE_PRIVATE)
 
-    private fun today(): String = LocalDate.now().toString()
+    /** 하루는 새벽 4시에 바뀐다 (자정 넘어 보는 쇼츠도 그날 기록) */
+    private fun today(): String = LocalDateTime.now().minusHours(DAY_START_HOUR).toLocalDate().toString()
 
     @Synchronized
     private fun roll() {
@@ -37,8 +38,14 @@ class CounterStore(context: Context) {
             e.putString(K_HIST, hist.toString())
         }
         e.putString(K_DATE, d).putInt(K_USED, 0).putString(K_FIRED, "").putBoolean(K_ACK, false)
-            .remove(K_BUDGET).remove(K_TH).remove(K_OVER_TH).remove(K_EXTRA)
-            .apply()
+            .remove(K_BUDGET).remove(K_TH).remove(K_OVER_TH).remove(K_EXTRA).putBoolean(K_AUTO, false)
+        // 오늘 약속을 아직 안 했으면 어제 약속을 그대로 쓴다 (앱을 안 열고 쇼츠부터 켜도 끝이 있게)
+        if (p.contains(K_LAST_BUDGET)) {
+            val b = p.getInt(K_LAST_BUDGET, 0)
+            e.putInt(K_BUDGET, b).putString(K_TH, JSONArray(thresholds(b)).toString())
+                .putString(K_OVER_TH, "[]").putBoolean(K_AUTO, true)
+        }
+        e.apply()
     }
 
     private fun history(): JSONObject =
@@ -55,10 +62,13 @@ class CounterStore(context: Context) {
     /** 오늘 볼 수 있는 끝: 약속 + 더 받은 시간 */
     fun limit(): Int? = budget()?.let { it + extra() }
     fun overLimit(): Boolean { val l = limit() ?: return false; return usedSec() > l * 60 }
+    /** 더 받기는 하루 MAX_EXTRA 분(5분씩 두 번)까지 */
+    fun canExtend(): Boolean = extra() < MAX_EXTRA
     /** 시간을 다 쓴 뒤에만 더 받는다 */
     @Synchronized
     fun extend(min: Int) {
         roll()
+        if (!canExtend()) return
         p.edit().putInt(K_EXTRA, p.getInt(K_EXTRA, 0) + min).putBoolean(K_ACK, false).apply()
     }
 
@@ -74,7 +84,8 @@ class CounterStore(context: Context) {
     fun setPromise(budgetMin: Int, reason: String, th: String, overTh: String) {
         roll()
         p.edit().putInt(K_BUDGET, budgetMin).putString(K_REASON, reason)
-            .putString(K_TH, th).putString(K_OVER_TH, overTh).apply()
+            .putString(K_TH, th).putString(K_OVER_TH, overTh)
+            .putInt(K_LAST_BUDGET, budgetMin).putBoolean(K_AUTO, false).apply()
         val usedMin = p.getInt(K_USED, 0) / 60.0
         val fired = ints(K_TH).withIndex().filter { usedMin >= it.value }.map { "t${it.index}" } +
             ints(K_OVER_TH).withIndex().filter { usedMin >= it.value }.map { "o${it.index}" }
@@ -117,6 +128,12 @@ class CounterStore(context: Context) {
         return Tick(now, b, line, crossed, prev / 60 != now / 60)
     }
 
+    // 웹 setBudget 과 같은 개입 지점: 41%, 72%, 2분 전 (5의 배수는 피함)
+    private fun thresholds(b: Int): List<Int> {
+        fun noRound(v: Double): Int { var x = Math.round(v).toInt(); while (x % 5 == 0) x += 1; return x }
+        return listOf(noRound(b * 0.41), noRound(b * 0.72), maxOf(1, b - 2)).filter { it < b }
+    }
+
     // 웹(scroll-melt/index.html)의 TH_LINES 와 같은 말
     private fun thLine(i: Int, t: Int, b: Int): String = when (i) {
         0 -> "벌써 ${t}분 봤어"
@@ -132,6 +149,8 @@ class CounterStore(context: Context) {
             .put("used", p.getInt(K_USED, 0))
             .put("budget", budget() ?: JSONObject.NULL)
             .put("extra", p.getInt(K_EXTRA, 0))
+            .put("canExtend", canExtend())
+            .put("auto", p.getBoolean(K_AUTO, false))
             .put("history", history())
             .toString()
     }
@@ -147,5 +166,9 @@ class CounterStore(context: Context) {
         private const val K_FIRED = "fired"
         private const val K_ACK = "overAck"
         private const val K_EXTRA = "extraMin"
+        private const val K_LAST_BUDGET = "lastBudgetMin"
+        private const val K_AUTO = "autoBudget"
+        private const val DAY_START_HOUR = 4L
+        const val MAX_EXTRA = 10
     }
 }

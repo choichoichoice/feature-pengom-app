@@ -180,15 +180,16 @@ class OverlayController(
         card.addView(ImageView(svc).apply { setImageResource(R.drawable.mascot_head_melt) },
             LinearLayout.LayoutParams(px(104), px(104)))
         val first = store.extra() == 0
+        val more = store.canExtend()
         card.addView(TextView(svc).apply {
-            text = if (first) "${store.budget()}분 다 됐어." else "더 받은 ${store.extra()}분도 끝."
+            text = when { first -> "${store.budget()}분 다 됐어."; more -> "더 받은 ${store.extra()}분도 끝."; else -> "오늘은 여기까지." }
             textSize = 23f; typeface = Typeface.DEFAULT_BOLD; gravity = Gravity.CENTER
             setTextColor(0xFF17232E.toInt()); setLineSpacing(0f, 1.15f)
         }, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply { topMargin = px(8) })
         card.addView(TextView(svc).apply {
             val reason = store.reason()
             text = (if (reason != "다른 거") "아침에 ‘$reason’ 한다고 했잖아.\n" else "") +
-                "더 보면 오늘 기록에 남아."
+                (if (more) "더 보면 오늘 기록에 남아." else "더 받는 건 하루 두 번까지야.")
             textSize = 14f; setTextColor(0xFF687B8B.toInt()); gravity = Gravity.CENTER
             setPadding(px(12), px(10), px(12), px(10))
             background = rounded(Color.WHITE, 14, 2, 0xFFE1EAF0.toInt())
@@ -197,7 +198,7 @@ class OverlayController(
         val row = LinearLayout(svc).apply { orientation = LinearLayout.HORIZONTAL }
         val keep = button("5분만 더", Color.WHITE, 0xFF17232E.toInt(), 0xFFE1EAF0.toInt())
         val leave = button("그만 볼래", 0xFF1FA7E8.toInt(), Color.WHITE, 0xFF1583B9.toInt())
-        row.addView(keep, LinearLayout.LayoutParams(0, px(54), 1f).apply { marginEnd = px(10) })
+        if (more) row.addView(keep, LinearLayout.LayoutParams(0, px(54), 1f).apply { marginEnd = px(10) })
         row.addView(leave, LinearLayout.LayoutParams(0, px(54), 1f))
         card.addView(row, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = px(16) })
 

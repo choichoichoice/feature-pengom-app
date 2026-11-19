@@ -79,14 +79,17 @@ class MainActivity : Activity() {
         /** 이름은 웹 화면과 맞추느라 그대로 둠: 필요한 권한 화면을 차례로 연다 */
         @JavascriptInterface fun openAccessibilitySettings() = runOnUiThread { askNextPermission() }
 
-        /** 인스타 → 유튜브 → 틱톡 순서로 깔려 있는 앱을 연다 */
-        @JavascriptInterface fun openShorts(): Boolean {
-            for (pkg in UsageWatchService.TARGETS) {
-                val i = packageManager.getLaunchIntentForPackage(pkg) ?: continue
-                runOnUiThread { startActivity(i) }
-                return true
-            }
-            return false
+        /** 테스트용 빌드인가 (테스트 도구는 이때만 보인다) */
+        @JavascriptInterface fun isDebug(): Boolean =
+            (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+
+        /** 배터리 최적화에서 빠져 있는가 (빠져 있지 않으면 폰이 시간 재기를 끌 수 있다) */
+        @JavascriptInterface fun batteryOk(): Boolean =
+            (getSystemService(POWER_SERVICE) as android.os.PowerManager).isIgnoringBatteryOptimizations(packageName)
+
+        @JavascriptInterface fun openBatterySettings() = runOnUiThread {
+            try { startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }
+            catch (e: Exception) { startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))) }
         }
     }
 }
