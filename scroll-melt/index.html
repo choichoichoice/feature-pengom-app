@@ -81,6 +81,22 @@ svg.i { width: 18px; height: 18px; flex: none; }
 #change .budget-row { justify-content: center; margin: 6px 0 2px; }
 #change h2 { margin: 4px 0 6px; }
 
+/* ---------- 돌아보기 (주간·월간) ---------- */
+.review { gap: 8px; }
+.rv-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.seg { display: inline-flex; background: var(--bg); border: 2px solid var(--line); border-radius: 999px; padding: 2px; }
+.seg button { border: 0; background: none; padding: 5px 12px; border-radius: 999px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.seg button.on { background: var(--surface); color: var(--fg); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.rv-main { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.rv-num { font-family: var(--f-display); font-size: 30px; font-variant-numeric: tabular-nums; }
+.rv-sub { font-size: 14px; font-weight: 700; color: var(--muted); }
+.rv-sub.down { color: #1f9d63; } .rv-sub.up { color: var(--melt-deep); }
+.rv-line { font-size: 14px; font-weight: 600; }
+.rv-muted { color: var(--muted); font-weight: 500; }
+.rv-reasons { list-style: none; margin: 2px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.rv-reasons li { display: flex; justify-content: space-between; gap: 10px; padding: 9px 12px; border-radius: 14px; background: var(--accent-soft); font-size: 14px; }
+.rv-reasons b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
 /* ---------- top bar ---------- */
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .title { font-family: var(--f-display); font-size: 22px; line-height: 1.1; }
@@ -329,6 +345,19 @@ details.dev button { font-size: 13px; padding: 10px; border-radius: 12px; backgr
           <div class="tile"><span class="label">어제 본 시간</span><span class="v" id="h-base">-</span></div>
           <div class="tile"><span class="label">연속 기록</span><span class="v" id="h-saved">0분</span></div>
           <div class="tile"><span class="label">이번 주 지킨 날</span><span class="v" id="h-streak2">0일</span></div>
+        </div>
+        <div class="card review" id="h-review">
+          <div class="rv-top">
+            <span class="label">돌아보기</span>
+            <div class="seg" role="tablist">
+              <button role="tab" data-r="7" class="on">이번 주</button>
+              <button role="tab" data-r="30">이번 달</button>
+            </div>
+          </div>
+          <div class="rv-main"><span class="rv-num" id="r-total">0분</span><span class="rv-sub" id="r-diff"></span></div>
+          <div class="rv-line" id="r-kept"></div>
+          <ul class="rv-reasons" id="r-reasons"></ul>
+          <div class="rv-line rv-muted" id="r-raised"></div>
         </div>
         <details class="dev">
           <summary>테스트 도구</summary>
@@ -706,7 +735,64 @@ details.dev button { font-size: 13px; padding: 10px; border-radius: 12px; backgr
     st.textContent = (over ? (um - S.budget) + "분 초과" : Math.max(0, S.budget - um) + "분 남음") + (S.raised ? " · " + S.raised + "분 늘림" : "");
     $("h-base").textContent = S.mins.length ? fmtMin(S.mins[S.mins.length - 1]) : "-";
     $("h-saved").textContent = S.streak + "일";
+    renderReview();
   }
+
+  /* ---------- 돌아보기: 앱이 아는 것(본 시간, 약속)만 그대로 말한다 ---------- */
+  let reviewDays = 7;
+  function renderReview() {
+    const n = reviewDays, word = n === 7 ? "지난주" : "지난달";
+    // 오늘은 아직 안 끝났으니 본 시간 합계에만 넣고, 지킨 날·아낀 시간은 끝난 날로만 센다
+    const today = { used: usedMin(), budget: S.budget, reason: S.reason, kept: !isOver(), raised: S.raised || 0, today: true };
+    const all = (S.log || []).concat(S.budget ? [today] : []);
+    const cur = all.slice(-n), prev = all.slice(-2 * n, -n);
+    const sum = (a, f) => a.reduce((t, d) => t + f(d), 0);
+    const total = sum(cur, (d) => d.used);
+    $("r-total").textContent = fmtMin(total);
+    const diffEl = $("r-diff");
+    diffEl.className = "rv-sub";
+    if (!prev.length) diffEl.textContent = "쇼츠 본 시간 · 비교는 " + (n === 7 ? "다음 주" : "다음 달") + "부터";
+    else {
+      // 날 수가 다르면 하루 평균으로 비교
+      const a = total / cur.length, b = sum(prev, (d) => d.used) / prev.length;
+      const same = prev.length === cur.length, gap = Math.round(same ? total - sum(prev, (d) => d.used) : a - b);
+      const unit = same ? "" : "하루 평균 ";
+      if (gap === 0) diffEl.textContent = word + "랑 " + unit + "같음";
+      else { diffEl.textContent = word + "보다 " + unit + fmtMin(Math.abs(gap)) + (gap < 0 ? " 덜 봄" : " 더 봄"); diffEl.classList.add(gap < 0 ? "down" : "up"); }
+    }
+    const done = cur.filter((d) => !d.today);
+    $("r-kept").textContent = done.length ? "약속 지킨 날 " + done.filter((d) => d.kept).length + " / " + done.length + "일" : "하루가 끝나면 여기 쌓여.";
+    const by = {};
+    done.forEach((d) => {
+      const left = Math.max(0, (d.budget || 0) - d.used);
+      if (!left) return;
+      const k = d.reason && d.reason !== "다른 거" ? d.reason : "";
+      by[k] = (by[k] || 0) + left;
+    });
+    const rows = Object.entries(by).sort((x, y) => y[1] - x[1]);
+    const ul = $("r-reasons"); ul.innerHTML = "";
+    rows.forEach(([k, m]) => {
+      const li = document.createElement("li");
+      const label = document.createElement("span");
+      label.textContent = k ? "‘" + k + "’ 하려고 아낀 시간" : "이유 안 적은 날 아낀 시간";
+      const v = document.createElement("b"); v.textContent = fmtMin(m);
+      li.append(label, v); ul.appendChild(li);
+    });
+    if (rows.length) {
+      const note = document.createElement("li"); note.className = "rv-muted"; note.style.background = "none"; note.style.padding = "0 2px";
+      note.textContent = "약속보다 덜 본 시간이야. 그 시간에 뭘 했는지는 네가 알지.";
+      ul.appendChild(note);
+    }
+    const raised = sum(cur, (d) => d.raised || 0);
+    $("r-raised").textContent = raised ? "약속을 늘린 시간 합계 " + fmtMin(raised) : "";
+  }
+  document.querySelectorAll("#h-review .seg button").forEach((b) => {
+    b.onclick = () => {
+      reviewDays = +b.dataset.r;
+      document.querySelectorAll("#h-review .seg button").forEach((x) => x.classList.toggle("on", x === b));
+      renderReview();
+    };
+  });
 
   /* ---------- 연습 피드: 보는 동안 실제로 시간이 흐른다 ---------- */
   const reel = $("reel");
