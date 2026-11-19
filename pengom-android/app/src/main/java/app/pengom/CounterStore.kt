@@ -54,11 +54,21 @@ class CounterStore(context: Context) {
         val a = JSONArray(p.getString(key, "[]")); List(a.length()) { a.getInt(it) }
     } catch (e: Exception) { emptyList() }
 
+    /**
+     * 아침 약속 또는 하루 중 약속 시간 변경. 변경 때는 이미 지난 개입 지점만 "이미 울림"으로 두고,
+     * 새 약속이 지금 쓴 시간보다 크면 초과 시트가 다시 뜰 수 있게 한다.
+     */
     @Synchronized
     fun setPromise(budgetMin: Int, reason: String, th: String, overTh: String) {
         roll()
         p.edit().putInt(K_BUDGET, budgetMin).putString(K_REASON, reason)
             .putString(K_TH, th).putString(K_OVER_TH, overTh).apply()
+        val usedMin = p.getInt(K_USED, 0) / 60.0
+        val fired = ints(K_TH).withIndex().filter { usedMin >= it.value }.map { "t${it.index}" } +
+            ints(K_OVER_TH).withIndex().filter { usedMin >= it.value }.map { "o${it.index}" }
+        val e = p.edit().putString(K_FIRED, fired.joinToString(","))
+        if (usedMin <= budgetMin) e.putBoolean(K_ACK, false)
+        e.apply()
     }
 
     fun ackOver() { p.edit().putBoolean(K_ACK, true).apply() }
@@ -104,6 +114,7 @@ class CounterStore(context: Context) {
         return Tick(now, b, line, crossed, prev / 60 != now / 60)
     }
 
+    // TODO(말투): 사용자 말투로 다시 쓸 예정. 웹 OVER_LINES 와 같이 바꿀 것
     private fun overLine(i: Int, n: Int): String = when (i % 7) {
         0 -> "나 지금 액체임."
         1 -> "${n}분 봤는데. 뭐 봤냐?"
