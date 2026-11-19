@@ -78,7 +78,7 @@ class OverlayController(
         }
         pillIcon = ImageView(svc).apply { setImageResource(R.drawable.mascot_head) }
         row.addView(pillIcon, LinearLayout.LayoutParams(px(26), px(26)).apply { marginEnd = px(6) })
-        pillNum = TextView(svc).apply { setTextColor(Color.WHITE); textSize = 17f; typeface = Typeface.DEFAULT_BOLD }
+        pillNum = TextView(svc).apply { setTextColor(Color.WHITE); textSize = 17f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum" }
         pillSub = TextView(svc).apply { textSize = 12f; typeface = Typeface.DEFAULT_BOLD; setPadding(px(8), 0, 0, 0) }
         row.addView(pillNum); row.addView(pillSub)
         val lp = params(WRAP_CONTENT, WRAP_CONTENT, false).apply {
@@ -95,19 +95,31 @@ class OverlayController(
         sheet?.let { safeRemove(it) }; sheet = null
     }
 
+    /** 약속 시간에서 1초씩 줄어드는 남은 시간. 넘기면 +로 늘어나는 초과 시간 */
     private fun refresh() {
-        val m = store.usedMin(); val b = store.budget()
+        val used = store.usedSec(); val b = store.budget()
         val over = store.isOver()
-        pillNum?.text = "${m}분"
-        pillSub?.text = when { b == null -> "약속 전"; over -> "+${m - b}분 초과"; else -> "${b - m}분 남음" }
-        pillSub?.setTextColor(if (over) 0xFFFF9D80.toInt() else 0xCCFFFFFF.toInt())
+        val red = 0xFFFF9D80.toInt()
+        when {
+            b == null -> { pillNum?.text = "${used / 60}분"; pillSub?.text = "약속 전" }
+            over -> { pillNum?.text = "+" + clock(used - b * 60); pillSub?.text = "초과" }
+            else -> { pillNum?.text = clock(b * 60 - used); pillSub?.text = "남음" }
+        }
+        pillNum?.setTextColor(if (over) red else Color.WHITE)
+        pillSub?.setTextColor(if (over) red else 0xCCFFFFFF.toInt())
         pillIcon?.setImageResource(if (over) R.drawable.mascot_head_melt else R.drawable.mascot_head)
     }
 
+    private fun clock(sec: Int): String {
+        val s = sec.coerceAtLeast(0)
+        val h = s / 3600; val m = (s % 3600) / 60; val r = s % 60
+        return if (h > 0) "%d:%02d:%02d".format(h, m, r) else "%d:%02d".format(m, r)
+    }
+
     fun onTick(t: CounterStore.Tick) {
-        if (!t.minuteChanged && t.line == null && !t.crossedBudget) return
         show()
         refresh()
+        if (!t.minuteChanged && t.line == null && !t.crossedBudget) return
         pill?.animate()?.scaleX(1.08f)?.scaleY(1.08f)?.setDuration(90)
             ?.withEndAction { pill?.animate()?.scaleX(1f)?.scaleY(1f)?.setDuration(140)?.start() }?.start()
         if (t.crossedBudget) showSheet() else t.line?.let { showToast(it) }

@@ -107,6 +107,7 @@ class UsageWatchService : Service() {
         lastQuery = now
 
         val watching = power.isInteractive && foreground in TARGETS
+        if (watching != lastWatching) { lastWatching = watching; updateNotification() }
         if (watching) overlay.show() else if (foreground != null && foreground != "com.android.systemui") overlay.hide()
 
         val dt = (now - lastTick).coerceIn(0, 5_000)
@@ -123,8 +124,9 @@ class UsageWatchService : Service() {
 
     private fun goForeground() {
         val nm = getSystemService(NotificationManager::class.java)
+        nm.deleteNotificationChannel("watch") // 0.3.0 이전 채널 (중요도가 낮아 숨겨졌음)
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL, "시간 재기", NotificationManager.IMPORTANCE_MIN).apply {
+            NotificationChannel(CHANNEL, "남은 시간", NotificationManager.IMPORTANCE_LOW).apply {
                 description = "쇼츠 앱을 본 시간을 재는 동안 표시됩니다"
                 setShowBadge(false)
             }
@@ -139,15 +141,35 @@ class UsageWatchService : Service() {
             this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE,
         )
         val b = store.budget()
-        val text = if (b == null) "오늘 ${store.usedMin()}분 · 아직 약속 전" else "오늘 ${store.usedMin()}분 / 약속 ${b}분"
-        return Notification.Builder(this, CHANNEL)
+        val used = store.usedSec()
+        val nb = Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_pengom)
-            .setContentTitle("펭곰이가 재는 중")
-            .setContentText(text)
             .setContentIntent(open)
             .setOngoing(true)
-            .build()
+            .setOnlyAlertOnce(true)
+        if (b == null) {
+            return nb.setContentTitle("아직 약속 전").setContentText("오늘 ${used / 60}분 봄").build()
+        }
+        val left = b * 60 - used
+        val over = left < 0
+        nb.setContentTitle(if (over) "약속 ${b}분 넘김" else "약속 ${b}분 중 남은 시간")
+            .setContentText(
+                if (lastWatching) (if (over) "넘긴 시간이 늘고 있어" else "보는 동안 줄어드는 중")
+                else (if (over) "+${-left / 60}분 초과 · 멈춤" else "${left / 60}분 ${left % 60}초 남음 · 멈춤")
+            )
+        if (lastWatching) {
+            // 보는 동안만 알림 시계가 1초씩 움직인다 (남으면 거꾸로, 넘기면 앞으로)
+            val now = System.currentTimeMillis()
+            nb.setShowWhen(true).setUsesChronometer(true)
+                .setChronometerCountDown(!over)
+                .setWhen(now + left * 1000L)
+        } else {
+            nb.setShowWhen(false)
+        }
+        return nb.build()
     }
+
+    private var lastWatching = false
 
     private fun updateNotification() {
         getSystemService(NotificationManager::class.java).notify(NOTI_ID, buildNotification())
@@ -164,7 +186,7 @@ class UsageWatchService : Service() {
         @Suppress("DEPRECATION") private const val PAUSED = UsageEvents.Event.MOVE_TO_BACKGROUND
         private const val TICK_MS = 1_000L
         private const val IDLE_MS = 15_000L
-        private const val CHANNEL = "watch"
+        private const val CHANNEL = "remaining"
         private const val NOTI_ID = 7
 
         fun start(ctx: Context) {
