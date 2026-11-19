@@ -271,6 +271,38 @@ details.dev button { font-size: 13px; padding: 10px; border-radius: 12px; backgr
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+/* ---------- 차분하게: 상자·테두리·그림자 최소화 ---------- */
+.bubble { border: 0; box-shadow: none; background: var(--accent-soft); font-weight: 600; }
+.bubble::after { border: 0; background: var(--accent-soft); }
+.card { border: 0; background: var(--accent-soft); }
+.btn { box-shadow: none; border-radius: 16px; }
+.btn:active { transform: scale(.98); box-shadow: none; }
+.btn.ghost { border: 0; box-shadow: none; background: transparent; color: var(--muted); font-weight: 600; }
+.btn.ghost:active { transform: scale(.98); box-shadow: none; }
+.cnt { border: 0; background: transparent; padding: 4px 2px; font-size: 13px; color: var(--muted); }
+.topbar { justify-content: flex-end; min-height: 24px; }
+.hero { background: none; padding-top: 0; }
+
+/* 홈: 남은 시간 하나 */
+.left { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 4px 8px 0; }
+.left .big { display: flex; align-items: baseline; gap: 6px; }
+.left .n { font-family: var(--f-display); font-size: 64px; line-height: 1; font-variant-numeric: tabular-nums; }
+.left .u { font-size: 18px; font-weight: 700; color: var(--muted); }
+.left .bar { width: min(260px, 80%); height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.left .bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 99px; transition: width .6s; }
+.left.extra .n, .left.extra .u { color: #d9890b; } .left.extra .bar i { background: #f2a93b; }
+.left.over .n, .left.over .u { color: var(--melt); } .left.over .bar i { background: var(--melt); }
+.left .cap { font-size: 13px; color: var(--muted); font-weight: 500; text-align: center; min-height: 1.3em; }
+.rv-open { align-self: center; border: 0; background: none; color: var(--muted); font-size: 14px; font-weight: 600; padding: 10px 14px; display: inline-flex; gap: 8px; }
+.review h2 { margin: 0; font-size: 18px; }
+.review .btn { margin-top: 6px; }
+
+/* 약속 화면 */
+.ask { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 4px; }
+.why { font-size: 15px; color: var(--muted); font-weight: 600; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.why input { width: 8.5em; font: inherit; color: var(--fg); text-align: center; border: 0; border-bottom: 2px solid var(--line); background: transparent; padding: 2px 4px; }
+.why input:focus { outline: none; border-color: var(--accent); }
+
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -288,38 +320,27 @@ details.dev button { font-size: 13px; padding: 10px; border-radius: 12px; backgr
     <!-- 아침 약속 -->
     <section class="screen" id="promise" hidden>
       <div class="scroll">
-        <div class="topbar">
-          <div class="title" id="p-title"><small>1일차 아침</small>오늘의 약속</div>
-        </div>
         <div class="hero">
-          <div class="bubble" id="p-bubble">오늘 몇 개만 볼래? 네가 정해.</div>
+          <div class="bubble" id="p-bubble">오늘 쇼츠 몇 분 볼래?</div>
           <div class="mascot" id="p-char"></div>
         </div>
-        <div class="card">
-          <label class="label" for="p-num">오늘 쇼츠, 몇 분까지?</label>
+        <div class="ask">
           <div class="budget-row">
-            <input id="p-num" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="31" autocomplete="off">
+            <input id="p-num" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="31" autocomplete="off" aria-label="오늘 볼 시간(분)">
             <span class="unit">분</span>
           </div>
-          <span class="budget-min" id="p-min"></span>
           <div class="hint" id="p-hint"></div>
-        </div>
-        <div class="card">
-          <label class="label" for="p-reason">오늘 아끼는 이유</label>
-          <div class="field">오늘은 <input id="p-reason" maxlength="20" placeholder="직접 적기" autocomplete="off"> 하려고 아낀다.</div>
+          <label class="why">아낀 시간엔 <input id="p-reason" maxlength="20" placeholder="운동, 공부…" autocomplete="off"> 할래</label>
         </div>
       </div>
-      <div class="dock"><button class="btn" id="p-go">약속하기</button></div>
+      <div class="dock"><button class="btn" id="p-go">약속</button></div>
     </section>
 
     <!-- 홈 -->
     <section class="screen" id="home" hidden>
       <div class="scroll">
         <div class="topbar">
-          <div class="title" id="h-title"><small>1일차</small>오늘</div>
-          <div class="counters">
-            <span class="cnt fire" title="연속으로 약속을 지킨 날"><svg class="i"><use href="#i-fire"/></svg><span id="h-streak">0</span></span>
-          </div>
+          <span class="cnt fire" title="연속으로 약속을 지킨 날"><svg class="i"><use href="#i-fire"/></svg><span id="h-streak">0</span>일</span>
         </div>
         <div class="hero">
           <div class="bubble" id="h-bubble">오늘도 잘 버텨보자.</div>
@@ -329,35 +350,17 @@ details.dev button { font-size: 13px; padding: 10px; border-radius: 12px; backgr
           <p class="perm-text">인스타·유튜브·틱톡을 본 시간을 재려면 "사용 정보 접근"과 "다른 앱 위에 표시" 권한이 필요해. 화면 속 글자나 영상은 보지 않고, 어떤 앱이 몇 분 켜져 있었는지만 이 폰에 저장해.</p>
           <button class="btn ghost" id="h-perm-btn">권한 켜러 가기</button>
         </div>
-        <div class="card today">
-          <div class="ring" id="h-ring">
-            <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="50" fill="none" stroke-width="12"/><circle class="val" cx="60" cy="60" r="50" fill="none" stroke-width="12" stroke-linecap="round" stroke-dasharray="314.16" stroke-dashoffset="314.16"/></svg>
-            <div class="mid"><span class="num" id="h-count">0</span><span class="of" id="h-of">/ 31분</span></div>
-          </div>
-          <div class="today-side">
-            <span class="label">오늘 쇼츠 본 시간</span>
-            <span class="state" id="h-state">31분 남음</span>
-            <span class="yday" id="h-base"></span>
-          </div>
+        <div class="left" id="h-left-box">
+          <div class="big"><span class="n" id="h-left">31</span><span class="u" id="h-left-u">분 남음</span></div>
+          <div class="bar"><i id="h-bar"></i></div>
+          <div class="cap" id="h-cap"></div>
         </div>
         <div class="card perm" id="h-battery" hidden>
           <span class="label">폰이 시간 재기를 끌 수 있어</span>
           <p class="perm-text">배터리를 아끼려고 폰이 펭곰이를 멈추면 시간이 안 재져. 배터리 최적화 목록에서 펭곰이를 빼줘.</p>
           <button class="btn ghost" id="h-battery-btn">배터리 설정 열기</button>
         </div>
-        <div class="card review" id="h-review">
-          <div class="rv-top">
-            <span class="label">돌아보기</span>
-            <div class="seg" role="tablist">
-              <button role="tab" data-r="7" class="on">이번 주</button>
-              <button role="tab" data-r="30">이번 달</button>
-            </div>
-          </div>
-          <div class="rv-main"><span class="rv-num" id="r-total">0분</span><span class="rv-sub" id="r-diff"></span></div>
-          <div class="rv-line" id="r-kept"></div>
-          <ul class="rv-reasons" id="r-reasons"></ul>
-          <div class="rv-line rv-muted" id="r-extra"></div>
-        </div>
+        <button class="rv-open" id="h-review-open"><span id="r-sum">이번 주 돌아보기</span><span aria-hidden="true">›</span></button>
         <details class="dev">
           <summary>테스트 도구 <span id="d-ver"></span></summary>
           <div class="row">
@@ -368,6 +371,23 @@ details.dev button { font-size: 13px; padding: 10px; border-radius: 12px; backgr
         </details>
       </div>
       <div class="dock"><button class="btn ghost" id="h-watch">약속 줄이기</button></div>
+      <div class="sheet-wrap" id="review" hidden>
+        <div class="sheet review">
+          <span class="grab"></span>
+          <div class="rv-top">
+            <h2>돌아보기</h2>
+            <div class="seg" role="tablist">
+              <button role="tab" data-r="7" class="on">이번 주</button>
+              <button role="tab" data-r="30">이번 달</button>
+            </div>
+          </div>
+          <div class="rv-main"><span class="rv-num" id="r-total">0분</span><span class="rv-sub" id="r-diff"></span></div>
+          <div class="rv-line" id="r-kept"></div>
+          <ul class="rv-reasons" id="r-reasons"></ul>
+          <div class="rv-line rv-muted" id="r-extra"></div>
+          <button class="btn ghost" id="r-close">닫기</button>
+        </div>
+      </div>
       <div class="sheet-wrap" id="change" hidden>
         <div class="sheet">
           <span class="grab"></span>
@@ -633,7 +653,6 @@ details.dev button { font-size: 13px; padding: 10px; border-radius: 12px; backgr
   /* ---------- 아침 약속 (분) ---------- */
   const noRound = (v) => { v = Math.round(v); while (v % 5 === 0) v += 1; return v; };
   function renderPromise() {
-    $("p-title").innerHTML = `<small>${S.day}일차 아침</small>오늘의 약속`;
     rig.p.el.style.width = growPx(200) + "px";
     rig.p.set(S.lastMelt ? "melt" : S.lastJoy ? "joy" : "idle", S.lastMelt);
     say($("p-bubble"), rig.p, S.morningMsg);
@@ -644,7 +663,6 @@ details.dev button { font-size: 13px; padding: 10px; border-radius: 12px; backgr
   const readBudget = () => { const v = parseInt($("p-num").value, 10); return v > 0 ? v : null; };
   function budgetHint() {
     const v = readBudget(), h = $("p-hint");
-    $("p-min").textContent = "인스타·유튜브·틱톡 합쳐서";
     if (v && v % 5 === 0) { h.className = "hint warn"; h.textContent = v + "분 말고 " + (v + 1) + "분. 딱 떨어지면 더 보게 되거든."; return; }
     h.className = "hint";
     h.textContent = S.mins.length ? "어제는 " + fmtMin(S.mins[S.mins.length - 1]) + " 봤어." : "";
@@ -706,7 +724,6 @@ details.dev button { font-size: 13px; padding: 10px; border-radius: 12px; backgr
 
   /* ---------- 홈 ---------- */
   function renderHome() {
-    $("h-title").innerHTML = `<small>${S.day}일차</small>오늘`;
     $("h-streak").textContent = S.streak;
     rig.h.el.style.width = growPx(220) + "px";
     say($("h-bubble"), rig.h, S.homeMsg || "오늘도 잘 버텨보자.");
@@ -731,19 +748,19 @@ details.dev button { font-size: 13px; padding: 10px; border-radius: 12px; backgr
     setMood();
     const over = isOver(), m = meltNow(), um = usedMin();
     rig.h.set(over ? "melt" : "idle", m);
-    $("h-count").textContent = um; $("h-of").textContent = "/ " + S.budget + "분";
-    const ring = $("h-ring"), frac = Math.min(1, S.used / (S.budget * 60));
-    ring.classList.toggle("over", over);
-    ring.querySelector(".val").style.strokeDashoffset = (314.16 * (1 - frac)).toFixed(2);
-    const st = $("h-state");
-    st.className = "state" + (over ? " over" : "");
-    const lim = limit();
-    st.textContent = !over ? Math.max(0, S.budget - um) + "분 남음"
-      : !overLimit() ? "더 받은 시간 " + Math.max(0, lim - um) + "분 남음"
-      : !canExtend() ? "오늘은 여기까지 · " + (um - lim) + "분 초과" : (um - lim) + "분 초과";
-    if (S.extra) st.textContent += " · " + S.extra + "분 더 받음";
+    const lim = limit(), box = $("h-left-box");
+    const inExtra = over && !overLimit();
+    box.classList.toggle("extra", inExtra);
+    box.classList.toggle("over", !!overLimit());
+    $("h-left").textContent = !over ? Math.max(0, S.budget - um) : inExtra ? Math.max(0, lim - um) : "+" + (um - lim);
+    $("h-left-u").textContent = !over ? "분 남음" : inExtra ? "분 · 더 받은 시간" : "분 넘음";
+    $("h-bar").style.width = Math.min(100, S.used / (lim * 60) * 100) + "%";
+    const cap = ["오늘 " + fmtMin(um) + " 봤어"];
+    if (S.mins.length) cap.push("어제 " + fmtMin(S.mins[S.mins.length - 1]));
+    if (S.extra) cap.push(S.extra + "분 더 받음");
+    if (overLimit() && !canExtend()) cap.push("오늘은 여기까지");
+    $("h-cap").textContent = cap.join(" · ");
     homeButton();
-    $("h-base").textContent = S.mins.length ? "어제는 " + fmtMin(S.mins[S.mins.length - 1]) : "";
     renderReview();
   }
 
@@ -794,11 +811,15 @@ details.dev button { font-size: 13px; padding: 10px; border-radius: 12px; backgr
     }
     const extra = sum(cur, (d) => d.extra || d.raised || 0);
     $("r-extra").textContent = extra ? "다 쓰고 더 받은 시간 " + fmtMin(extra) : "";
+    if (n === 7) $("r-sum").textContent = "이번 주 " + fmtMin(total) + (diffEl.classList.contains("down") ? " · " + diffEl.textContent : "");
   }
-  document.querySelectorAll("#h-review .seg button").forEach((b) => {
+  $("h-review-open").onclick = () => { reviewDays = 7; document.querySelectorAll("#review .seg button").forEach((x) => x.classList.toggle("on", x.dataset.r === "7")); renderReview(); $("review").hidden = false; };
+  $("r-close").onclick = () => { $("review").hidden = true; reviewDays = 7; renderReview(); };
+  $("review").addEventListener("click", (e) => { if (e.target.id === "review") $("r-close").onclick(); });
+  document.querySelectorAll("#review .seg button").forEach((b) => {
     b.onclick = () => {
       reviewDays = +b.dataset.r;
-      document.querySelectorAll("#h-review .seg button").forEach((x) => x.classList.toggle("on", x === b));
+      document.querySelectorAll("#review .seg button").forEach((x) => x.classList.toggle("on", x === b));
       renderReview();
     };
   });
