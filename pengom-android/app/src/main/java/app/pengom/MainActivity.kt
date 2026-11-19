@@ -68,6 +68,8 @@ class MainActivity : Activity() {
 
         @JavascriptInterface fun isCounting(): Boolean = Perms.all(this@MainActivity)
 
+        @JavascriptInterface fun extend(min: Int) = store.extend(min)
+
         @JavascriptInterface fun appVersion(): String =
             try { packageManager.getPackageInfo(packageName, 0).versionName ?: "" } catch (e: Exception) { "" }
 

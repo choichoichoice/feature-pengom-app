@@ -140,7 +140,8 @@ class UsageWatchService : Service() {
         val open = PendingIntent.getActivity(
             this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE,
         )
-        val b = store.budget()
+        val b = store.limit()
+        val promise = store.budget()
         val used = store.usedSec()
         val nb = Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_pengom)
@@ -152,7 +153,13 @@ class UsageWatchService : Service() {
         }
         val left = b * 60 - used
         val over = left < 0
-        nb.setContentTitle(if (over) "약속 ${b}분 넘김" else "약속 ${b}분 중 남은 시간")
+        nb.setContentTitle(
+            when {
+                over -> "오늘 시간 다 씀"
+                promise != null && used > promise * 60 -> "더 받은 ${b - promise}분 중 남은 시간"
+                else -> "약속 ${b}분 중 남은 시간"
+            }
+        )
             .setContentText(
                 if (lastWatching) (if (over) "넘긴 시간이 늘고 있어" else "보는 동안 줄어드는 중")
                 else (if (over) "+${-left / 60}분 초과 · 멈춤" else "${left / 60}분 ${left % 60}초 남음 · 멈춤")

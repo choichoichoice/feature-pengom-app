@@ -87,6 +87,8 @@ class OverlayController(
         }
         try { wm.addView(row, lp); pill = row } catch (_: Exception) { return }
         refresh()
+        // 시간을 다 쓴 채로 다시 들어오면 시트를 다시 보여준다
+        if (store.overLimit()) main.post { showSheet() }
     }
 
     fun hide() {
@@ -95,19 +97,20 @@ class OverlayController(
         sheet?.let { safeRemove(it) }; sheet = null
     }
 
-    /** 약속 시간에서 1초씩 줄어드는 남은 시간. 넘기면 +로 늘어나는 초과 시간 */
+    /** 약속(그리고 더 받은 시간)에서 1초씩 줄어드는 남은 시간 */
     private fun refresh() {
-        val used = store.usedSec(); val b = store.budget()
-        val over = store.isOver()
-        val red = 0xFFFF9D80.toInt()
+        val used = store.usedSec(); val b = store.budget(); val lim = store.limit()
+        val red = 0xFFFF9D80.toInt(); val amber = 0xFFFFC56B.toInt()
+        var color = Color.WHITE; var sub = 0xCCFFFFFF.toInt()
         when {
-            b == null -> { pillNum?.text = "${used / 60}분"; pillSub?.text = "약속 전" }
-            over -> { pillNum?.text = "+" + clock(used - b * 60); pillSub?.text = "초과" }
-            else -> { pillNum?.text = clock(b * 60 - used); pillSub?.text = "남음" }
+            b == null || lim == null -> { pillNum?.text = "${used / 60}분"; pillSub?.text = "약속 전" }
+            used <= b * 60 -> { pillNum?.text = clock(b * 60 - used); pillSub?.text = "남음" }
+            used <= lim * 60 -> { pillNum?.text = clock(lim * 60 - used); pillSub?.text = "더 받은 시간"; color = amber; sub = amber }
+            else -> { pillNum?.text = "+" + clock(used - lim * 60); pillSub?.text = "초과"; color = red; sub = red }
         }
-        pillNum?.setTextColor(if (over) red else Color.WHITE)
-        pillSub?.setTextColor(if (over) red else 0xCCFFFFFF.toInt())
-        pillIcon?.setImageResource(if (over) R.drawable.mascot_head_melt else R.drawable.mascot_head)
+        pillNum?.setTextColor(color)
+        pillSub?.setTextColor(sub)
+        pillIcon?.setImageResource(if (store.isOver()) R.drawable.mascot_head_melt else R.drawable.mascot_head)
     }
 
     private fun clock(sec: Int): String {
@@ -176,23 +179,24 @@ class OverlayController(
         }
         card.addView(ImageView(svc).apply { setImageResource(R.drawable.mascot_head_melt) },
             LinearLayout.LayoutParams(px(104), px(104)))
+        val first = store.extra() == 0
         card.addView(TextView(svc).apply {
-            text = "네가 정한 거야.\n내가 정한 거 아니고."
+            text = if (first) "${store.budget()}분 다 됐어." else "더 받은 ${store.extra()}분도 끝."
             textSize = 23f; typeface = Typeface.DEFAULT_BOLD; gravity = Gravity.CENTER
             setTextColor(0xFF17232E.toInt()); setLineSpacing(0f, 1.15f)
         }, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply { topMargin = px(8) })
         card.addView(TextView(svc).apply {
             val reason = store.reason()
-            text = (if (reason != "다른 거") "“$reason 하려고 아낀다.” 아침에 네가 쓴 말이야.\n" else "") +
-                "약속 ${store.budget()}분, 지금 ${store.usedMin()}분째."
+            text = (if (reason != "다른 거") "아침에 ‘$reason’ 한다고 했잖아.\n" else "") +
+                "더 보면 오늘 기록에 남아."
             textSize = 14f; setTextColor(0xFF687B8B.toInt()); gravity = Gravity.CENTER
             setPadding(px(12), px(10), px(12), px(10))
             background = rounded(Color.WHITE, 14, 2, 0xFFE1EAF0.toInt())
         }, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = px(14) })
 
         val row = LinearLayout(svc).apply { orientation = LinearLayout.HORIZONTAL }
-        val keep = button("그래도 본다", Color.WHITE, 0xFF17232E.toInt(), 0xFFE1EAF0.toInt())
-        val leave = button("나간다", 0xFF1FA7E8.toInt(), Color.WHITE, 0xFF1583B9.toInt())
+        val keep = button("5분만 더", Color.WHITE, 0xFF17232E.toInt(), 0xFFE1EAF0.toInt())
+        val leave = button("그만 볼래", 0xFF1FA7E8.toInt(), Color.WHITE, 0xFF1583B9.toInt())
         row.addView(keep, LinearLayout.LayoutParams(0, px(54), 1f).apply { marginEnd = px(10) })
         row.addView(leave, LinearLayout.LayoutParams(0, px(54), 1f))
         card.addView(row, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = px(16) })
@@ -204,8 +208,8 @@ class OverlayController(
         vibrate(longArrayOf(0, 30, 60, 30))
 
         keep.setOnClickListener {
-            store.ackOver(); removeSheet()
-            main.postDelayed({ showToast("그래. 나는 여기서 녹고 있을게.") }, 250)
+            store.extend(5); removeSheet(); refresh()
+            main.postDelayed({ showToast("딱 5분이다?") }, 250)
         }
         leave.setOnClickListener { store.ackOver(); removeSheet(); goHome() }
     }
