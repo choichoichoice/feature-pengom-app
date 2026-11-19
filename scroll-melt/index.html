@@ -303,6 +303,31 @@ details.dev button { font-size: 13px; padding: 10px; border-radius: 12px; backgr
 .why input { width: 8.5em; font: inherit; color: var(--fg); text-align: center; border: 0; border-bottom: 2px solid var(--line); background: transparent; padding: 2px 4px; }
 .why input:focus { outline: none; border-color: var(--accent); }
 
+/* ---------- 크게: 한눈에 읽히는 글자 크기 ---------- */
+.bubble { font-size: 18px; padding: 13px 20px; max-width: 330px; }
+.q { font-size: 23px; font-weight: 800; line-height: 1.35; text-align: center; color: var(--fg); }
+.budget-row input { font-size: 92px; width: 3.2ch; }
+.unit { font-size: 36px; }
+.hint { font-size: 16px; }
+.why { font-size: 19px; }
+.why input { font-size: 19px; }
+.btn { font-size: 20px; padding: 19px; border-radius: 18px; }
+.btn.ghost { font-size: 18px; }
+.left .n { font-size: 104px; }
+.left .u { font-size: 24px; }
+.left .bar { height: 10px; width: min(300px, 86%); }
+.left .cap { font-size: 17px; }
+.rv-open { font-size: 18px; }
+.cnt { font-size: 16px; } .cnt svg.i { width: 20px; height: 20px; }
+.review h2 { font-size: 22px; }
+.seg button { font-size: 15px; padding: 7px 14px; }
+.rv-num { font-size: 40px; }
+.rv-sub, .rv-line, .rv-reasons li { font-size: 16px; }
+.sheet h2 { font-size: 24px; }
+.sheet .quote { font-size: 16px; }
+.perm-text { font-size: 16px; }
+.label { font-size: 14px; }
+details.dev summary { font-size: 14px; }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -325,6 +350,7 @@ details.dev button { font-size: 13px; padding: 10px; border-radius: 12px; backgr
           <div class="mascot" id="p-char"></div>
         </div>
         <div class="ask">
+          <label class="q" for="p-num">오늘 쇼츠·릴스 볼 시간,<br>총 몇 분으로 할래?</label>
           <div class="budget-row">
             <input id="p-num" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="31" autocomplete="off" aria-label="오늘 볼 시간(분)">
             <span class="unit">분</span>
@@ -605,7 +631,7 @@ details.dev button { font-size: 13px; padding: 10px; border-radius: 12px; backgr
   const fresh = () => ({
     day: 1, mins: [], kept: [], size: 10.0, streak: 0, log: [], extra: 0,
     budget: null, reason: "", used: 0, fired: [], overAck: false, exitedOnce: false,
-    morningMsg: "안녕, 난 펭곰이. 오늘 쇼츠 몇 분 볼래?", homeMsg: "",
+    morningMsg: "안녕, 난 펭곰이.", homeMsg: "",
     lastMelt: 0, lastJoy: false,
   });
   let S;
@@ -928,10 +954,10 @@ details.dev button { font-size: 13px; padding: 10px; border-radius: 12px; backgr
       const base = Math.max(5, S.mins.length ? avg(S.mins.slice(-7)) : S.budget);
       const g = 0.3 + Math.max(0, (base - um) / base) * 3;
       S.size += g; S.streak += 1;
-      msg = "어제 약속 지켰다! 나 좀 컸어. 오늘은 몇 분?";
+      msg = "어제 약속 지켰다! 나 좀 컸어.";
     } else {
       S.streak = 0; S.size = Math.max(6, S.size - 0.6); S.lastMelt = 0.35;
-      msg = "어제는 어제. 오늘 다시 정하자.";
+      msg = "어제는 어제. 오늘 다시 해보자.";
     }
     S.mins.push(um); S.kept.push(kept);
     // 주간·월간 돌아보기용 하루 기록
