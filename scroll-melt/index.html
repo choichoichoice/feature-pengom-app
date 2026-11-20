@@ -425,6 +425,50 @@ details.dev summary { font-size: 14px; }
 .tin input:focus { outline: 2px solid var(--accent); border-radius: 6px; }
 .tin b { font-size: 20px; }
 .hint.left { text-align: left; margin: 6px 4px 0; font-size: 14px; }
+/* ---------- 0.11: 탭 가능한 남은 시간, 극지 배경, 떠 있는 펭곰이 ---------- */
+.goal-chip { display: none; }
+.left.tap { cursor: pointer; border-radius: 24px; padding: 10px 12px 12px; margin: 0 -4px; transition: background-color .2s, transform .12s; -webkit-tap-highlight-color: transparent; }
+.left.tap:hover { background: rgba(255, 255, 255, .28); }
+.left.tap:active { transform: scale(.98); background: rgba(255, 255, 255, .42); }
+.left.tap:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.tap-hint { font-size: 14px; font-weight: 600; color: var(--muted); opacity: .8; }
+.g-now { display: flex; justify-content: center; gap: 18px; font-size: 16px; color: var(--muted); margin-top: -4px; }
+.g-now b { color: var(--fg); }
+
+#home { isolation: isolate; }
+#home .scroll { background: none !important; }
+#home .sky { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+#home .sky i { position: absolute; inset: 0; opacity: 0; transition: opacity 1.4s ease; }
+#home[data-sky="ok"] .s-ok, #home[data-sky="warn"] .s-warn, #home[data-sky="over"] .s-over { opacity: 1; }
+.sky .s-ok { background: linear-gradient(180deg, #bfe5fb 0%, #e4f4fd 38%, #f4fafe 58%, #d6edf9 78%, #a8d4ee 100%); }
+.sky .s-warn { background: linear-gradient(180deg, #ffd2ad 0%, #ffe6d0 36%, #fff3ea 56%, #f1dcd6 78%, #c9c6df 100%); }
+.sky .s-over { background:
+  radial-gradient(1.5px 1.5px at 18% 12%, #fff9 50%, transparent 51%), radial-gradient(1.5px 1.5px at 72% 8%, #fff8 50%, transparent 51%),
+  radial-gradient(1px 1px at 44% 20%, #fff7 50%, transparent 51%), radial-gradient(1px 1px at 86% 24%, #fff6 50%, transparent 51%),
+  radial-gradient(1px 1px at 8% 30%, #fff6 50%, transparent 51%),
+  linear-gradient(180deg, #17233f 0%, #26365a 40%, #33456c 62%, #273859 82%, #1a2742 100%); }
+#home[data-sky="over"] { --fg: #eef3fb; --muted: #b6c3da; --accent-soft: rgba(255, 255, 255, .12); --line: rgba(255, 255, 255, .2); color: var(--fg); }
+#home[data-sky="over"] .left.lv-danger .n, #home[data-sky="over"] .left.lv-danger .u { color: #ff9a86; }
+#home[data-sky="over"] .left.tap:hover, #home[data-sky="over"] .left.tap:active { background: rgba(255, 255, 255, .08); }
+#home[data-sky="over"] .warn-banner { background: #4a3a2a; color: #ffd9b0; }
+.phone.st-over .hero { filter: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .sky .s-ok { background: linear-gradient(180deg, #0f2a40 0%, #13334d 45%, #10293d 75%, #0b2131 100%); }
+  :root:not([data-theme="light"]) .sky .s-warn { background: linear-gradient(180deg, #3f2a2a 0%, #3a2b33 45%, #2a2536 75%, #1d1c2c 100%); }
+  :root:not([data-theme="light"]) .left.tap:hover, :root:not([data-theme="light"]) .left.tap:active { background: rgba(255, 255, 255, .06); }
+}
+:root[data-theme="dark"] .sky .s-ok { background: linear-gradient(180deg, #0f2a40 0%, #13334d 45%, #10293d 75%, #0b2131 100%); }
+:root[data-theme="dark"] .sky .s-warn { background: linear-gradient(180deg, #3f2a2a 0%, #3a2b33 45%, #2a2536 75%, #1d1c2c 100%); }
+
+/* 펭곰이와 빙하: 물 위에 떠 있는 듯 천천히 오르내리고, 그림자는 반대로 숨 쉼 */
+#home .hero { position: relative; }
+#home .hero .mascot { animation: pg-float 4.6s ease-in-out infinite; will-change: transform; }
+#home .hero::after { content: ""; display: block; width: 58%; height: 20px; margin-top: -16px; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(16, 58, 92, .30), transparent); animation: pg-shadow 4.6s ease-in-out infinite; }
+#home[data-sky="over"] .hero::after { background: radial-gradient(closest-side, rgba(0, 0, 0, .45), transparent); }
+@keyframes pg-float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-9px) rotate(-.6deg); } }
+@keyframes pg-shadow { 0%, 100% { transform: scaleX(1); opacity: .9; } 50% { transform: scaleX(.82); opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { #home .hero .mascot, #home .hero::after { animation: none; } }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -467,7 +511,8 @@ details.dev summary { font-size: 14px; }
     </section>
 
     <!-- 홈 -->
-    <section class="screen" id="home" hidden>
+    <section class="screen" id="home" data-sky="ok" hidden>
+      <div class="sky" aria-hidden="true"><i class="s-ok"></i><i class="s-warn"></i><i class="s-over"></i></div>
       <div class="scroll">
         <button class="warn-banner" id="h-perm" hidden>사용 시간 감지를 위해 권한 설정이 필요해요 <span aria-hidden="true">›</span></button>
         <div class="topbar">
@@ -481,11 +526,11 @@ details.dev summary { font-size: 14px; }
         <div class="hero">
           <div class="bubble" id="h-bubble">아직 빙하가 튼튼해요! 천천히 즐겨요.</div>
           <div class="mascot" id="h-char"></div>        </div>
-        <div class="left" id="h-left-box">
-          <div class="big"><span class="n" id="h-left">31</span><span class="u" id="h-left-u">분 남음</span></div>
+        <div class="left tap" id="h-left-box" role="button" tabindex="0" aria-label="남은 시간. 눌러서 하루 목표 변경">
+          <div class="big"><span class="n" id="h-left">31</span><span class="u" id="h-left-u">분 남았어요</span></div>
           <div class="bar"><i id="h-bar"></i></div>
           <div class="cap" id="h-cap"></div>
-          <button class="goal-chip" id="h-goal" aria-label="하루 목표 시간 바꾸기">하루 목표 <b id="h-goal-v">30분</b> <span aria-hidden="true">✎</span></button>
+          <div class="tap-hint" aria-hidden="true">탭해서 목표 변경 <span>✎</span></div>
         </div>
         <div class="card perm" id="h-battery" hidden>
           <span class="label" id="h-battery-title">배터리 설정이 필요해요</span>
@@ -606,7 +651,8 @@ details.dev summary { font-size: 14px; }
   <div class="sheet-wrap" id="goal" hidden>
     <div class="sheet goal-sheet" role="dialog" aria-labelledby="g-title">
       <span class="grab"></span>
-      <h2 id="g-title">하루 목표</h2>
+      <h2 id="g-title">하루 목표 시간 설정</h2>
+      <div class="g-now" id="g-now"><span>현재 목표 <b id="g-cur">30분</b></span><span>오늘 사용 <b id="g-used">0분</b></span></div>
       <div class="picker" id="g-pick">
             <div class="pk-main">
               <button type="button" class="pk-step" data-d="-5" aria-label="5분 줄이기">−5분</button>
@@ -803,7 +849,7 @@ details.dev summary { font-size: 14px; }
   try { S = JSON.parse(localStorage.getItem("pengom-v3")) || fresh(); } catch (e) { S = fresh(); }
   const save = () => { try { localStorage.setItem("pengom-v3", JSON.stringify(S)); } catch (e) {} };
   const minOf = (sec) => Math.floor(sec / 60);
-  const fmtMin = (m) => m >= 60 ? Math.floor(m / 60) + "시간 " + (m % 60) + "분" : m + "분";
+  const fmtMin = (m) => m >= 60 ? Math.floor(m / 60) + "시간" + (m % 60 ? " " + (m % 60) + "분" : "") : m + "분";
   const fmtClock = (sec) => minOf(sec) + ":" + String(Math.floor(sec % 60)).padStart(2, "0");
   const usedMin = () => minOf(S.used);
   // isOver: 아침 약속을 넘겼다 (약속 깨짐). limit: 약속 + 다 쓴 뒤 더 받은 시간
@@ -906,6 +952,7 @@ details.dev summary { font-size: 14px; }
     const v = gPick.get(), h = $("g-hint"), ok = $("g-ok");
     ok.disabled = false; h.className = "hint";
     ok.textContent = "저장";
+    if (v === S.budget) { h.textContent = "오늘부터 바로 적용돼요."; return; }
     if (v * 60 <= S.used) {
       h.className = "hint warn";
       h.textContent = "오늘 이미 " + fmtMin(usedMin()) + " 사용했어요. " + fmtMin(v) + "으로 바꾸면 바로 목표 시간이 끝나요.";
@@ -915,6 +962,8 @@ details.dev summary { font-size: 14px; }
     h.textContent = "오늘부터 바로 적용돼요.";
   }
   function openGoal() {
+    $("g-cur").textContent = S.budget ? fmtMin(S.budget) + (S.extra ? " (연장 +" + S.extra + "분)" : "") : "없음";
+    $("g-used").textContent = fmtMin(usedMin());
     $("g-reset").textContent = "매일 " + hhmm(wakeMinNow()) + "(일어나는 시간)에 사용량이 초기화돼요.";
     gPick.set(S.budget || 30);
     goalHint();
@@ -934,7 +983,8 @@ details.dev summary { font-size: 14px; }
     pushPromise(); save(); closeGoal();
     if (!$("settings").hidden) renderSettings(); else renderHome();
   };
-  $("h-goal").onclick = openGoal;
+  $("h-left-box").onclick = openGoal;
+  $("h-left-box").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openGoal(); } });
 
   function extend(min) {
     if (!canExtend()) return;
@@ -1056,12 +1106,13 @@ details.dev summary { font-size: 14px; }
     box.classList.toggle("over", !!overLimit());
     const lv = level();
     box.classList.toggle("lv-warn", lv === "warn"); box.classList.toggle("lv-danger", lv === "danger");
+    // 배경: 여유 = 맑은 하늘, 남은 30% 이하 = 노을, 목표 초과 = 밤하늘
+    $("home").dataset.sky = isOver() ? "over" : lv === "ok" ? "ok" : "warn";
     renderTopStatus();
     $("h-left").textContent = overLimit() ? "+" + Math.max(1, um - lim) : Math.max(0, left);
-    $("h-left-u").textContent = overLimit() ? "분 초과" : inExtra ? "분 남음 (연장)" : "분 남음";
+    $("h-left-u").textContent = overLimit() ? "분 넘었어요" : inExtra ? "분 남았어요 (연장)" : "분 남았어요";
     $("h-bar").style.width = Math.min(100, S.used / (lim * 60) * 100) + "%";
     $("h-cap").textContent = "오늘 " + um + "분 / 목표 " + S.budget + "분" + (S.extra ? " (연장 +" + S.extra + "분)" : "");
-    $("h-goal-v").textContent = fmtMin(S.budget);
     homeButton();
     renderReview();
   }
