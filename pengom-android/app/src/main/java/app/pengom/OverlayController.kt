@@ -10,6 +10,7 @@ import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -196,7 +197,7 @@ class OverlayController(
         }, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = px(14) })
 
         val row = LinearLayout(svc).apply { orientation = LinearLayout.HORIZONTAL }
-        val keep = button("5분 연장", Color.WHITE, 0xFF17232E.toInt(), 0xFFE1EAF0.toInt())
+        val keep = button("길게 눌러 5분 연장", Color.WHITE, 0xFF17232E.toInt(), 0xFFE1EAF0.toInt())
         val leave = button("그만 보기", 0xFF1FA7E8.toInt(), Color.WHITE, 0xFF1583B9.toInt())
         if (more) row.addView(keep, LinearLayout.LayoutParams(0, px(54), 1f).apply { marginEnd = px(10) })
         row.addView(leave, LinearLayout.LayoutParams(0, px(54), 1f))
@@ -208,9 +209,26 @@ class OverlayController(
         card.animate().translationY(0f).setDuration(420).setInterpolator(DecelerateInterpolator(2f)).start()
         vibrate(longArrayOf(0, 30, 60, 30))
 
-        keep.setOnClickListener {
+        // 연장은 2초 동안 길게 눌러야 된다 (무심코 누르는 것 막기)
+        val doExtend = Runnable {
+            vibrate(longArrayOf(0, 40))
             store.extend(5); removeSheet(); refresh()
             main.postDelayed({ showToast("5분만 더 볼게요! 이번엔 꼭 멈추기로 해요.") }, 250)
+        }
+        keep.setOnTouchListener { v, e ->
+            when (e.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    (v as TextView).text = "계속 누르고 있어요…"
+                    v.animate().scaleX(0.97f).scaleY(0.97f).setDuration(2000).start()
+                    main.postDelayed(doExtend, 2000); true
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    main.removeCallbacks(doExtend)
+                    (v as TextView).text = "길게 눌러 5분 연장"
+                    v.animate().cancel(); v.scaleX = 1f; v.scaleY = 1f; true
+                }
+                else -> true
+            }
         }
         leave.setOnClickListener { store.ackOver(); removeSheet(); goHome() }
     }

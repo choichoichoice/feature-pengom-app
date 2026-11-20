@@ -392,6 +392,39 @@ details.dev summary { font-size: 14px; }
 .goal-sheet h2 { margin: 2px 0 0; }
 #g-hint { font-size: 16px; }
 .btn:disabled { background: var(--line); color: var(--muted); }
+/* ---------- 0.10: 배너, 상단 줄, 막대 단계 색, 길게 누르기 ---------- */
+.warn-banner { width: 100%; border: 0; text-align: left; background: #fff1e0; color: #8a4b06; font-size: 16px; font-weight: 700;
+  padding: 13px 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.topbar { position: relative; justify-content: space-between; padding-right: 6px; }
+.tb-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.cnt.fire { flex: none; white-space: nowrap; border: 0; background: var(--accent-soft); color: var(--fg); padding: 6px 12px; border-radius: 999px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+.tip { position: absolute; right: 6px; top: calc(100% + 6px); z-index: 5; background: var(--fg); color: var(--screen); font-size: 14px; font-weight: 600; padding: 8px 12px; border-radius: 10px; white-space: nowrap; }
+.tip::before { content: ""; position: absolute; right: 22px; top: -5px; width: 10px; height: 10px; background: var(--fg); transform: rotate(45deg); }
+.apps { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; padding: 2px; }
+.apps img, .apps .ab { width: 22px; height: 22px; border-radius: 6px; display: inline-grid; place-items: center; font-size: 11px; font-weight: 800; color: #fff; }
+.apps .ab { background: var(--muted); }
+.apps .none { font-size: 13px; color: var(--muted); font-weight: 600; }
+.ready { white-space: nowrap; }
+.ready.wait { color: var(--muted); }
+/* 남은 비율에 따라: 여유 파랑 → 30% 이하 주황 → 10% 이하·5분 미만 빨강 */
+.left .bar i, .left.extra .bar i, .left.over .bar i { background: #1f9be0; }
+.left.lv-warn .bar i { background: #f08a24; }
+.left.lv-danger .bar i { background: #e5533d; }
+.left .n, .left .u, .left.extra .n, .left.extra .u { color: var(--fg); }
+.left.lv-warn .n, .left.lv-warn .u { color: #c4650c; }
+.left.lv-danger .n, .left.lv-danger .u { color: #d2412b; }
+.left .u { color: var(--muted); }
+.reset-note { margin: -4px 0 0; font-size: 13px; color: var(--muted); text-align: center; }
+/* 길게 누르기 버튼: 누르는 동안 왼쪽부터 차오름 */
+.btn.hold { touch-action: none; user-select: none; -webkit-user-select: none;
+  background: linear-gradient(to right, var(--accent-deep) calc(var(--p, 0) * 100%), var(--accent) 0); }
+.btn.ghost.hold { background: linear-gradient(to right, var(--line) calc(var(--p, 0) * 100%), transparent 0); }
+/* 기상 시간 직접 입력 */
+.tin { display: inline-flex; align-items: center; gap: 4px; background: var(--accent-soft); border-radius: 12px; padding: 4px 10px; }
+.tin input { width: 2.2ch; font: inherit; font-size: 20px; font-weight: 800; text-align: center; border: 0; background: transparent; color: var(--fg); padding: 4px 0; font-variant-numeric: tabular-nums; }
+.tin input:focus { outline: 2px solid var(--accent); border-radius: 6px; }
+.tin b { font-size: 20px; }
+.hint.left { text-align: left; margin: 6px 4px 0; font-size: 14px; }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -436,18 +469,18 @@ details.dev summary { font-size: 14px; }
     <!-- 홈 -->
     <section class="screen" id="home" hidden>
       <div class="scroll">
+        <button class="warn-banner" id="h-perm" hidden>사용 시간 감지를 위해 권한 설정이 필요해요 <span aria-hidden="true">›</span></button>
         <div class="topbar">
-          <span class="ready" id="h-ready" hidden></span>
-          <span class="cnt fire" title="목표를 연속으로 지킨 날"><svg class="i"><use href="#i-fire"/></svg>연속 <span id="h-streak">0</span>일</span>
+          <div class="tb-left">
+            <button class="ready" id="h-ready" hidden></button>
+            <button class="apps" id="h-apps" aria-label="감지 중인 앱, 눌러서 바꾸기"></button>
+          </div>
+          <button class="cnt fire" id="h-streak-btn" aria-describedby="h-streak-tip"><svg class="i"><use href="#i-fire"/></svg><span id="h-streak">0</span>일</button>
+          <span class="tip" id="h-streak-tip" role="tooltip" hidden>목표를 연속으로 지킨 날이에요</span>
         </div>
         <div class="hero">
           <div class="bubble" id="h-bubble">아직 빙하가 튼튼해요! 천천히 즐겨요.</div>
           <div class="mascot" id="h-char"></div>        </div>
-        <div class="card perm" id="h-perm" hidden>
-          <span class="label">사용 감지가 꺼져 있어요</span>
-          <p class="perm-text">인스타그램·유튜브·틱톡 사용 시간을 재려면 ‘사용 정보 접근’과 ‘다른 앱 위에 표시’ 권한이 필요해요. 화면 속 글자나 영상은 보지 않고, 어떤 앱이 몇 분 켜져 있었는지만 확인해요.</p>
-          <button class="btn" id="h-perm-btn">권한 설정하기</button>
-        </div>
         <div class="left" id="h-left-box">
           <div class="big"><span class="n" id="h-left">31</span><span class="u" id="h-left-u">분 남음</span></div>
           <div class="bar"><i id="h-bar"></i></div>
@@ -499,15 +532,23 @@ details.dev summary { font-size: 14px; }
         <div class="group">
           <div class="gtitle">하루 목표</div>
           <div class="srow"><span id="s-promise">-</span><button class="link" id="s-reduce">변경</button></div>
+          <p class="note" id="s-reset"></p>
         </div>
-        <div class="group">
+        <div class="group" id="s-apps-group">
           <div class="gtitle">감지할 앱</div>
           <div id="s-apps"></div>
           <p class="note">켜 둔 앱이 화면에 떠 있는 시간을 재요. 앱 안에서 쇼츠를 보는지 긴 영상을 보는지는 구분하지 못해요.</p>
         </div>
         <div class="group">
           <div class="gtitle">기상 시간</div>
-          <label class="srow"><span>보통 일어나는 시간</span><input class="time" type="time" id="s-wake" value="07:00"></label>
+          <div class="srow"><span>보통 일어나는 시간</span>
+            <span class="tin" role="group" aria-label="일어나는 시간 (24시간)">
+              <input id="s-wake-h" type="text" inputmode="numeric" maxlength="2" placeholder="07" aria-label="시" autocomplete="off">
+              <b>:</b>
+              <input id="s-wake-m" type="text" inputmode="numeric" maxlength="2" placeholder="00" aria-label="분" autocomplete="off">
+            </span>
+          </div>
+          <div class="hint left" id="s-wake-hint">24시간 기준으로 입력해 주세요. 예: 07:30, 22:00</div>
           <p class="note">사람마다 생활 시간이 달라서, 하루는 자정이 아니라 <b>일어나는 시간</b>에 시작돼요. 늦은 밤에 본 시간은 전날 기록으로 들어가고, 일어날 시간이 되면 펭곰이가 오늘 목표를 물어봐요. 바꾼 시간은 다음 날부터 적용돼요.</p>
         </div>
         <div class="group">
@@ -575,6 +616,7 @@ details.dev summary { font-size: 14px; }
             <div class="pk-presets"><button type="button" data-v="15">15분</button><button type="button" data-v="30">30분</button><button type="button" data-v="45">45분</button><button type="button" data-v="60">1시간</button><button type="button" data-v="90">1시간 30분</button></div>
           </div>
       <div class="hint" id="g-hint">오늘부터 바로 적용돼요.</div>
+      <p class="reset-note" id="g-reset"></p>
       <div class="row">
         <button class="btn ghost" id="g-cancel">취소</button>
         <button class="btn" id="g-ok">저장</button>
@@ -863,15 +905,17 @@ details.dev summary { font-size: 14px; }
   function goalHint() {
     const v = gPick.get(), h = $("g-hint"), ok = $("g-ok");
     ok.disabled = false; h.className = "hint";
+    ok.textContent = "저장";
     if (v * 60 <= S.used) {
       h.className = "hint warn";
-      h.textContent = "오늘 이미 " + fmtMin(usedMin()) + " 사용했어요. 그보다 긴 목표로 정해 주세요.";
-      ok.disabled = true; return;
+      h.textContent = "오늘 이미 " + fmtMin(usedMin()) + " 사용했어요. " + fmtMin(v) + "으로 바꾸면 바로 목표 시간이 끝나요.";
+      ok.textContent = "그래도 바꾸기"; return;
     }
     if (S.budget && v > S.budget) { h.textContent = "오늘부터 바로 적용돼요. 목표를 늘리면 기록에 함께 남아요."; return; }
     h.textContent = "오늘부터 바로 적용돼요.";
   }
   function openGoal() {
+    $("g-reset").textContent = "매일 " + hhmm(wakeMinNow()) + "(일어나는 시간)에 사용량이 초기화돼요.";
     gPick.set(S.budget || 30);
     goalHint();
     $("goal").hidden = false;
@@ -881,7 +925,6 @@ details.dev summary { font-size: 14px; }
   $("goal").addEventListener("click", (e) => { if (e.target.id === "goal") closeGoal(); });
   $("g-ok").onclick = () => {
     const v = gPick.get(), before = S.budget;
-    if (v * 60 <= S.used) { goalHint(); buzz(15); return; }
     if (v === before) return closeGoal();
     if (before && v > before) S.raised = (S.raised || 0) + (v - before);
     setBudget(v);
@@ -901,13 +944,83 @@ details.dev summary { font-size: 14px; }
   }
   const EXTEND_MSG = (n) => n + "분만 더 볼게요! 이번엔 꼭 멈추기로 해요.";
 
+  /* ---------- 상단: 상태, 감지 앱, 스트릭 ---------- */
+  function statusInfo() {
+    let on = true, batt = true;
+    if (NATIVE) { try { on = !!NATIVE.isCounting(); batt = !NATIVE.batteryOk || NATIVE.batteryOk(); } catch (e) {} }
+    if (!on) return ["need", "권한 필요"];
+    if (!batt) return ["need", "배터리 설정 필요"];
+    if (!S.budget) return ["wait", "타이머 대기 중"];
+    return ["ok", "사용 감지 중"];
+  }
+  function renderTopStatus() {
+    const [cls, txt] = statusInfo(), r = $("h-ready");
+    r.hidden = false; r.className = "ready " + cls; r.textContent = txt;
+    renderAppIcons();
+  }
+  const APP_BADGE = { instagram: "IG", youtube: "YT", tiktok: "TT" };
+  let iconCache = {};
+  function renderAppIcons() {
+    let apps = WEB_APPS.map((a) => ({ ...a, on: !(S.offApps || []).includes(a.key), installed: true }));
+    if (NATIVE && NATIVE.apps) { try { apps = JSON.parse(NATIVE.apps()); } catch (e) {} }
+    const on = apps.filter((a) => a.on && a.installed), box = $("h-apps");
+    const key = on.map((a) => a.key).join(",");
+    if (box.dataset.k === key) return;
+    box.dataset.k = key; box.innerHTML = "";
+    if (!on.length) { const n = document.createElement("span"); n.className = "none"; n.textContent = "감지할 앱 없음"; box.appendChild(n); return; }
+    on.forEach((a) => {
+      let src = iconCache[a.key];
+      if (src === undefined && NATIVE && NATIVE.appIcon) { try { src = iconCache[a.key] = NATIVE.appIcon(a.key) || ""; } catch (e) { src = ""; } }
+      if (src) { const im = document.createElement("img"); im.src = src; im.alt = a.label; box.appendChild(im); }
+      else { const b = document.createElement("span"); b.className = "ab"; b.textContent = APP_BADGE[a.key] || "?"; b.title = a.label; box.appendChild(b); }
+    });
+  }
+  $("h-apps").onclick = () => { go("settings"); setTimeout(() => $("s-apps-group").scrollIntoView({ behavior: "smooth", block: "start" }), 60); };
+  let tipT = null;
+  $("h-streak-btn").onclick = () => {
+    const t = $("h-streak-tip"); t.hidden = false; clearTimeout(tipT);
+    tipT = setTimeout(() => { t.hidden = true; }, 2500);
+  };
+
+  /* ---------- 길게 누르기 (2초): 연장처럼 마찰이 필요한 버튼 ---------- */
+  function holdable(el, ms, onDone) {
+    let raf = 0, start = 0;
+    const stop = () => { cancelAnimationFrame(raf); raf = 0; el.style.setProperty("--p", 0); };
+    el.addEventListener("pointerdown", (e) => {
+      if (el.dataset.hold !== "1") return;
+      e.preventDefault(); start = performance.now();
+      const tick = () => {
+        const p = Math.min(1, (performance.now() - start) / ms);
+        el.style.setProperty("--p", p);
+        if (p >= 1) { stop(); buzz(30); onDone(); } else raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    });
+    ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => el.addEventListener(ev, stop));
+    el.addEventListener("contextmenu", (e) => e.preventDefault());
+  }
+  const HOLD_LABEL = "5분 연장 · 2초간 길게 누르기";
+
   /* ---------- 홈 ---------- */
   // 사건이 없을 때 펭곰이가 하는 말: 지금 상태에 맞춰서
+  // 남은 비율 단계: ok(여유) / warn(30% 이하) / danger(10% 이하 또는 5분 미만, 초과 포함)
+  function level() {
+    if (!S.budget) return "ok";
+    const total = limit() * 60, left = total - S.used;
+    if (left <= 0 || left <= total * 0.1 || left < 5 * 60) return "danger";
+    if (left <= total * 0.3) return "warn";
+    return "ok";
+  }
+  // 하루가 거의 끝난 시간(21시 이후 ~ 기상 시간 전)
+  function wakeMinNow() { let w = S.wake == null ? 420 : S.wake; if (NATIVE && NATIVE.wakeMin) { try { w = NATIVE.wakeMin(); } catch (e) {} } return w; }
+  function isNight() { const d = new Date(), m = d.getHours() * 60 + d.getMinutes(); return m >= 21 * 60 || m < wakeMinNow(); }
+  const hhmm = (m) => String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
   function stateMsg() {
     if (!S.budget) return "오늘 목표를 정해 볼까요?";
     if (overLimit()) return canExtend() ? "목표 시간이 끝났어요. 여기서 멈춰 볼까요?" : "오늘은 여기까지예요. 내일 다시 같이 해요.";
     if (isOver()) return "연장한 시간이에요. 이번엔 꼭 멈추기로 해요.";
-    if (S.used >= limit() * 60 * 0.8) return "빙하가 녹고 있어요. 슬슬 마무리해 볼까요?";
+    if (level() !== "ok") return "빙하가 녹고 있어요. 슬슬 마무리해 볼까요?";
+    if (isNight()) return "오늘 빙하를 지켜냈어요! 내일도 같이 해요.";
     return "아직 빙하가 튼튼해요! 천천히 즐겨요.";
   }
   function renderHome() {
@@ -922,15 +1035,15 @@ details.dev summary { font-size: 14px; }
   // 홈 아래 버튼: 감지가 꺼졌으면 켜기, 시간을 다 썼으면 5분 연장
   function homeButton() {
     const b = $("h-watch");
-    if (NATIVE && !NATIVE.isCounting()) { b.hidden = false; b.textContent = "사용 감지 켜기"; b.classList.remove("ghost"); return; }
+    if (NATIVE && !NATIVE.isCounting()) { b.hidden = false; b.textContent = "사용 감지 켜기"; b.classList.remove("ghost", "hold"); b.dataset.hold = "0"; return; }
     const timeUp = S.budget && S.used >= limit() * 60;
     b.hidden = !timeUp || !canExtend();
-    b.textContent = "5분 연장하기"; b.classList.remove("ghost");
+    b.textContent = HOLD_LABEL; b.classList.remove("ghost"); b.classList.add("hold"); b.dataset.hold = "1";
   }
   function setMood() {
     const frac = S.budget ? S.used / (limit() * 60) : 0;
     $("phone").classList.toggle("st-over", isOver());
-    $("phone").classList.toggle("st-near", !isOver() && frac >= 0.8);
+    $("phone").classList.toggle("st-near", !isOver() && level() !== "ok");
   }
   // 총 허용 시간 = 목표 + 연장. 남은 시간과 막대는 모두 이 값을 기준으로 한다.
   function homeNums() {
@@ -941,6 +1054,9 @@ details.dev summary { font-size: 14px; }
     const left = lim - um, inExtra = over && !overLimit();
     box.classList.toggle("extra", inExtra);
     box.classList.toggle("over", !!overLimit());
+    const lv = level();
+    box.classList.toggle("lv-warn", lv === "warn"); box.classList.toggle("lv-danger", lv === "danger");
+    renderTopStatus();
     $("h-left").textContent = overLimit() ? "+" + Math.max(1, um - lim) : Math.max(0, left);
     $("h-left-u").textContent = overLimit() ? "분 초과" : inExtra ? "분 남음 (연장)" : "분 남음";
     $("h-bar").style.width = Math.min(100, S.used / (lim * 60) * 100) + "%";
@@ -1145,7 +1261,8 @@ details.dev summary { font-size: 14px; }
     $("sheet").hidden = false; rig.s.talk(1800); buzz([30, 60, 30]); $("s-leave").focus();
   }
   function hideSheet() { $("sheet").hidden = true; locked = false; reel.style.overflowY = "scroll"; }
-  $("s-keep").onclick = () => { extend(5); hideSheet(); setTimeout(() => toast(EXTEND_MSG(5)), 250); };
+  $("s-keep").dataset.hold = "1"; $("s-keep").classList.add("hold"); $("s-keep").textContent = "길게 눌러 5분 연장";
+  holdable($("s-keep"), 2000, () => { extend(5); hideSheet(); setTimeout(() => toast(EXTEND_MSG(5)), 250); });
   $("s-leave").onclick = () => { hideSheet(); exitFeed(); };
   $("f-exit").onclick = exitFeed;
   function exitFeed() {
@@ -1216,11 +1333,7 @@ details.dev summary { font-size: 14px; }
     } else if (!battDoneT || !on) {
       card.hidden = true;
     }
-    const ready = $("h-ready");
-    ready.hidden = false;
-    const okAll = on && batt;
-    ready.className = "ready " + (okAll ? "ok" : "need");
-    ready.textContent = okAll ? "사용 감지 중" : !on ? "감지 꺼짐" : "배터리 설정 필요";
+    renderTopStatus();
     homeButton();
   }
   function nativeSync() {
@@ -1250,15 +1363,16 @@ details.dev summary { font-size: 14px; }
   }
 
   $("h-watch").onclick = () => {
+    if ($("h-watch").dataset.hold === "1") return; // 연장은 길게 눌러야
     if (NATIVE && !NATIVE.isCounting()) return NATIVE.openAccessibilitySettings();
-    if (S.used >= limit() * 60) {
-      if (!canExtend()) return;
-      extend(5); S.homeMsg = EXTEND_MSG(5); renderHome(); return;
-    }
   };
-  $("h-perm-btn").onclick = () => NATIVE && NATIVE.openAccessibilitySettings();
+  holdable($("h-watch"), 2000, () => {
+    if (!(S.used >= limit() * 60) || !canExtend()) return;
+    extend(5); S.homeMsg = EXTEND_MSG(5); renderHome();
+  });
+  $("h-perm").onclick = () => NATIVE && NATIVE.openAccessibilitySettings();
   $("h-battery-btn").onclick = () => NATIVE && NATIVE.openBatterySettings && NATIVE.openBatterySettings();
-  $("h-ready").onclick = () => go("settings");
+  $("h-ready").onclick = () => { if (NATIVE && !NATIVE.isCounting()) return NATIVE.openAccessibilitySettings(); go("settings"); };
   /* ---------- 설정 ---------- */
   const WEB_APPS = [{ key: "instagram", label: "인스타그램" }, { key: "youtube", label: "유튜브" }, { key: "tiktok", label: "틱톡" }];
   let lastSK = "";
@@ -1298,15 +1412,34 @@ details.dev summary { font-size: 14px; }
     });
     clearArmed = false; $("s-clear").textContent = "지우기"; $("s-clear-text").textContent = "기록 모두 지우기";
     try { $("s-ver").textContent = NATIVE && NATIVE.appVersion ? NATIVE.appVersion() : "웹 미리보기"; } catch (e) {}
-    let wake = S.wake == null ? 420 : S.wake;
-    if (NATIVE && NATIVE.wakeMin) { try { wake = NATIVE.wakeMin(); } catch (e) {} }
-    $("s-wake").value = String(Math.floor(wake / 60)).padStart(2, "0") + ":" + String(wake % 60).padStart(2, "0");
+    const wake = wakeMinNow();
+    $("s-wake-h").value = String(Math.floor(wake / 60)).padStart(2, "0");
+    $("s-wake-m").value = String(wake % 60).padStart(2, "0");
+    $("s-reset").textContent = "매일 " + hhmm(wake) + "(일어나는 시간)에 하루 사용량이 초기화돼요.";
   }
-  $("s-wake").addEventListener("change", () => {
-    const [h, m] = ($("s-wake").value || "07:00").split(":").map(Number);
+  // 기상 시간: 시(0~23)·분(0~59)을 숫자로 직접 입력. 두 자리 치면 다음 칸으로, 칸을 벗어나면 저장.
+  function saveWake() {
+    const hs = $("s-wake-h").value.trim(), ms = $("s-wake-m").value.trim(), hint = $("s-wake-hint");
+    const h = parseInt(hs, 10), m = ms === "" ? 0 : parseInt(ms, 10);
+    if (hs === "" || isNaN(h) || h < 0 || h > 23 || isNaN(m) || m < 0 || m > 59) {
+      hint.className = "hint left warn"; hint.textContent = "시간은 0~23, 분은 0~59 사이로 입력해 주세요."; return;
+    }
     const v = h * 60 + m;
+    $("s-wake-h").value = String(h).padStart(2, "0"); $("s-wake-m").value = String(m).padStart(2, "0");
     S.wake = v; save();
     if (NATIVE && NATIVE.setWakeMin) { try { NATIVE.setWakeMin(v); } catch (e) {} }
+    hint.className = "hint left"; hint.textContent = hhmm(v) + "로 저장했어요. 다음 날부터 적용돼요.";
+    $("s-reset").textContent = "매일 " + hhmm(v) + "(일어나는 시간)에 하루 사용량이 초기화돼요.";
+  }
+  ["s-wake-h", "s-wake-m"].forEach((id, k) => {
+    const el = $(id);
+    el.addEventListener("input", () => {
+      el.value = el.value.replace(/\D/g, "").slice(0, 2);
+      if (k === 0 && el.value.length === 2) $("s-wake-m").focus();
+    });
+    el.addEventListener("focus", () => el.select());
+    el.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); el.blur(); } });
+    el.addEventListener("blur", () => setTimeout(() => { if (!["s-wake-h", "s-wake-m"].includes(document.activeElement && document.activeElement.id)) saveWake(); }, 0));
   });
   $("s-reduce").onclick = openGoal;
   let clearArmed = false;

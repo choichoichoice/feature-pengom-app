@@ -85,6 +85,22 @@ class MainActivity : Activity() {
 
         @JavascriptInterface fun setApp(key: String, on: Boolean) = store.setApp(key, on)
 
+        /** 감지 중인 앱의 실제 아이콘 (작은 PNG, data URL). 없으면 빈 문자열 */
+        @JavascriptInterface fun appIcon(key: String): String {
+            val app = CounterStore.APPS.firstOrNull { it.key == key } ?: return ""
+            for (pkg in app.pkgs) {
+                val d = try { packageManager.getApplicationIcon(pkg) } catch (e: Exception) { continue }
+                val size = 72
+                val bmp = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
+                val c = android.graphics.Canvas(bmp)
+                d.setBounds(0, 0, size, size); d.draw(c)
+                val out = java.io.ByteArrayOutputStream()
+                bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out)
+                return "data:image/png;base64," + android.util.Base64.encodeToString(out.toByteArray(), android.util.Base64.NO_WRAP)
+            }
+            return ""
+        }
+
         @JavascriptInterface fun clearAll() = store.clearAll()
 
         @JavascriptInterface fun wakeMin(): Int = store.wakeMin()
