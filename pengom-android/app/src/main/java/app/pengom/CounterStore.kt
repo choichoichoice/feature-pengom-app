@@ -1,6 +1,7 @@
 package app.pengom
 
 import android.content.Context
+import org.json.JSONArray
 import org.json.JSONObject
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -78,8 +79,9 @@ class CounterStore(context: Context) {
             e.putString(K_HIST, hist.toString())
             val hs = jsonOf(K_HIST_SESS); hs.put(cur, p.getInt(K_SESSIONS, 0)); e.putString(K_HIST_SESS, trim(hs).toString())
             val he = jsonOf(K_HIST_EXT); he.put(cur, p.getInt(K_EXT_TODAY, 0)); e.putString(K_HIST_EXT, trim(he).toString())
+            val hl = jsonOf(K_HIST_SLIST); hl.put(cur, todayList()); e.putString(K_HIST_SLIST, trim(hl).toString())
         }
-        e.putInt(K_SESSIONS, 0).putInt(K_EXT_TODAY, 0).putBoolean(K_S_ACTIVE, false)
+        e.putInt(K_SESSIONS, 0).putInt(K_EXT_TODAY, 0).putBoolean(K_S_ACTIVE, false).putString(K_TODAY_SLIST, "[]")
         e.putString(K_DATE, d).putInt(K_USED, 0)
         // 예전 버전(하루 목표 방식)의 값은 더 쓰지 않으니 지운다
         LEGACY_KEYS.forEach { e.remove(it) }
@@ -100,6 +102,36 @@ class CounterStore(context: Context) {
     private fun jsonOf(key: String): JSONObject =
         try { JSONObject(p.getString(key, "{}") ?: "{}") } catch (e: Exception) { JSONObject() }
     private fun trim(o: JSONObject): JSONObject { o.keys().asSequence().sorted().toList().dropLast(60).forEach { o.remove(it) }; return o }
+
+    // 오늘 세션 목록: [[시작(epoch 초), 본 시간(초), 연장 횟수], ...] — 기록 화면의 세션 블록·시간대·멈춤 성공률용
+    private fun todayList(): JSONArray = try { JSONArray(p.getString(K_TODAY_SLIST, "[]") ?: "[]") } catch (e: Exception) { JSONArray() }
+    private fun bumpLast(dSec: Int, dExt: Int, e: android.content.SharedPreferences.Editor) {
+        val l = todayList(); if (l.length() == 0) return
+        val last = l.getJSONArray(l.length() - 1)
+        last.put(1, last.optInt(1) + dSec); last.put(2, last.optInt(2) + dExt)
+        e.putString(K_TODAY_SLIST, l.toString())
+    }
+
+    /**
+     * 서비스가 꺼져 있던 동안 생긴 세션을 시스템 기록으로 다시 만든다.
+     * segs: [[시작(epoch 초), 본 시간(초)], ...] — 저장된 목록보다 더 많이 봤거나 세션이 많으면 그걸로 바꾼다.
+     */
+    @Synchronized
+    fun rebuildToday(segs: List<Pair<Long, Int>>) {
+        roll()
+        val l = todayList()
+        var storedSec = 0; for (i in 0 until l.length()) storedSec += l.getJSONArray(i).optInt(1)
+        val newSec = segs.sumOf { it.second }
+        if (segs.size <= l.length() && newSec <= storedSec + 60) return
+        val out = JSONArray()
+        segs.forEachIndexed { i, (start, sec) ->
+            // 저장돼 있던 세션의 연장 횟수는 같은 순서의 세션에 그대로 붙인다
+            val x = if (i < l.length()) l.getJSONArray(i).optInt(2) else 0
+            out.put(JSONArray().put(start).put(sec).put(x))
+        }
+        p.edit().putString(K_TODAY_SLIST, out.toString())
+            .putInt(K_SESSIONS, maxOf(p.getInt(K_SESSIONS, 0), segs.size)).apply()
+    }
 
     fun sessionMin(): Int = p.getInt(K_SESSION_MIN, DEFAULT_SESSION_MIN)
     fun sessionSec(): Int { roll(); return p.getInt(K_S_USED, 0) }
@@ -136,6 +168,7 @@ class CounterStore(context: Context) {
             e.putBoolean(K_S_ACTIVE, true).putInt(K_S_USED, 0).putInt(K_S_EXTRA, 0)
                 .putBoolean(K_S_ACK, false).putString(K_S_FIRED, "")
                 .putInt(K_SESSIONS, p.getInt(K_SESSIONS, 0) + 1)
+                .putString(K_TODAY_SLIST, todayList().put(JSONArray().put(now / 1000).put(0).put(0)).toString())
         }
         e.putLong(K_S_LEFT_AT, 0L).apply()
     }
@@ -149,7 +182,7 @@ class CounterStore(context: Context) {
     @Synchronized
     fun setSession(min: Int, reason: String) {
         roll()
-        val m = min.coerceIn(5, 120)
+        val m = min.coerceIn(1, 120)
         val e = p.edit().putInt(K_SESSION_MIN, m).putString(K_REASON, reason)
         // 새 허용 시간보다 덜 봤으면 다시 끝날 때 시트가 뜨게
         if (p.getInt(K_S_USED, 0) <= (m + p.getInt(K_S_EXTRA, 0)) * 60) e.putBoolean(K_S_ACK, false)
@@ -161,8 +194,9 @@ class CounterStore(context: Context) {
     fun extend(min: Int = EXTEND_MIN) {
         roll()
         if (!canExtend()) return
-        p.edit().putInt(K_S_EXTRA, p.getInt(K_S_EXTRA, 0) + min).putBoolean(K_S_ACK, false)
-            .putInt(K_EXT_TODAY, p.getInt(K_EXT_TODAY, 0) + 1).apply()
+        val e = p.edit().putInt(K_S_EXTRA, p.getInt(K_S_EXTRA, 0) + min).putBoolean(K_S_ACK, false)
+            .putInt(K_EXT_TODAY, p.getInt(K_EXT_TODAY, 0) + 1)
+        bumpLast(0, 1, e); e.apply()
     }
 
 
@@ -193,7 +227,8 @@ class CounterStore(context: Context) {
             if (pm < t && nm >= t && "t$i" !in fired) { fired += "t$i"; line = thLine(i, t, base) }
         }
         val crossed = pm <= lim && nm > lim && !p.getBoolean(K_S_ACK, false)
-        p.edit().putInt(K_USED, day).putInt(K_S_USED, now).putString(K_S_FIRED, fired.joinToString(",")).apply()
+        val e = p.edit().putInt(K_USED, day).putInt(K_S_USED, now).putString(K_S_FIRED, fired.joinToString(","))
+        bumpLast(sec, 0, e); e.apply()
         return Tick(day, now, lim, line, crossed, prev / 60 != now / 60)
     }
 
@@ -226,6 +261,8 @@ class CounterStore(context: Context) {
             .put("history", history())
             .put("historySessions", jsonOf(K_HIST_SESS))
             .put("historyExtends", jsonOf(K_HIST_EXT))
+            .put("todaySessions", todayList())
+            .put("historySessionList", jsonOf(K_HIST_SLIST))
             .toString()
     }
 
@@ -256,6 +293,8 @@ class CounterStore(context: Context) {
         private const val K_EXT_TODAY = "extendsToday"
         private const val K_HIST_SESS = "historySessions"
         private const val K_HIST_EXT = "historyExtends"
+        private const val K_TODAY_SLIST = "todaySessionList"
+        private const val K_HIST_SLIST = "historySessionList"
         const val DEFAULT_SESSION_MIN = 15
         /** 앱을 나가 이만큼(분) 쉬면 다음에 켤 때 새 세션 */
         const val BREAK_MIN = 10

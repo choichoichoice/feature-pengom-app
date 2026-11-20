@@ -92,7 +92,39 @@ class UsageWatchService : Service() {
         }
         if (openPkg != null) total += now - openAt
         store.raiseUsedTo((total / 1000).toInt())
+        rebuildSessions(now)
         lastQuery = now
+    }
+
+    /** 오늘 대상 앱이 켜져 있던 구간을 세션으로 묶는다 (쉰 시간이 BREAK_MIN 분 미만이면 같은 세션) */
+    private fun rebuildSessions(now: Long) {
+        val events = usm.queryEvents(store.dayStartMillis(), now)
+        val targets = store.targets()
+        val e = UsageEvents.Event()
+        val spans = mutableListOf<LongArray>()
+        var openAt = -1L; var openPkg: String? = null
+        while (events.hasNextEvent()) {
+            events.getNextEvent(e)
+            when (e.eventType) {
+                RESUMED -> {
+                    if (openPkg != null) { spans += longArrayOf(openAt, e.timeStamp); openPkg = null }
+                    if (e.packageName in targets) { openPkg = e.packageName; openAt = e.timeStamp }
+                }
+                PAUSED -> if (e.packageName == openPkg) { spans += longArrayOf(openAt, e.timeStamp); openPkg = null }
+            }
+        }
+        if (openPkg != null) spans += longArrayOf(openAt, now)
+        val segs = mutableListOf<Pair<Long, Int>>()
+        var start = -1L; var end = -1L; var sec = 0L
+        for (sp in spans) {
+            if (start >= 0 && sp[0] - end < CounterStore.BREAK_MIN * 60_000L) { sec += sp[1] - sp[0]; end = sp[1] }
+            else {
+                if (start >= 0) segs += Pair(start / 1000, (sec / 1000).toInt())
+                start = sp[0]; end = sp[1]; sec = sp[1] - sp[0]
+            }
+        }
+        if (start >= 0) segs += Pair(start / 1000, (sec / 1000).toInt())
+        store.rebuildToday(segs.filter { it.second >= 5 })
     }
 
     private var lastDay: String? = null

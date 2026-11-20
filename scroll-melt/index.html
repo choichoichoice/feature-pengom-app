@@ -481,6 +481,41 @@ details.dev summary { font-size: 14px; }
 .btn.ghost.hold { background: var(--accent-soft); color: var(--fg); }
 .btn.ghost.hold::before { background: var(--accent); opacity: .35; }
 #sheet .row { flex-direction: column-reverse; }
+/* ---------- 0.14: 1분 단위 설정 ---------- */
+.pk-main { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+.pk-val { display: flex; align-items: baseline; justify-content: center; gap: 4px; }
+.pk-in { width: 3.2ch; font-family: var(--f-display); font-size: 56px; line-height: 1.1; text-align: center; border: 0; border-bottom: 3px solid var(--line);
+  background: transparent; color: var(--fg); padding: 0; font-variant-numeric: tabular-nums; }
+.pk-in:focus { outline: none; border-color: var(--accent); }
+.pk-u { font-family: var(--f-display); font-size: 28px; color: var(--muted); }
+.pk-range { width: 100%; height: 36px; accent-color: var(--accent); }
+.pk-scale { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); font-weight: 600; margin-top: -6px; }
+/* ---------- 0.14: 기록 차트·종합 결과 ---------- */
+.ch-plot .slot { fill: var(--line); opacity: .45; }
+.ch-plot .avg { stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.ch-plot .avg-t { fill: var(--muted); font-size: 12px; font-weight: 700; }
+.ch-plot .val { fill: var(--fg); font-size: 12px; font-weight: 700; }
+.ch-plot .val.sel { font-size: 13.5px; fill: var(--accent-deep); }
+.ch-plot g.sel .seg-i { filter: saturate(1.3) brightness(.9); }
+.ch-plot .today .seg-i { opacity: .62; }
+.ch-plot .star { fill: #5cc4f2; }
+.ch-plot .ax.sel { fill: var(--fg); font-weight: 800; }
+.ch-key { flex-wrap: wrap; row-gap: 4px; }
+.ch-key .k-bar { background: linear-gradient(#bfe8fd, #4cb4ec); }
+.ch-key .k-ext { width: 10px; height: 10px; border-radius: 3px; background: #ff9f80; margin-left: 8px; }
+.ch-key .k-avg { width: 14px; height: 0; border-top: 2px dashed var(--muted); margin-left: 8px; }
+.ch-key .k-star { color: #5cc4f2; margin-left: 8px; font-size: 13px; }
+.insight { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+.ins-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.ins-say { flex-direction: row; align-items: center; gap: 12px; background: var(--accent-soft); border: 0; }
+.ins-say p { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.5; }
+.ins-face { width: 54px; flex: none; }
+.ins-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ins-k { font-size: 13px; color: var(--muted); font-weight: 700; }
+.ins-v { font-family: var(--f-display); font-size: 24px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ins-row { flex-direction: row; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ins-row b { font-size: 16px; }
+.ins-note { margin: 0; font-size: 13px; color: var(--muted); }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -509,9 +544,9 @@ details.dev summary { font-size: 14px; }
           <div class="q" id="p-q">쇼츠·릴스, 한 번 볼 때<br>몇 분까지 볼까요?</div>
           <div class="picker" id="p-pick">
             <div class="pk-main">
-              <button type="button" class="pk-step" data-d="-5" aria-label="5분 줄이기">−5분</button>
-              <div class="pk-val" aria-live="polite"><span class="pk-n">30분</span></div>
-              <button type="button" class="pk-step" data-d="5" aria-label="5분 늘리기">+5분</button>
+              <label class="pk-val"><input class="pk-in" type="text" inputmode="numeric" maxlength="3" aria-label="1회 시청 시간(분), 1~120"><span class="pk-u">분</span></label>
+              <input class="pk-range" type="range" min="1" max="120" step="1" aria-label="1회 시청 시간 슬라이더, 1분 단위">
+              <div class="pk-scale" aria-hidden="true"><span>1분</span><span>60분</span><span>120분</span></div>
             </div>
             <div class="pk-presets"><button type="button" data-v="10">10분</button><button type="button" data-v="15">15분 <small>추천</small></button><button type="button" data-v="20">20분</button><button type="button" data-v="30">30분</button></div>
           </div>
@@ -567,13 +602,19 @@ details.dev summary { font-size: 14px; }
           <div class="rv-main"><span class="rv-num" id="r-total">0분</span><span class="rv-sub" id="r-diff"></span></div>
           <figure class="chart" id="r-chart" aria-label="하루별 사용 시간">
             <div class="ch-plot" id="r-plot"></div>
-            <figcaption class="ch-key" id="r-key"><span class="k-bar"></span>하루 총 사용 시간</figcaption>
+            <figcaption class="ch-key" id="r-key"><span class="k-bar"></span>하루 사용 (블록 = 1회 시청) <span class="k-ext"></span>연장 <span class="k-avg"></span>평균 <span class="k-star">★</span>연장 없이 멈춘 날</figcaption>
             <div class="ch-tip" id="r-tip" role="status" aria-live="polite" hidden></div>
           </figure>
-          <div class="rv-line" id="r-first"></div>
-          <div class="rv-line" id="r-kept"></div>
-          <ul class="rv-reasons" id="r-reasons"></ul>
-          <div class="rv-line rv-muted" id="r-extra"></div>
+          <section class="insight" aria-label="종합 결과">
+            <div class="ins-card ins-say"><div class="ins-face" id="r-face"></div><p id="r-say">기록이 쌓이면 이번 주 이야기를 들려드릴게요.</p></div>
+            <div class="ins-grid">
+              <div class="ins-card"><span class="ins-k">하루 평균</span><b class="ins-v" id="r-avg">-</b></div>
+              <div class="ins-card"><span class="ins-k">1회 평균 시청</span><b class="ins-v" id="r-sess">-</b></div>
+              <div class="ins-card"><span class="ins-k">바로 멈춤 성공률</span><b class="ins-v" id="r-stop">-</b></div>
+            </div>
+            <div class="ins-card ins-row"><span class="ins-k">가장 많이 보는 시간대</span><b id="r-peak">기록이 조금 더 쌓이면 알려드릴게요</b></div>
+            <p class="ins-note" id="r-note"></p>
+          </section>
       </div>
     </section>
 
@@ -667,9 +708,9 @@ details.dev summary { font-size: 14px; }
       <div class="g-now" id="g-now"><span>지금 1회 <b id="g-cur">15분</b></span><span>오늘 총 <b id="g-used">0분</b></span></div>
       <div class="picker" id="g-pick">
             <div class="pk-main">
-              <button type="button" class="pk-step" data-d="-5" aria-label="5분 줄이기">−5분</button>
-              <div class="pk-val" aria-live="polite"><span class="pk-n">30분</span></div>
-              <button type="button" class="pk-step" data-d="5" aria-label="5분 늘리기">+5분</button>
+              <label class="pk-val"><input class="pk-in" type="text" inputmode="numeric" maxlength="3" aria-label="1회 시청 시간(분), 1~120"><span class="pk-u">분</span></label>
+              <input class="pk-range" type="range" min="1" max="120" step="1" aria-label="1회 시청 시간 슬라이더, 1분 단위">
+              <div class="pk-scale" aria-hidden="true"><span>1분</span><span>60분</span><span>120분</span></div>
             </div>
             <div class="pk-presets"><button type="button" data-v="10">10분</button><button type="button" data-v="15">15분 <small>추천</small></button><button type="button" data-v="20">20분</button><button type="button" data-v="30">30분</button></div>
           </div>
@@ -858,7 +899,7 @@ details.dev summary { font-size: 14px; }
   const fresh = () => ({
     day: 1, mins: [], kept: [], size: 10.0, streak: 0, log: [],
     session: DEFAULT_SESSION, setupDone: false, reason: "", used: 0,
-    sUsed: 0, sExtra: 0, sActive: false, sLeftAt: 0, sessions: 0, ext: 0,
+    sUsed: 0, sExtra: 0, sActive: false, sLeftAt: 0, sessions: 0, ext: 0, todaySegs: [],
     fired: [], overAck: false,
     morningMsg: "안녕하세요, 저는 펭곰이에요.", homeMsg: "",
     lastMelt: 0, lastJoy: false,
@@ -888,7 +929,7 @@ details.dev summary { font-size: 14px; }
   const canExtend = () => (S.sExtra || 0) < MAX_EXTENDS * EXTEND_MIN;
   const buzz = (p) => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
 
-  const rig = { p: new Mascot($("p-char")), h: new Mascot($("h-char")), s: new Mascot($("s-char")), t: new Mascot($("t-face")) };
+  const rig = { p: new Mascot($("p-char")), h: new Mascot($("h-char")), s: new Mascot($("s-char")), t: new Mascot($("t-face")), r: new Mascot($("r-face")) };
   const growPx = (base) => Math.round(base * Math.min(1.35, 0.9 + (S.size - 10) / 30));
   const meltNow = () => isOver() ? Math.min(1, 0.3 + (S.sUsed / 60 - S.session) / (S.session * 0.9)) : 0;
 
@@ -922,18 +963,28 @@ details.dev summary { font-size: 14px; }
   }
   document.querySelectorAll("#tabs button").forEach((b) => { b.onclick = () => go(b.dataset.go); });
 
-  /* ---------- 시간 고르기: 프리셋 + ±5분 (첫 화면과 1회 시청 시간 시트에서 같이 씀) ---------- */
-  const GOAL_MIN = 5, GOAL_MAX = 60;
+  /* ---------- 시간 고르기: 1분 단위 (슬라이더 + 숫자 직접 입력) + 프리셋. 셋이 서로 바로 연동된다 ---------- */
+  const GOAL_MIN = 1, GOAL_MAX = 120;
   function Picker(el, onChange) {
     let v = 15;
-    const n = el.querySelector(".pk-n"), down = el.querySelector('[data-d="-5"]'), up = el.querySelector('[data-d="5"]');
-    const draw = () => {
-      n.textContent = fmtMin(v);
-      down.disabled = v <= GOAL_MIN; up.disabled = v >= GOAL_MAX;
+    const inp = el.querySelector(".pk-in"), rng = el.querySelector(".pk-range");
+    const draw = (keepInput) => {
+      if (!keepInput) inp.value = v;
+      rng.value = v;
+      rng.style.setProperty("--fill", ((v - GOAL_MIN) / (GOAL_MAX - GOAL_MIN) * 100) + "%");
       el.querySelectorAll(".pk-presets button").forEach((b) => b.classList.toggle("on", +b.dataset.v === v));
     };
-    const set = (x) => { v = Math.max(GOAL_MIN, Math.min(GOAL_MAX, Math.round(x))); draw(); onChange && onChange(v); };
-    el.querySelectorAll(".pk-step").forEach((b) => { b.onclick = () => { set(v + +b.dataset.d); buzz(8); }; });
+    const set = (x, keepInput) => {
+      x = Math.round(+x); if (!isFinite(x)) return;
+      v = Math.max(GOAL_MIN, Math.min(GOAL_MAX, x)); draw(keepInput); onChange && onChange(v);
+    };
+    rng.addEventListener("input", () => set(rng.value));
+    inp.addEventListener("input", () => {
+      inp.value = inp.value.replace(/\D/g, "").slice(0, 3);
+      if (inp.value !== "") set(inp.value, true);
+    });
+    inp.addEventListener("blur", () => draw()); // 범위를 벗어나게 쳤으면 맞춘 값으로 보여 준다
+    inp.addEventListener("focus", () => inp.select());
     el.querySelectorAll(".pk-presets button").forEach((b) => { b.onclick = () => { set(+b.dataset.v); buzz(8); }; });
     return { get: () => v, set };
   }
@@ -995,6 +1046,7 @@ details.dev summary { font-size: 14px; }
   function extend() {
     if (!canExtend()) return;
     S.sExtra = (S.sExtra || 0) + EXTEND_MIN; S.ext = (S.ext || 0) + 1; S.overAck = false;
+    if (!NATIVE && S.todaySegs && S.todaySegs.length) S.todaySegs[S.todaySegs.length - 1][2] += 1;
     if (NATIVE && NATIVE.extend) { try { NATIVE.extend(EXTEND_MIN); } catch (e) {} }
     save();
   }
@@ -1130,6 +1182,11 @@ details.dev summary { font-size: 14px; }
     renderReview();
   }
 
+  /* ---------- 날짜: 하루는 기상 시간에 바뀐다 ---------- */
+  const ymd = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  function dayKey() { return ymd(new Date(Date.now() - wakeMinNow() * 60000)); }
+  function shiftDay(key, n) { const d = new Date(key + "T12:00:00"); d.setDate(d.getDate() + n); return ymd(d); }
+
   /* ---------- 기록 그래프 ---------- */
   const WD = ["일", "월", "화", "수", "목", "금", "토"];
   function dayLabel(d, i, n) {
@@ -1142,82 +1199,163 @@ details.dev summary { font-size: 14px; }
   }
   // 깔끔한 눈금 간격: 1, 2, 5 × 10^n
   function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; }
-  function renderChart(days) {
+  let chartSel = -1;
+  function renderChart(days, avgMin, showAllValues) {
     const plot = $("r-plot"), tip = $("r-tip");
-    tip.hidden = true;
-    if (!days.length) { plot.innerHTML = ""; return; }
-    // 위쪽 여백(top)을 넉넉히 두고, 최댓값의 1.2배까지 축을 잡아 맨 위 라벨·값이 절대 잘리지 않게
-    const W = 340, H = 196, top = 30, bot = 26, right = 14;
-    const maxV = Math.max(10, ...days.map((d) => d.used));
+    if (!days.length) { plot.innerHTML = ""; tip.hidden = true; return; }
+    const W = 340, H = 214, top = 34, bot = 26, right = 14;
+    const maxV = Math.max(10, avgMin || 0, ...days.map((d) => d.used || 0));
     const step = Math.max(5, niceStep(maxV * 1.2 / 4));
-    const yMax = Math.ceil(maxV * 1.2 / step) * step;
-    // 왼쪽 여백은 가장 긴 눈금 라벨("150분")이 들어가게: 글자 수만큼 넓힌다
-    const left = 14 + String(yMax).length * 8 + 14;
+    const yMax = Math.ceil(maxV * 1.2 / step) * step;          // 최댓값 × 1.2 이상 — 맨 위 값 라벨이 잘리지 않게
+    const left = 14 + String(yMax).length * 8 + 14;              // 가장 긴 눈금 라벨이 들어가는 폭
     const y = (v) => top + (H - top - bot) * (1 - v / yMax);
     const slot = (W - left - right) / days.length;
-    const bw = Math.max(4, Math.min(24, slot - 2));
-    const r = Math.min(4, bw / 2);
-    let g = "";
+    const bw = Math.max(4, Math.min(26, slot - 4));
+    const r = Math.min(5, bw / 2), GAP = 2;
+    let g = `<defs><linearGradient id="ice" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c3ebfe"/><stop offset="1" stop-color="#43b0ea"/></linearGradient></defs>`;
     for (let v = step; v <= yMax; v += step) g += `<line class="grid" x1="${left - 2}" x2="${W - right}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${left - 8}" y="${y(v) + 4}" text-anchor="end">${v}분</text>`;
     g += `<line class="grid" x1="${left}" x2="${W - right}" y1="${y(0)}" y2="${y(0)}"/>`;
     const labelEvery = days.length <= 7 ? 1 : 7;
+    const lim = (v, half) => Math.min(W - half - 3, Math.max(left + half, v));
     days.forEach((d, i) => {
-      const cx = left + slot * (i + 0.5), x = cx - bw / 2, yt = y(d.used), h = y(0) - yt;
-      const path = h <= 0 ? "" : h < r ? `M${x},${y(0)}h${bw}v${-h}h${-bw}z`
-        : `M${x},${y(0)}V${yt + r}Q${x},${yt} ${x + r},${yt}H${x + bw - r}Q${x + bw},${yt} ${x + bw},${yt + r}V${y(0)}Z`;
-      g += `<g data-i="${i}"><path class="bar${d.today ? " today" : ""}" d="${path}"/>`
-        + `<rect class="hit" x="${cx - slot / 2}" y="${top - 10}" width="${slot}" height="${H - top - bot + 10}"/></g>`;
-      if (i % labelEvery === 0 || d.today) g += `<text class="ax" x="${Math.min(W - right - 12, Math.max(left + 12, cx))}" y="${H - 6}" text-anchor="middle">${dayLabel(d, i, days.length)}</text>`;
+      const cx = left + slot * (i + 0.5), x = cx - bw / 2;
+      // 빈 슬롯(기록 없는 날도 자리를 차지): 연한 기둥
+      g += `<rect class="slot" x="${x}" y="${top}" width="${bw}" height="${y(0) - top}" rx="${r}"/>`;
+      let inner = "";
+      if (d.used > 0) {
+        const yt = y(d.used), h = y(0) - yt;
+        const clip = `bar${i}`;
+        const shape = h < r ? `M${x},${y(0)}h${bw}v${-h}h${-bw}z`
+          : `M${x},${y(0)}V${yt + r}Q${x},${yt} ${x + r},${yt}H${x + bw - r}Q${x + bw},${yt} ${x + bw},${yt + r}V${y(0)}Z`;
+        g += `<clipPath id="${clip}"><path d="${shape}"/></clipPath>`;
+        // 세션별 얼음 블록: 아래부터 쌓고, 블록 사이 2px 틈. 연장한 세션은 윗부분(연장분)을 코랄로.
+        const blocks = d.segs && d.segs.length ? d.segs.map((sg) => ({ m: sg[1] / 60, x: sg[2] || 0 })) : [{ m: d.used, x: d.ext ? 1 : 0 }];
+        const total = blocks.reduce((t, b) => t + b.m, 0) || 1, scale = d.used / total;
+        let acc = 0;
+        blocks.forEach((b, k) => {
+          const m = b.m * scale; if (m <= 0) return;
+          const y0 = y(acc), y1 = y(acc + m), gap = k > 0 ? GAP : 0;
+          inner += `<rect class="seg-i" x="${x}" y="${y1}" width="${bw}" height="${Math.max(0, y0 - y1 - gap)}" fill="url(#ice)"/>`;
+          if (b.x) { const em = Math.min(m, b.x * EXTEND_MIN); inner += `<rect class="seg-i" x="${x}" y="${y1}" width="${bw}" height="${Math.max(0, y(acc + m - em) - y1)}" fill="#ff9f80"/>`; }
+          acc += m;
+        });
+        g += `<g data-i="${i}" class="${d.today ? "today" : ""}${i === chartSel ? " sel" : ""}"><g clip-path="url(#${clip})">${inner}</g>`
+          + `<rect class="hit" x="${cx - slot / 2}" y="${top - 16}" width="${slot}" height="${H - top - bot + 16}"/></g>`;
+        // 막대 위 값 (이번 주는 모든 막대, 이번 달은 선택한 막대와 오늘만)
+        if (showAllValues || i === chartSel || d.today) {
+          const t = d.used + "분", half = t.length * 3.4 + 2;
+          g += `<text class="val${i === chartSel ? " sel" : ""}" x="${lim(cx, half)}" y="${Math.max(13, yt - 6)}" text-anchor="middle">${t}</text>`;
+          if (!d.today && !d.ext) g += `<path class="star" transform="translate(${lim(cx, half)},${Math.max(13, yt - 6) - 17}) scale(.55)" d="M0,-9 L2.6,-2.8 9,-2.8 3.8,1.2 5.6,8 0,4 -5.6,8 -3.8,1.2 -9,-2.8 -2.6,-2.8Z"/>`;
+        }
+      } else {
+        g += `<g data-i="${i}"><rect class="hit" x="${cx - slot / 2}" y="${top - 16}" width="${slot}" height="${H - top - bot + 16}"/></g>`;
+      }
+      if (i % labelEvery === 0 || d.today) g += `<text class="ax${i === chartSel ? " sel" : ""}" x="${lim(cx, 12)}" y="${H - 6}" text-anchor="middle">${d.label}</text>`;
     });
-    const li = days.length - 1, last = days[li], lx = left + slot * (li + 0.5);
-    const half = (String(last.used).length + 1) * 4.6; // 값 라벨 반폭(대략) — 오른쪽 끝에서 잘리지 않게
-    g += `<text class="val" x="${Math.min(W - half - 4, lx)}" y="${Math.max(14, y(last.used) - 6)}" text-anchor="middle">${last.used}분</text>`;
-    plot.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${days.map((d, i) => dayLabel(d, i, days.length) + " " + d.used + "분").join(", ")}">${g}</svg>`;
+    // 평균 점선
+    if (avgMin > 0) {
+      const ya = y(avgMin), t = "평균 " + avgMin + "분", ty = Math.max(12, ya - 5);
+      // 라벨은 양 끝 중 막대(값 라벨 포함)와 덜 겹치는 쪽에 둔다
+      const near = (idxs) => Math.min(...idxs.map((i) => days[i] && days[i].used > 0 ? Math.abs(y(days[i].used) - 6 - ty) : 99));
+      const n = days.length, k = Math.min(3, n);
+      const rightGap = near([...Array(k)].map((_, j) => n - 1 - j)), leftGap = near([...Array(k)].map((_, j) => j));
+      const onLeft = leftGap > rightGap && rightGap < 16;
+      g += `<line class="avg" x1="${left}" x2="${W - right}" y1="${ya}" y2="${ya}"/>`
+        + `<text class="avg-t" x="${onLeft ? left + 2 : W - right}" y="${ty}" text-anchor="${onLeft ? "start" : "end"}">${t}</text>`;
+    }
+    plot.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${days.map((d) => d.label + " " + (d.used || 0) + "분").join(", ")}">${g}</svg>`;
     plot.querySelectorAll("g[data-i]").forEach((el) => {
-      el.addEventListener("click", () => {
-        const i = +el.dataset.i, d = days[i];
-        plot.querySelectorAll("g.sel").forEach((x) => x.classList.remove("sel")); el.classList.add("sel");
-        tip.textContent = dayLabel(d, i, days.length) + " · 사용 " + d.used + "분" + (d.sessions != null ? " · " + d.sessions + "회 시청" : "") + (d.ext ? " · 연장 " + d.ext + "회" : "");
-        tip.hidden = false;
-      });
+      el.addEventListener("click", () => { chartSel = +el.dataset.i; renderReview(true); });
     });
+    // 선택한 날 설명
+    const d = days[chartSel];
+    if (d) {
+      const segTxt = d.segs && d.segs.length > 1 ? " (" + d.segs.map((sg) => Math.max(1, Math.round(sg[1] / 60)) + "분").join(" + ") + ")" : "";
+      tip.textContent = d.label + " · " + (d.used ? d.used + "분 사용" + segTxt + (d.sessions != null ? " · " + d.sessions + "회 시청" : "") + (d.ext ? " · 연장 " + d.ext + "회" : d.today ? "" : " · 연장 없음") : "기록 없음");
+      tip.hidden = false;
+    } else tip.hidden = true;
   }
 
-  /* ---------- 기록: 하루 누적 사용은 막는 기준이 아니라 스스로 보는 기록 ---------- */
+  /* ---------- 기록: 하루 누적 사용은 막는 기준이 아니라 스스로 보는 기록 + 종합 결과 ---------- */
   let reviewDays = 7;
-  function renderReview() {
-    const n = reviewDays, word = n === 7 ? "지난주" : "지난달";
-    const today = { used: usedMin(), sessions: S.sessions || 0, ext: S.ext || 0, today: true };
-    const all = (S.log || []).map((d) => ({ ...d, ext: d.ext != null ? d.ext : (d.extra ? 1 : 0) })).concat(S.setupDone || S.budget ? [today] : []);
-    const cur = all.slice(-n), prev = all.slice(-2 * n, -n);
-    const sum = (a, f) => a.reduce((t, d) => t + (f(d) || 0), 0);
-    const total = sum(cur, (d) => d.used);
-    $("r-total").textContent = fmtMin(total);
-    renderChart(cur);
-    const doneAll = (S.log || []);
-    if (doneAll.length >= 14) {
-      const a = avg(doneAll.slice(0, 7).map((d) => d.used)), b = avg(doneAll.slice(-7).map((d) => d.used));
-      $("r-first").textContent = b < a ? "첫 주 대비 하루 평균 −" + fmtMin(a - b) : b > a ? "첫 주 대비 하루 평균 +" + fmtMin(b - a) : "첫 주와 하루 평균 동일";
-    } else $("r-first").textContent = "";
-    const diffEl = $("r-diff");
-    diffEl.className = "rv-sub";
-    if (!prev.length) diffEl.textContent = "총 사용 시간 · 비교는 " + (n === 7 ? "다음 주" : "다음 달") + "부터";
-    else {
-      const a = total / cur.length, b = sum(prev, (d) => d.used) / prev.length;
-      const same = prev.length === cur.length, gap = Math.round(same ? total - sum(prev, (d) => d.used) : a - b);
-      const unit = same ? "" : "하루 평균 ";
-      if (gap === 0) diffEl.textContent = word + " 대비 " + unit + "동일";
-      else { diffEl.textContent = word + " 대비 " + unit + (gap < 0 ? "−" : "+") + fmtMin(Math.abs(gap)); diffEl.classList.add(gap < 0 ? "down" : "up"); }
+  const WEEK = ["월", "화", "수", "목", "금", "토", "일"];
+  function dayEntries() {
+    // 날짜별 기록 (옛 기록도 그대로). 세션 목록(segs)이 없는 옛날 날은 세션 지표 계산에서만 빠진다.
+    const map = {};
+    (S.log || []).forEach((d) => { if (d.date) map[d.date] = { ...d, ext: d.ext != null ? d.ext : (d.extra ? 1 : 0) }; });
+    const tk = S.dateKey || dayKey();
+    map[tk] = { date: tk, used: usedMin(), sessions: S.sessions || 0, ext: S.ext || 0, segs: S.todaySegs || [], today: true };
+    return { map, tk };
+  }
+  function rangeDays(n, endKey, map) {
+    const out = [];
+    if (n === 7) {
+      // 이번 주: 월~일 7칸 고정 (오늘 이후 칸은 빈 슬롯)
+      const t = new Date(endKey + "T12:00:00"), dow = (t.getDay() + 6) % 7, mon = shiftDay(endKey, -dow);
+      for (let i = 0; i < 7; i++) { const k = shiftDay(mon, i); out.push({ ...(map[k] || { date: k, used: 0 }), label: k === endKey ? "오늘" : WEEK[i], future: k > endKey }); }
+    } else {
+      for (let i = n - 1; i >= 0; i--) { const k = shiftDay(endKey, -i), t = new Date(k + "T12:00:00"); out.push({ ...(map[k] || { date: k, used: 0 }), label: k === endKey ? "오늘" : (t.getMonth() + 1) + "/" + t.getDate() }); }
     }
-    const done = cur.filter((d) => !d.today);
-    const days = cur.length || 1;
-    $("r-kept").textContent = done.length
-      ? "하루 평균 " + fmtMin(Math.round(total / days)) + " · 연장 없이 지킨 날 " + done.filter((d) => !d.ext).length + " / " + done.length + "일"
-      : "하루가 끝나면 여기에 기록돼요.";
-    $("r-reasons").innerHTML = "";
-    const sess = sum(cur, (d) => d.sessions), ext = sum(cur, (d) => d.ext);
-    $("r-extra").textContent = "시청 " + sess + "회 · 연장 " + ext + "회";
-    if (n === 7) $("r-sum").textContent = "이번 주 총 " + fmtMin(total);
+    return out;
+  }
+  function stats(days) {
+    const withData = days.filter((d) => d.used > 0);
+    const total = days.reduce((t, d) => t + (d.used || 0), 0);
+    const segs = [].concat(...days.filter((d) => Array.isArray(d.segs)).map((d) => d.segs)).filter((sg) => sg[1] >= 30);
+    // 세션 목록이 없는 옛날 날: 하루 단위 횟수로 대신 셈
+    let sessN = segs.length, sessMin = segs.reduce((t, sg) => t + sg[1] / 60, 0), stopN = segs.filter((sg) => !sg[2]).length;
+    days.filter((d) => !Array.isArray(d.segs) && d.sessions > 0).forEach((d) => { sessN += d.sessions; sessMin += d.used; stopN += Math.max(0, d.sessions - (d.ext || 0)); });
+    const hours = {};
+    segs.forEach((sg) => { const h = new Date(sg[0] * 1000).getHours(), b = Math.floor(h / 2) * 2; hours[b] = (hours[b] || 0) + sg[1]; });
+    return { total, days: withData.length, dayAvg: withData.length ? Math.round(total / withData.length) : 0,
+      sessN, perSess: sessN ? Math.round(sessMin / sessN) : 0, stopRate: sessN ? Math.round(stopN / sessN * 100) : null, hours, segN: segs.length };
+  }
+  function hourName(h) {
+    const p = h < 5 ? "새벽" : h < 12 ? "오전" : h < 18 ? "오후" : h < 22 ? "저녁" : "밤";
+    const h12 = (x) => { x = x % 24; const v = x % 12 === 0 ? 12 : x % 12; return v + "시"; };
+    return p + " " + h12(h) + "~" + h12(h + 2);
+  }
+  function renderReview(keepSel) {
+    if (!keepSel) chartSel = -1;
+    const n = reviewDays, word = n === 7 ? "지난주" : "지난달";
+    const { map, tk } = dayEntries();
+    const cur = rangeDays(n, tk, map), prev = rangeDays(n, shiftDay(tk, n === 7 ? -7 : -n), map);
+    const A = stats(cur.filter((d) => !d.future)), B = stats(prev);
+    $("r-total").textContent = fmtMin(A.total);
+    if (chartSel < 0 && !keepSel) chartSel = cur.findIndex((d) => d.today);
+    renderChart(cur, A.dayAvg, n === 7);
+    // 지난 기간과 비교 (하루 평균 기준)
+    const diffEl = $("r-diff"); diffEl.className = "rv-sub";
+    if (!B.days) diffEl.textContent = "총 사용 시간 · 비교는 " + (n === 7 ? "다음 주" : "다음 달") + "부터";
+    else {
+      const gap = A.dayAvg - B.dayAvg;
+      diffEl.textContent = gap === 0 ? word + " 대비 하루 평균 동일" : word + " 대비 하루 평균 " + (gap < 0 ? "−" : "+") + fmtMin(Math.abs(gap));
+      if (gap) diffEl.classList.add(gap < 0 ? "down" : "up");
+    }
+    // 핵심 지표 3칸
+    $("r-avg").textContent = A.days ? fmtMin(A.dayAvg) : "-";
+    $("r-sess").textContent = A.sessN ? fmtMin(A.perSess) : "-";
+    $("r-stop").textContent = A.stopRate == null ? "-" : A.stopRate + "%";
+    // 주요 시청 시간대 (세션이 5번 넘게 쌓이면)
+    const hk = Object.keys(A.hours);
+    if (A.segN >= 5 && hk.length) { const best = hk.sort((a, b) => A.hours[b] - A.hours[a])[0]; $("r-peak").textContent = hourName(+best); }
+    else $("r-peak").textContent = "기록이 조금 더 쌓이면 알려드릴게요";
+    // 펭곰이 한 줄 총평
+    const period = n === 7 ? "이번 주는" : "이번 달은";
+    let say;
+    if (!A.days) say = "기록이 쌓이면 " + (n === 7 ? "이번 주" : "이번 달") + " 이야기를 들려드릴게요.";
+    else {
+      say = period + " 하루 평균 " + fmtMin(A.dayAvg) + " 봤어요.";
+      if (A.stopRate != null && B.stopRate != null && A.sessN >= 3 && B.sessN >= 3 && A.stopRate !== B.stopRate)
+        say += A.stopRate > B.stopRate ? " 연장 없이 멈춘 횟수가 늘고 있어요!" : " 연장이 조금 늘었어요. 다음엔 꾹 참아 봐요!";
+      else if (B.days && A.dayAvg < B.dayAvg) say += " " + word + "보다 하루 " + fmtMin(B.dayAvg - A.dayAvg) + " 덜 봤어요!";
+      else if (B.days && A.dayAvg > B.dayAvg) say += " " + word + "보다 조금 늘었어요. 천천히 줄여 봐요.";
+      else if (A.stopRate != null && A.stopRate >= 70) say += " 바로 멈추기를 잘하고 있어요!";
+      else say += " 이 흐름 그대로 가요!";
+    }
+    $("r-say").textContent = say;
+    $("r-note").textContent = A.sessN ? "시청 " + A.sessN + "회 · 연장 " + cur.reduce((t, d) => t + (d.ext || 0), 0) + "회" : "";
+    if (n === 7) $("r-sum").textContent = "이번 주 총 " + fmtMin(A.total);
   }
   $("h-review-open").onclick = () => go("history");
   document.querySelectorAll("#history .seg button").forEach((b) => {
@@ -1258,6 +1396,7 @@ details.dev summary { font-size: 14px; }
   function addTime(sec) {
     if (locked || $("feed").hidden) return;
     const prev = S.sUsed; S.sUsed += sec; S.used += sec;
+    if (!NATIVE && S.todaySegs && S.todaySegs.length) S.todaySegs[S.todaySegs.length - 1][1] += sec;
     updateMeter(minOf(prev) !== minOf(S.sUsed));
     onAdvance(prev / 60, S.sUsed / 60);
     if (sec > 1 || S.used % 5 === 0) save();
@@ -1322,7 +1461,10 @@ details.dev summary { font-size: 14px; }
   /* ---------- 세션 (웹 미리보기용. 안드로이드에서는 CounterStore 가 같은 규칙으로 판단) ---------- */
   function watchStart() {
     if (NATIVE) return;
-    if (!webInSession()) { S.sActive = true; S.sUsed = 0; S.sExtra = 0; S.overAck = false; S.fired = []; S.sessions = (S.sessions || 0) + 1; }
+    if (!webInSession()) {
+      S.sActive = true; S.sUsed = 0; S.sExtra = 0; S.overAck = false; S.fired = []; S.sessions = (S.sessions || 0) + 1;
+      (S.todaySegs = S.todaySegs || []).push([Math.floor(Date.now() / 1000), 0, 0]);
+    }
     S.sLeftAt = 0;
   }
   function watchStop() { if (!NATIVE && S.sActive && !S.sLeftAt) S.sLeftAt = Date.now(); }
@@ -1330,7 +1472,9 @@ details.dev summary { font-size: 14px; }
   /* ---------- 하루 넘기기 ---------- */
   function nextDay(y) {
     // y: 안드로이드가 넘겨준 어제 값 {used(분), sessions, ext}. 없으면 웹 상태로
-    const um = y ? y.used : usedMin(), sessions = y ? y.sessions : (S.sessions || 0), ext = y ? y.ext : (S.ext || 0);
+    const um = y ? y.used : usedMin(), ext = y ? y.ext : (S.ext || 0);
+    const segs = y ? (y.segs || null) : (S.todaySegs || []);
+    const sessions = Math.max(y ? y.sessions : (S.sessions || 0), segs ? segs.length : 0);
     const kept = ext === 0;
     let msg; S.lastMelt = 0; S.lastJoy = kept;
     if (kept && sessions > 0) {
@@ -1342,9 +1486,10 @@ details.dev summary { font-size: 14px; }
       msg = "어제는 어제예요. 오늘 다시 같이 해요.";
     } else msg = "좋은 아침이에요! 오늘도 한 번에 " + S.session + "분씩만 봐요.";
     S.mins.push(um); S.kept.push(kept);
-    (S.log = S.log || []).push({ day: S.day, date: S.dateKey || new Date().toISOString().slice(0, 10), used: um, sessions, ext, session: S.session, kept });
+    (S.log = S.log || []).push({ day: S.day, date: S.dateKey || dayKey(), used: um, sessions, ext, session: S.session, kept, segs });
     S.log = S.log.slice(-120);
-    Object.assign(S, { day: S.day + 1, used: 0, sUsed: 0, sExtra: 0, sActive: false, sLeftAt: 0, sessions: 0, ext: 0, fired: [], overAck: false, homeMsg: msg, morningMsg: msg });
+    Object.assign(S, { day: S.day + 1, used: 0, sUsed: 0, sExtra: 0, sActive: false, sLeftAt: 0, sessions: 0, ext: 0, todaySegs: [], fired: [], overAck: false, homeMsg: msg, morningMsg: msg });
+    if (!NATIVE) S.dateKey = shiftDay(S.dateKey || dayKey(), 1);
     save(); go("home");
   }
 
@@ -1385,12 +1530,16 @@ details.dev summary { font-size: 14px; }
       // 하루가 바뀌었다: 어제 기록으로 정산
       const k = S.dateKey, sec = st.history && st.history[k];
       const y = { used: typeof sec === "number" ? minOf(sec) : usedMin(),
-        sessions: (st.historySessions && st.historySessions[k]) || 0, ext: (st.historyExtends && st.historyExtends[k]) || 0 };
+        sessions: (st.historySessions && st.historySessions[k]) || 0, ext: (st.historyExtends && st.historyExtends[k]) || 0,
+        segs: (st.historySessionList && st.historySessionList[k]) || null };
       S.dateKey = st.date; nextDay(y); return;
     }
     const before = [S.used, S.sUsed, S.sExtra, S.nIn, S.nBreak > 0, S.sessions, S.ext, S.session].join("|");
     S.used = st.used; S.sUsed = st.sessionUsed || 0; S.sExtra = st.sessionExtra || 0;
-    S.nIn = !!st.inSession; S.nBreak = st.breakLeft || 0; S.sessions = st.sessions || 0; S.ext = st.extends || 0;
+    S.nIn = !!st.inSession; S.nBreak = st.breakLeft || 0; S.ext = st.extends || 0;
+    if (Array.isArray(st.todaySessions)) S.todaySegs = st.todaySessions;
+    // 시청 횟수: 저장된 횟수와 세션 목록 중 큰 값 (예전 버전에서 넘어온 날 0회로 보이지 않게)
+    S.sessions = Math.max(st.sessions || 0, (S.todaySegs || []).length);
     if (st.sessionMin) S.session = st.sessionMin;
     const changed = before !== [S.used, S.sUsed, S.sExtra, S.nIn, S.nBreak > 0, S.sessions, S.ext, S.session].join("|");
     if (changed) { save(); if (!$("home").hidden) homeNums(); }
