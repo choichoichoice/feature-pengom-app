@@ -440,35 +440,36 @@ details.dev summary { font-size: 14px; }
 #home .sky { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
 #home .sky i { position: absolute; inset: 0; opacity: 0; transition: opacity 1.4s ease; }
 #home[data-sky="ok"] .s-ok, #home[data-sky="warn"] .s-warn, #home[data-sky="over"] .s-over { opacity: 1; }
-.sky .s-ok { background: linear-gradient(180deg, #bfe5fb 0%, #e4f4fd 38%, #f4fafe 58%, #d6edf9 78%, #a8d4ee 100%); }
-.sky .s-warn { background: linear-gradient(180deg, #ffd2ad 0%, #ffe6d0 36%, #fff3ea 56%, #f1dcd6 78%, #c9c6df 100%); }
-.sky .s-over { background:
-  radial-gradient(1.5px 1.5px at 18% 12%, #fff9 50%, transparent 51%), radial-gradient(1.5px 1.5px at 72% 8%, #fff8 50%, transparent 51%),
-  radial-gradient(1px 1px at 44% 20%, #fff7 50%, transparent 51%), radial-gradient(1px 1px at 86% 24%, #fff6 50%, transparent 51%),
-  radial-gradient(1px 1px at 8% 30%, #fff6 50%, transparent 51%),
-  linear-gradient(180deg, #17233f 0%, #26365a 40%, #33456c 62%, #273859 82%, #1a2742 100%); }
-#home[data-sky="over"] { --fg: #eef3fb; --muted: #b6c3da; --accent-soft: rgba(255, 255, 255, .12); --line: rgba(255, 255, 255, .2); color: var(--fg); }
-#home[data-sky="over"] .left.lv-danger .n, #home[data-sky="over"] .left.lv-danger .u { color: #ff9a86; }
-#home[data-sky="over"] .left.tap:hover, #home[data-sky="over"] .left.tap:active { background: rgba(255, 255, 255, .08); }
-#home[data-sky="over"] .warn-banner { background: #4a3a2a; color: #ffd9b0; }
+/* 은은한 파스텔 틴트: 위쪽만 물들고 화면 중간쯤에서 원래 바탕색으로 사라진다. 글자색은 그대로. */
+.sky .s-ok   { background: linear-gradient(180deg, #d6eefb 0%, #e8f5fc 30%, var(--screen) 58%); }
+.sky .s-warn { background: linear-gradient(180deg, #ffe0cc 0%, #fff0e6 30%, var(--screen) 58%); }
+.sky .s-over { background: linear-gradient(180deg, #d5dbef 0%, #e7eaf5 30%, var(--screen) 58%); }
 .phone.st-over .hero { filter: none; }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .sky .s-ok { background: linear-gradient(180deg, #0f2a40 0%, #13334d 45%, #10293d 75%, #0b2131 100%); }
-  :root:not([data-theme="light"]) .sky .s-warn { background: linear-gradient(180deg, #3f2a2a 0%, #3a2b33 45%, #2a2536 75%, #1d1c2c 100%); }
+  :root:not([data-theme="light"]) .sky .s-ok   { background: linear-gradient(180deg, #123247 0%, var(--screen) 55%); }
+  :root:not([data-theme="light"]) .sky .s-warn { background: linear-gradient(180deg, #3a2a26 0%, var(--screen) 55%); }
+  :root:not([data-theme="light"]) .sky .s-over { background: linear-gradient(180deg, #1f2742 0%, var(--screen) 55%); }
   :root:not([data-theme="light"]) .left.tap:hover, :root:not([data-theme="light"]) .left.tap:active { background: rgba(255, 255, 255, .06); }
 }
-:root[data-theme="dark"] .sky .s-ok { background: linear-gradient(180deg, #0f2a40 0%, #13334d 45%, #10293d 75%, #0b2131 100%); }
-:root[data-theme="dark"] .sky .s-warn { background: linear-gradient(180deg, #3f2a2a 0%, #3a2b33 45%, #2a2536 75%, #1d1c2c 100%); }
+:root[data-theme="dark"] .sky .s-ok   { background: linear-gradient(180deg, #123247 0%, var(--screen) 55%); }
+:root[data-theme="dark"] .sky .s-warn { background: linear-gradient(180deg, #3a2a26 0%, var(--screen) 55%); }
+:root[data-theme="dark"] .sky .s-over { background: linear-gradient(180deg, #1f2742 0%, var(--screen) 55%); }
 
 /* 펭곰이와 빙하: 물 위에 떠 있는 듯 천천히 오르내리고, 그림자는 반대로 숨 쉼 */
 #home .hero { position: relative; }
 #home .hero .mascot { animation: pg-float 4.6s ease-in-out infinite; will-change: transform; }
 #home .hero::after { content: ""; display: block; width: 58%; height: 20px; margin-top: -16px; border-radius: 50%;
   background: radial-gradient(closest-side, rgba(16, 58, 92, .30), transparent); animation: pg-shadow 4.6s ease-in-out infinite; }
-#home[data-sky="over"] .hero::after { background: radial-gradient(closest-side, rgba(0, 0, 0, .45), transparent); }
 @keyframes pg-float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-9px) rotate(-.6deg); } }
 @keyframes pg-shadow { 0%, 100% { transform: scaleX(1); opacity: .9; } 50% { transform: scaleX(.82); opacity: .55; } }
 @media (prefers-reduced-motion: reduce) { #home .hero .mascot, #home .hero::after { animation: none; } }
+/* 다크 모드에서도 상태별 강조색이 어둡게 (말풍선·칩 글자가 보이도록) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .phone.st-near { --accent: #f2a04a; --accent-deep: #f7b56b; --accent-soft: #3a2a1c; }
+  :root:not([data-theme="light"]) .phone.st-over { --accent: #86695f; --accent-deep: #a8887d; --accent-soft: #2f2826; }
+}
+:root[data-theme="dark"] .phone.st-near { --accent: #f2a04a; --accent-deep: #f7b56b; --accent-soft: #3a2a1c; }
+:root[data-theme="dark"] .phone.st-over { --accent: #86695f; --accent-deep: #a8887d; --accent-soft: #2f2826; }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
