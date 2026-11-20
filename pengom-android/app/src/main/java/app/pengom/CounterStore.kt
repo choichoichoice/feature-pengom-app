@@ -50,7 +50,20 @@ class CounterStore(context: Context) {
         (p.getString(K_OFF_APPS, "") ?: "").split(',').filter { it.isNotEmpty() }.toSet()
 
     /** 사용자가 끄지 않은 앱들의 패키지 이름 */
-    fun targets(): Set<String> { val off = offApps(); return APPS.filter { it.key !in off }.flatMap { it.pkgs }.toSet() }
+    fun targets(): Set<String> { val off = offApps(); return APPS.filter { it.key !in off }.flatMap { it.pkgs }.toSet() + customApps() }
+
+    /** 사용자가 "+ 다른 앱 추가"로 넣은 앱 (패키지 이름) */
+    fun customApps(): Set<String> =
+        (p.getString(K_CUSTOM_APPS, "") ?: "").split(',').filter { it.isNotEmpty() }.toSet()
+
+    fun setCustomApp(pkg: String, on: Boolean) {
+        val s = customApps().toMutableSet()
+        if (on) s += pkg else s -= pkg
+        p.edit().putString(K_CUSTOM_APPS, s.joinToString(",")).apply()
+    }
+
+    /** 아낀 시간에 할 일만 바꾼다 (오버레이 문구에 바로 반영) */
+    fun setReason(reason: String) { p.edit().putString(K_REASON, reason.ifBlank { "다른 거" }).apply() }
 
     fun isAppOn(key: String): Boolean = key !in offApps()
 
@@ -277,6 +290,7 @@ class CounterStore(context: Context) {
         /** 하루가 바뀌는 시각: 새벽 4시 */
         const val DAY_START_MIN = 4 * 60
         private const val K_OFF_APPS = "offApps"
+        private const val K_CUSTOM_APPS = "customApps"
         val APPS = listOf(
             App("instagram", "인스타그램", setOf("com.instagram.android")),
             App("youtube", "유튜브", setOf("com.google.android.youtube")),

@@ -63,6 +63,16 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun labelOf(pkg: String): String? = try {
+        packageManager.getApplicationLabel(packageManager.getApplicationInfo(pkg, 0)).toString()
+    } catch (e: Exception) { null }
+
+    /** 설정 화면에서 돌아오면 권한 체크리스트를 다시 그리게 알린다 */
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        web.evaluateJavascript("window.__pengomNativeRefresh && window.__pengomNativeRefresh()", null)
+    }
+
     inner class Bridge {
         @JavascriptInterface fun getState(): String = store.stateJson()
 
@@ -81,15 +91,61 @@ class MainActivity : Activity() {
                 a.put(org.json.JSONObject().put("key", app.key).put("label", app.label)
                     .put("on", store.isAppOn(app.key)).put("installed", installed))
             }
+            // 사용자가 추가한 앱 (지운 앱은 목록에서 뺀다)
+            for (pkg in store.customApps()) {
+                val label = labelOf(pkg) ?: continue
+                a.put(org.json.JSONObject().put("key", pkg).put("label", label)
+                    .put("on", true).put("installed", true).put("custom", true))
+            }
             return a.toString()
         }
 
         @JavascriptInterface fun setApp(key: String, on: Boolean) = store.setApp(key, on)
 
+        /** "+ 다른 앱 추가": 홈 화면에서 실행할 수 있는 앱 목록 [{pkg, label, on}] (LAUNCHER queries 로 보이는 앱만) */
+        @JavascriptInterface fun launcherApps(): String {
+            val i = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+            val skip = CounterStore.APPS.flatMap { it.pkgs }.toSet() + packageName
+            val custom = store.customApps()
+            val seen = HashSet<String>()
+            val list = packageManager.queryIntentActivities(i, 0).mapNotNull { r ->
+                val pkg = r.activityInfo.packageName
+                if (pkg in skip || !seen.add(pkg)) null else Pair(pkg, r.loadLabel(packageManager).toString())
+            }.sortedBy { it.second }
+            val a = org.json.JSONArray()
+            list.forEach { (pkg, label) -> a.put(org.json.JSONObject().put("pkg", pkg).put("label", label).put("on", pkg in custom)) }
+            return a.toString()
+        }
+
+        @JavascriptInterface fun setCustomApp(pkg: String, on: Boolean) = store.setCustomApp(pkg, on)
+
+        @JavascriptInterface fun setReason(reason: String) = store.setReason(reason)
+
+        /** 권한 하나씩: 온보딩 체크리스트용 */
+        @JavascriptInterface fun permState(): String = org.json.JSONObject()
+            .put("usage", Perms.usage(this@MainActivity))
+            .put("overlay", Perms.overlay(this@MainActivity))
+            .put("notify", Build.VERSION.SDK_INT < 33 ||
+                checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED)
+            .toString()
+
+        @JavascriptInterface fun openUsageSettings() = runOnUiThread {
+            startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+        }
+
+        @JavascriptInterface fun openOverlaySettings() = runOnUiThread {
+            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+        }
+
+        @JavascriptInterface fun requestNotify() = runOnUiThread {
+            if (Build.VERSION.SDK_INT >= 33) requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+        }
+
         /** 감지 중인 앱의 실제 아이콘 (작은 PNG, data URL). 없으면 빈 문자열 */
         @JavascriptInterface fun appIcon(key: String): String {
-            val app = CounterStore.APPS.firstOrNull { it.key == key } ?: return ""
-            for (pkg in app.pkgs) {
+            // key: 기본 앱 키(youtube 등) 또는 사용자가 추가한 앱의 패키지 이름
+            val pkgs = CounterStore.APPS.firstOrNull { it.key == key }?.pkgs ?: setOf(key)
+            for (pkg in pkgs) {
                 val d = try { packageManager.getApplicationIcon(pkg) } catch (e: Exception) { continue }
                 val size = 72
                 val bmp = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)

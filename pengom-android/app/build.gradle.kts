@@ -11,8 +11,8 @@ android {
         applicationId = "app.pengom"
         minSdk = 26
         targetSdk = 34
-        versionCode = 20
-        versionName = "0.15.0"
+        versionCode = 21
+        versionName = "0.16.0"
     }
 
     buildTypes {
@@ -35,6 +35,11 @@ android {
 
 val copyWeb by tasks.registering(Copy::class) {
     from(rootProject.file("../scroll-melt/index.html"))
+    // 앱에 넣은 글꼴 (인터넷 없이도 같은 모양)
+    from(rootProject.file("../scroll-melt/fonts")) {
+        include("*.woff2", "*.txt")
+        into("fonts")
+    }
     into(layout.buildDirectory.dir("webassets/web"))
 }
 tasks.named("preBuild") { dependsOn(copyWeb) }

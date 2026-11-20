@@ -1,10 +1,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>펭곰이</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
 <style>
+/* 앱에 넣은 글꼴 (fonts/README.md). 인터넷 없이도 같은 모양 */
+@font-face { font-family: "PengomDisplay"; src: url("fonts/jua.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "PengomSans"; src: url("fonts/pengomsans-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "PengomSans"; src: url("fonts/pengomsans-500.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "PengomSans"; src: url("fonts/pengomsans-600.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "PengomSans"; src: url("fonts/pengomsans-700.woff2") format("woff2"); font-weight: 700 900; font-display: swap; }
 /* Layout: one phone-sized app shell (framed on desktop, full-bleed on phones); screens stack inside, primary action pinned low. */
 :root {
   --bg: #e9f1f6;
@@ -21,8 +24,8 @@
   --melt: #ff6a48;
   --melt-deep: #d24b2c;
   --melt-soft: #ffeae4;
-  --f-display: "Jua", "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-  --f-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --f-display: "PengomDisplay", "PengomSans", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --f-body: "PengomSans", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -527,6 +530,42 @@ details.dev summary { font-size: 14px; }
 /* 시간대 카드: 제목 위, 내용 아래 */
 .ins-row { flex-direction: column; align-items: flex-start; gap: 4px; }
 .ins-row b { font-size: 17px; overflow-wrap: anywhere; }
+/* ---------- 0.16 ---------- */
+.reason-in { flex: 1; min-width: 0; font: inherit; font-size: 17px; border: 0; border-bottom: 2px solid var(--line); background: transparent; color: var(--fg); padding: 6px 2px; }
+.reason-in:focus { outline: none; border-color: var(--accent); }
+.add-app { align-self: flex-start; margin-top: 8px; border: 0; background: var(--accent-soft); color: var(--accent-deep); font-weight: 700; font-size: 16px; padding: 10px 16px; border-radius: 12px; }
+.srow .app-ic { width: 26px; height: 26px; border-radius: 7px; flex: none; margin-right: 10px; vertical-align: middle; }
+.srow > span:first-child { display: inline-flex; align-items: center; min-width: 0; }
+.app-sheet { max-height: 86%; display: flex; flex-direction: column; gap: 10px; }
+.as-search { font: inherit; font-size: 17px; padding: 12px 14px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); color: var(--fg); }
+.as-search:focus { outline: none; border-color: var(--accent); }
+.as-list { overflow-y: auto; flex: 1; min-height: 160px; max-height: 52vh; }
+.as-list .srow { padding: 10px 4px; }
+.as-list .empty { color: var(--muted); padding: 16px 4px; font-size: 15px; }
+.apps .more { font-size: 12px; font-weight: 800; color: var(--muted); }
+/* 온보딩 권한 체크리스트 */
+.checklist { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.checklist li { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); }
+.checklist li div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.checklist b { font-size: 17px; } .checklist em { font-style: normal; font-size: 12px; color: var(--muted); margin-left: 4px; }
+.checklist small { font-size: 14px; color: var(--muted); }
+.checklist .ck { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line); flex: none; display: grid; place-items: center; font-weight: 900; color: #fff; }
+.checklist li.done .ck { background: #1f9d63; border-color: #1f9d63; }
+.checklist li.done .ck::after { content: "✓"; }
+.checklist li.done .link { display: none; }
+.note.center { text-align: center; }
+/* 빙하 단계: 펭곰이 크기는 그대로, 발밑 빙하가 자란다 */
+.mascot .floe2, .mascot .floe3, .mascot .spk, .mascot .flake { opacity: 0; transition: opacity .8s; }
+.mascot.stage-2 .floe2, .mascot.stage-3 .floe3 { opacity: 1; }
+.mascot.stage-2 .spk, .mascot.stage-3 .spk { opacity: 1; animation: pg-twinkle 2.4s ease-in-out infinite; }
+.mascot.stage-3 .flake { opacity: .9; animation: pg-drift 6s ease-in-out infinite; }
+.mascot .spk:nth-of-type(2n) { animation-delay: .8s; } .mascot .spk:nth-of-type(3n) { animation-delay: 1.5s; }
+.mascot .flake:nth-of-type(2n) { animation-delay: 2s; } .mascot .flake:nth-of-type(3n) { animation-delay: 3.6s; }
+@keyframes pg-twinkle { 0%, 100% { opacity: .15; transform: scale(.7); } 50% { opacity: 1; transform: scale(1); } }
+@keyframes pg-drift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+.mascot .spk, .mascot .flake { transform-box: fill-box; transform-origin: center; }
+@media (prefers-reduced-motion: reduce) { .mascot .spk, .mascot .flake { animation: none !important; } }
+.ins-ice b { color: var(--accent-deep); }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -579,13 +618,13 @@ details.dev summary { font-size: 14px; }
             <button class="apps" id="h-apps" aria-label="감지 중인 앱, 눌러서 바꾸기"></button>
           </div>
           <button class="cnt fire" id="h-streak-btn" aria-describedby="h-streak-tip"><svg class="i"><use href="#i-fire"/></svg><span id="h-streak">0</span>일</button>
-          <span class="tip" id="h-streak-tip" role="tooltip" hidden>목표를 연속으로 지킨 날이에요</span>
+          <span class="tip" id="h-streak-tip" role="tooltip" hidden>연장 없이 빙하를 지킨 연속 일수예요</span>
         </div>
         <div class="hero">
           <div class="bubble" id="h-bubble">이번엔 15분만 딱 보기로 해요!</div>
           <div class="mascot" id="h-char"></div>        </div>
         <div class="left tap" id="h-left-box" role="button" tabindex="0" aria-label="이번 시청 남은 시간. 눌러서 1회 시청 시간 변경">
-          <div class="big"><span class="n" id="h-left">31</span><span class="u" id="h-left-u">분 남았어요</span></div>
+          <div class="big"><span class="n" id="h-left"></span><span class="u" id="h-left-u"></span></div>
           <div class="tap-hint" aria-hidden="true">탭해서 시간을 변경해 보세요 <span>✎</span></div>
           <div class="bar"><i id="h-bar"></i></div>
           <div class="cap" id="h-cap"></div>
@@ -624,6 +663,7 @@ details.dev summary { font-size: 14px; }
               <div class="ins-card"><span class="ins-k">바로 멈춤 성공률</span><b class="ins-v" id="r-stop">-</b></div>
             </div>
             <div class="ins-card ins-row"><span class="ins-k">가장 많이 보는 시간대</span><b id="r-peak">기록이 조금 더 쌓이면 알려드릴게요</b></div>
+            <div class="ins-card ins-row ins-ice"><span class="ins-k">빙하 상태</span><b id="r-ice"></b></div>
             <p class="ins-note" id="r-note"></p>
           </section>
       </div>
@@ -643,9 +683,15 @@ details.dev summary { font-size: 14px; }
           <div class="srow"><span id="s-promise">-</span><button class="link" id="s-reduce">변경</button></div>
           <p class="note" id="s-reset"></p>
         </div>
+        <div class="group">
+          <div class="gtitle">아낀 시간에 할 일</div>
+          <div class="srow"><input class="reason-in" id="s-reason" maxlength="20" placeholder="운동, 공부… (비워 두면 표시 안 함)" autocomplete="off" aria-label="아낀 시간에 할 일"><button class="link" id="s-reason-save">저장</button></div>
+          <p class="note" id="s-reason-note">시간이 끝났을 때 펭곰이가 이 말을 다시 보여 줘요.</p>
+        </div>
         <div class="group" id="s-apps-group">
           <div class="gtitle">감지할 앱</div>
           <div id="s-apps"></div>
+          <button class="add-app" id="s-add-app">+ 다른 앱 추가</button>
           <p class="note">켜 둔 앱이 화면에 떠 있는 시간을 재요. 앱 안에서 쇼츠를 보는지 긴 영상을 보는지는 구분하지 못해요.</p>
         </div>
         <div class="group">
@@ -666,6 +712,23 @@ details.dev summary { font-size: 14px; }
           <div class="row"><button id="d-practice">연습 피드</button></div>
         </details>
       </div>
+    </section>
+
+    <!-- 온보딩: 권한 안내 (1단계) -->
+    <section class="screen" id="permstep" hidden>
+      <div class="scroll">
+        <div class="hero">
+          <div class="bubble" id="ps-bubble">유튜브를 몇 분 봤는지 챙겨드리려면 권한이 필요해요. 화면 내용은 절대 보지 않아요!</div>
+          <div class="mascot" id="ps-char"></div>
+        </div>
+        <ul class="checklist">
+          <li id="ps-usage"><span class="ck" aria-hidden="true"></span><div><b>사용 정보 접근</b><small>어떤 앱이 몇 분 켜져 있었는지만 확인해요</small></div><button class="link">허용하기</button></li>
+          <li id="ps-overlay"><span class="ck" aria-hidden="true"></span><div><b>다른 앱 위에 표시</b><small>시청 중 남은 시간과 펭곰이를 띄워요</small></div><button class="link">허용하기</button></li>
+          <li id="ps-notify" class="opt"><span class="ck" aria-hidden="true"></span><div><b>알림 <em>선택</em></b><small>알림창에 남은 시간을 보여 줘요</small></div><button class="link">허용하기</button></li>
+        </ul>
+        <p class="note center">설정 화면에서 펭곰이를 찾아 켠 뒤, 뒤로 돌아오면 자동으로 체크돼요.</p>
+      </div>
+      <div class="dock"><button class="btn" id="ps-go" disabled>권한을 허용해 주세요</button></div>
     </section>
 
     <!-- 쇼츠 시뮬레이터 -->
@@ -700,6 +763,15 @@ details.dev summary { font-size: 14px; }
     <button data-go="history"><svg class="i"><use href="#i-chart"/></svg>기록</button>
     <button data-go="settings"><svg class="i"><use href="#i-gear"/></svg>설정</button>
   </nav>
+  <div class="sheet-wrap" id="appsheet" hidden>
+    <div class="sheet app-sheet" role="dialog" aria-labelledby="as-title">
+      <span class="grab"></span>
+      <h2 id="as-title">감지할 앱 추가</h2>
+      <input class="as-search" id="as-q" type="search" placeholder="앱 이름 검색 (예: 네이버, 넷플릭스)" autocomplete="off" aria-label="앱 검색">
+      <div class="as-list" id="as-list" role="list"></div>
+      <button class="btn" id="as-done">완료</button>
+    </div>
+  </div>
   <div class="sheet-wrap" id="goal" hidden>
     <div class="sheet goal-sheet" role="dialog" aria-labelledby="g-title">
       <span class="grab"></span>
@@ -737,6 +809,22 @@ details.dev summary { font-size: 14px; }
   const PIV = { L: [345, 600], R: [942, 640] };
   const GROUND = [627, 1118];
   let rigId = 0;
+  // 발밑 빙하 (그림 속 빙하 뒤에 깔리는 더 큰 얼음). 2단계: 넓고 두꺼운 판 + 반짝임, 3단계: 큰 얼음 섬 + 눈꽃·결정
+  function floeLayer(id) {
+    const spk = (x, y, r) => `<g class="spk"><path d="M${x} ${y - r} L${x + r * .26} ${y - r * .26} L${x + r} ${y} L${x + r * .26} ${y + r * .26} L${x} ${y + r} L${x - r * .26} ${y + r * .26} L${x - r} ${y} L${x - r * .26} ${y - r * .26}Z" fill="#7fd3fb"/><circle cx="${x}" cy="${y}" r="${r * .22}" fill="#fff"/></g>`;
+    const flake = (x, y, r) => `<g class="flake" stroke="#7cc9ef" stroke-width="8" stroke-linecap="round"><path d="M${x} ${y - r}V${y + r}M${x - r * .87} ${y - r / 2}L${x + r * .87} ${y + r / 2}M${x - r * .87} ${y + r / 2}L${x + r * .87} ${y - r / 2}M${x - r * .3} ${y - r * .75}L${x} ${y - r * .5}L${x + r * .3} ${y - r * .75}M${x - r * .3} ${y + r * .75}L${x} ${y + r * .5}L${x + r * .3} ${y + r * .75}"/></g>`;
+    return `<defs><linearGradient id="${id}ice" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9f8ff"/><stop offset=".3" stop-color="#b3e3fa"/><stop offset="1" stop-color="#4fb4e6"/></linearGradient>
+        <linearGradient id="${id}ice3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".25" stop-color="#c7ecfc"/><stop offset="1" stop-color="#2f9fd9"/></linearGradient></defs>
+      <g class="floe2"><path d="M140 1104 L250 1052 L1004 1052 L1118 1106 L1064 1178 L196 1178Z" fill="url(#${id}ice)"/>
+        <path d="M250 1052 L1004 1052 L1050 1074 L200 1074Z" fill="#fff" opacity=".75"/>
+        <path d="M230 1140 l38 -34 l26 34Z M960 1146 l30 -38 l30 38Z" fill="#8fd6f7" opacity=".8"/></g>
+      <g class="floe3"><path d="M40 1100 L170 1020 L1090 1020 L1220 1100 L1170 1196 L1040 1236 L220 1236 L90 1196Z" fill="url(#${id}ice3)"/>
+        <path d="M170 1020 L1090 1020 L1160 1056 C1060 1080 950 1056 850 1072 C730 1092 560 1062 440 1080 C320 1096 220 1074 100 1062Z" fill="#fff"/>
+        <path d="M150 1160 l54 -56 l42 56Z M1050 1170 l48 -64 l46 62Z M330 1206 l30 -36 l28 36Z M880 1210 l26 -32 l24 32Z" fill="#a6e0f8"/>
+        <path d="M80 1012 l26 -70 l26 70Z M1160 1004 l22 -60 l22 60Z" fill="#c9effd" stroke="#7cc9ef" stroke-width="5"/></g>
+      ${spk(210, 990, 30)}${spk(1060, 980, 34)}${spk(300, 880, 20)}${spk(990, 860, 22)}
+      ${flake(150, 800, 34)}${flake(1110, 740, 30)}${flake(200, 600, 24)}${flake(1070, 540, 26)}`;
+  }
   const RIGS = new Set();
 
   class Mascot {
@@ -747,6 +835,7 @@ details.dev summary { font-size: 14px; }
       this.gaze = { x: 0, y: 0 }; this.gazeT = { x: 0, y: 0 }; this.nextSac = 0;
       this.nextBlink = performance.now() + 1400; this.blinkAt = -9999;
       this.mouthOpen = true; this.nextMouth = 0; this.last = performance.now();
+      this.stage = 1; this.cheerUntil = 0; this.nextCheer = performance.now() + 4000;
       el.innerHTML = this.svg(); el.setAttribute("role", "img");
       const q = (s) => el.querySelector("." + s);
       this.p = {
@@ -765,6 +854,7 @@ details.dev summary { font-size: 14px; }
       return `<svg viewBox="140 100 960 1060" xmlns="http://www.w3.org/2000/svg">
         <defs>${eyeClip}</defs>
         <ellipse class="p-water" cx="${GROUND[0]}" cy="${GROUND[1]}" rx="420" ry="40" fill="${WATER}" opacity="0"/>
+        ${floeLayer(id)}
         <g class="p-body">
           <g class="p-armL">${img("flipL")}</g>
           <g class="p-armR">${img("flipR")}</g>
@@ -791,6 +881,8 @@ details.dev summary { font-size: 14px; }
       this.el.setAttribute("aria-label", mood === "melt" ? "얼음이 녹아 심드렁한 펭곰이" : mood === "joy" ? "신나서 뛰는 펭곰이" : "얼음 위의 펭곰이");
       this.frame(performance.now());
     }
+    // 빙하 단계 1~3: 크기는 그대로, 발밑 빙하와 표정·분위기가 바뀐다
+    setStage(n) { this.stage = n; this.el.classList.remove("stage-1", "stage-2", "stage-3"); this.el.classList.add("stage-" + n); }
     talk(ms) { this.talkUntil = performance.now() + ms; }
     hop(ms) { this.hopUntil = performance.now() + ms; }
     tap() {
@@ -846,7 +938,13 @@ details.dev summary { font-size: 14px; }
         ln.setAttribute("y1", y.toFixed(1)); ln.setAttribute("y2", y.toFixed(1));
         ln.setAttribute("opacity", lid > 0.08 ? 1 : 0);
       });
-      const showJoy = joy;
+      // 2단계: 가끔 가볍게 깡총 / 3단계: 가끔 반짝이는 기쁨 표정 + 깡총 (녹는 중엔 안 함)
+      if (!melting && this.stage >= 2 && now > this.nextCheer) {
+        this.nextCheer = now + (this.stage >= 3 ? 5200 : 7500) + Math.random() * 3000;
+        this.hop(this.stage >= 3 ? 900 : 600);
+        if (this.stage >= 3) this.cheerUntil = now + 1700;
+      }
+      const showJoy = joy || (!melting && now < this.cheerUntil);
       P.joy.setAttribute("opacity", showJoy ? 1 : 0);
       P.eyeL.setAttribute("opacity", showJoy ? 0 : 1); P.eyeR.setAttribute("opacity", showJoy ? 0 : 1);
       // 입: 말할 땐 열고 닫기를 반복, 녹을 땐 꾹 다문 물결 입
@@ -928,8 +1026,17 @@ details.dev summary { font-size: 14px; }
   const canExtend = () => (S.sExtra || 0) < MAX_EXTENDS * EXTEND_MIN;
   const buzz = (p) => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
 
-  const rig = { p: new Mascot($("p-char")), h: new Mascot($("h-char")), s: new Mascot($("s-char")), t: new Mascot($("t-face")), r: new Mascot($("r-face")) };
-  const growPx = (base) => Math.round(base * Math.min(1.35, 0.9 + (S.size - 10) / 30));
+  const rig = { p: new Mascot($("p-char")), h: new Mascot($("h-char")), s: new Mascot($("s-char")), t: new Mascot($("t-face")), r: new Mascot($("r-face")), ps: new Mascot($("ps-char")) };
+  // 펭곰이 크기는 고정. 연장 없이 지킨 연속 일수로 빙하 단계를 정한다.
+  const growPx = (base) => base;
+  const iceStage = () => (S.streak || 0) >= 7 ? 3 : (S.streak || 0) >= 3 ? 2 : 1;
+  const iceLine = () => {
+    const d = S.streak || 0;
+    if (d >= 7) return "빙하가 " + d + "일째 튼튼한 얼음 섬이 됐어요!";
+    if (d >= 3) return "빙하가 " + d + "일째 튼튼하게 자라고 있어요!";
+    if (d >= 1) return "빙하가 " + d + "일째 자라는 중이에요. 3일이면 더 넓어져요!";
+    return "연장 없이 멈춘 날이 이어지면 빙하가 자라요.";
+  };
   const meltNow = () => isOver() ? Math.min(1, 0.3 + (S.sUsed / 60 - S.session) / (S.session * 0.9)) : 0;
 
   function say(el, r, text) {
@@ -939,10 +1046,12 @@ details.dev summary { font-size: 14px; }
   const POKE = {
     idle: ["불렀어요?", "간지러워요!", "찔러도 시간은 안 늘어나요.", "말랑해 보여도 저 차가워요."],
     melt: ["지금 녹는 중이에요…", "건드리면 흘러내려요.", "물 튀어요!"],
-    joy: ["헤헤, 저 좀 컸죠?", "오늘도 같이 해요!"],
+    joy: ["헤헤, 빙하 좀 커졌죠?", "오늘도 같이 해요!"],
   };
   ["p", "h"].forEach((k) => {
     rig[k].el.addEventListener("poke", () => {
+      // 홈에서 찌르면 두 번에 한 번은 지금 빙하 상태를 알려 준다
+      if (k === "h" && rig.h.mood !== "melt" && (rig.h.pokes = (rig.h.pokes || 0) + 1) % 2 === 1) return say($("h-bubble"), rig.h, iceLine());
       const pool = POKE[rig[k].mood] || POKE.idle;
       say($(k + "-bubble"), rig[k], pool[Math.floor(Math.random() * pool.length)]);
     });
@@ -950,7 +1059,7 @@ details.dev summary { font-size: 14px; }
 
   const TABBED = ["home", "history", "settings"];
   function go(id) {
-    ["promise", "home", "feed", "history", "settings"].forEach((s) => ($(s).hidden = s !== id));
+    ["promise", "permstep", "home", "feed", "history", "settings"].forEach((s) => ($(s).hidden = s !== id));
     $("phone").classList.toggle("dark-top", id === "feed");
     const tabbed = TABBED.includes(id);
     $("tabs").hidden = !tabbed; $("phone").classList.toggle("tabs-on", tabbed);
@@ -959,6 +1068,7 @@ details.dev summary { font-size: 14px; }
     if (id === "home") renderHome();
     if (id === "history") { reviewDays = 7; document.querySelectorAll("#history .seg button").forEach((x) => x.classList.toggle("on", x.dataset.r === "7")); renderReview(); }
     if (id === "settings") renderSettings();
+    if (id === "permstep") renderPermStep();
   }
   document.querySelectorAll("#tabs button").forEach((b) => { b.onclick = () => go(b.dataset.go); });
 
@@ -991,7 +1101,7 @@ details.dev summary { font-size: 14px; }
   /* ---------- 첫 화면: 1회 시청 시간 정하기 ---------- */
   const pPick = Picker($("p-pick"));
   function renderPromise() {
-    rig.p.el.style.width = growPx(200) + "px";
+    rig.p.el.style.width = "200px";
     rig.p.set("idle", 0);
     say($("p-bubble"), rig.p, S.morningMsg || "안녕하세요, 저는 펭곰이에요.");
     pPick.set(S.session || DEFAULT_SESSION);
@@ -1003,8 +1113,31 @@ details.dev summary { font-size: 14px; }
     S.reason = $("p-reason").value.trim() || "다른 거";
     S.session = v; S.setupDone = true;
     S.homeMsg = "이번엔 " + v + "분만 딱 보기로 해요!";
-    pushSession(); save(); go("home");
+    pushSession(); save();
+    // 권한이 아직이면 안내 단계로, 이미 다 허용돼 있으면 바로 홈으로
+    go(NATIVE && !permsReady() ? "permstep" : "home");
   };
+
+  /* ---------- 온보딩 2단계: 권한 안내 체크리스트 ---------- */
+  function permState() {
+    if (!NATIVE || !NATIVE.permState) return { usage: true, overlay: true, notify: true };
+    try { return JSON.parse(NATIVE.permState()); } catch (e) { return { usage: false, overlay: false, notify: false }; }
+  }
+  const permsReady = () => { const p = permState(); return p.usage && p.overlay; };
+  function renderPermStep() {
+    rig.ps.el.style.width = "170px";
+    const p = permState();
+    $("ps-usage").classList.toggle("done", !!p.usage);
+    $("ps-overlay").classList.toggle("done", !!p.overlay);
+    $("ps-notify").classList.toggle("done", !!p.notify);
+    const ok = p.usage && p.overlay, b = $("ps-go");
+    b.disabled = !ok; b.textContent = ok ? "준비 완료! 시작하기" : "권한을 허용해 주세요";
+    if (ok) say($("ps-bubble"), rig.ps, "다 됐어요! 이제 같이 시작해 볼까요?");
+  }
+  $("ps-usage").querySelector(".link").onclick = () => NATIVE && NATIVE.openUsageSettings && NATIVE.openUsageSettings();
+  $("ps-overlay").querySelector(".link").onclick = () => NATIVE && NATIVE.openOverlaySettings && NATIVE.openOverlaySettings();
+  $("ps-notify").querySelector(".link").onclick = () => NATIVE && NATIVE.requestNotify && NATIVE.requestNotify();
+  $("ps-go").onclick = () => { if (permsReady()) go("home"); };
 
   /* ---------- 1회 시청 시간 바꾸기 (바텀시트): 지금 세션에도 바로 적용 ---------- */
   const gPick = Picker($("g-pick"), () => goalHint());
@@ -1068,21 +1201,19 @@ details.dev summary { font-size: 14px; }
     renderAppIcons();
   }
   const APP_BADGE = { instagram: "IG", youtube: "YT", tiktok: "TT" };
-  let iconCache = {};
+  var iconCache = {};
   function renderAppIcons() {
-    let apps = WEB_APPS.map((a) => ({ ...a, on: !(S.offApps || []).includes(a.key), installed: true }));
-    if (NATIVE && NATIVE.apps) { try { apps = JSON.parse(NATIVE.apps()); } catch (e) {} }
-    const on = apps.filter((a) => a.on && a.installed), box = $("h-apps");
+    const on = allApps().filter((a) => a.on && a.installed), box = $("h-apps");
     const key = on.map((a) => a.key).join(",");
     if (box.dataset.k === key) return;
     box.dataset.k = key; box.innerHTML = "";
     if (!on.length) { const n = document.createElement("span"); n.className = "none"; n.textContent = "감지할 앱 없음"; box.appendChild(n); return; }
-    on.forEach((a) => {
-      let src = iconCache[a.key];
-      if (src === undefined && NATIVE && NATIVE.appIcon) { try { src = iconCache[a.key] = NATIVE.appIcon(a.key) || ""; } catch (e) { src = ""; } }
+    on.slice(0, 4).forEach((a) => {
+      const src = iconFor(a.key);
       if (src) { const im = document.createElement("img"); im.src = src; im.alt = a.label; box.appendChild(im); }
-      else { const b = document.createElement("span"); b.className = "ab"; b.textContent = APP_BADGE[a.key] || "?"; b.title = a.label; box.appendChild(b); }
+      else { const b = document.createElement("span"); b.className = "ab"; b.textContent = APP_BADGE[a.key] || a.label.slice(0, 2); b.title = a.label; box.appendChild(b); }
     });
+    if (on.length > 4) { const m = document.createElement("span"); m.className = "more"; m.textContent = "+" + (on.length - 4); box.appendChild(m); }
   }
   $("h-apps").onclick = () => { go("settings"); setTimeout(() => $("s-apps-group").scrollIntoView({ behavior: "smooth", block: "start" }), 60); };
   let tipT = null;
@@ -1142,7 +1273,8 @@ details.dev summary { font-size: 14px; }
   }
   function renderHome() {
     $("h-streak").textContent = S.streak;
-    rig.h.el.style.width = growPx(220) + "px";
+    rig.h.el.style.width = "220px";
+    rig.h.setStage(iceStage());
     say($("h-bubble"), rig.h, S.homeMsg || stateMsg());
     if (S.homeMsg) { S.homeMsg = ""; save(); }
     homeNums();
@@ -1360,6 +1492,7 @@ details.dev summary { font-size: 14px; }
       else say += " 이 흐름 그대로 가요!";
     }
     $("r-say").textContent = say;
+    $("r-ice").textContent = ["", "1단계 · 작은 빙하", "2단계 · 넓어진 빙하", "3단계 · 얼음 섬"][iceStage()] + " — " + iceLine();
     $("r-note").textContent = A.sessN ? "시청 " + A.sessN + "회 · 연장 " + cur.reduce((t, d) => t + (d.ext || 0), 0) + "회" : "";
     if (n === 7) $("r-sum").textContent = "이번 주 총 " + fmtMin(A.total);
   }
@@ -1530,6 +1663,7 @@ details.dev summary { font-size: 14px; }
   }
   function nativeSync() {
     if (!NATIVE || !$("feed").hidden) return;
+    if (!$("permstep").hidden) renderPermStep();
     const st = nativeState(); if (!st) return;
     if (!S.dateKey) S.dateKey = st.date;
     if (st.date !== S.dateKey) {
@@ -1566,6 +1700,53 @@ details.dev summary { font-size: 14px; }
   $("h-ready").onclick = () => { if (NATIVE && !NATIVE.isCounting()) return NATIVE.openAccessibilitySettings(); go("settings"); };
   /* ---------- 설정 ---------- */
   const WEB_APPS = [{ key: "instagram", label: "인스타그램" }, { key: "youtube", label: "유튜브" }, { key: "tiktok", label: "틱톡" }];
+  // 웹 미리보기용 가짜 설치 앱 목록 (안드로이드에서는 NATIVE.launcherApps)
+  const WEB_LAUNCHER = ["네이버", "네이버 웹툰", "넷플릭스", "X", "쿠팡", "카카오톡", "당근", "멜론", "치지직", "트위치"].map((l, i) => ({ pkg: "web.app" + i, label: l }));
+  // 기본 3개 + 사용자가 추가한 앱
+  function allApps() {
+    if (NATIVE && NATIVE.apps) { try { return JSON.parse(NATIVE.apps()); } catch (e) {} }
+    const base = WEB_APPS.map((a) => ({ ...a, on: !(S.offApps || []).includes(a.key), installed: true }));
+    const custom = (S.customApps || []).map((pkg) => ({ key: pkg, label: (WEB_LAUNCHER.find((x) => x.pkg === pkg) || { label: pkg }).label, on: true, installed: true, custom: true }));
+    return base.concat(custom);
+  }
+  function iconFor(key) {
+    if (iconCache[key] !== undefined) return iconCache[key];
+    let src = ""; if (NATIVE && NATIVE.appIcon) { try { src = NATIVE.appIcon(key) || ""; } catch (e) {} }
+    return (iconCache[key] = src);
+  }
+  function setCustom(pkg, on) {
+    if (NATIVE && NATIVE.setCustomApp) { try { NATIVE.setCustomApp(pkg, on); } catch (e) {} }
+    const set = new Set(S.customApps || []); on ? set.add(pkg) : set.delete(pkg); S.customApps = [...set]; save();
+    $("h-apps").dataset.k = "";
+  }
+  let launcherCache = null;
+  function openAppSheet() {
+    if (!launcherCache) {
+      launcherCache = WEB_LAUNCHER;
+      if (NATIVE && NATIVE.launcherApps) { try { launcherCache = JSON.parse(NATIVE.launcherApps()); } catch (e) {} }
+    }
+    $("as-q").value = ""; renderAppSheet(); $("appsheet").hidden = false;
+  }
+  function renderAppSheet() {
+    const q = $("as-q").value.trim().toLowerCase(), box = $("as-list"), mine = new Set(allApps().filter((a) => a.custom).map((a) => a.key));
+    const list = launcherCache.filter((a) => !q || a.label.toLowerCase().includes(q) || a.pkg.toLowerCase().includes(q));
+    box.innerHTML = "";
+    if (!list.length) { const e = document.createElement("div"); e.className = "empty"; e.textContent = "찾는 앱이 없어요."; box.appendChild(e); return; }
+    list.slice(0, 120).forEach((a) => {
+      const row = document.createElement("label"); row.className = "srow"; row.setAttribute("role", "listitem");
+      const name = document.createElement("span");
+      const src = iconFor(a.pkg); if (src) { const im = document.createElement("img"); im.className = "app-ic"; im.src = src; im.alt = ""; name.appendChild(im); }
+      name.appendChild(document.createTextNode(a.label));
+      const sw = document.createElement("span"); sw.className = "sw";
+      const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = mine.has(a.pkg); cb.setAttribute("aria-label", a.label + " 감지");
+      cb.onchange = () => setCustom(a.pkg, cb.checked);
+      sw.append(cb, document.createElement("i")); row.append(name, sw); box.appendChild(row);
+    });
+  }
+  $("as-q").addEventListener("input", renderAppSheet);
+  $("s-add-app").onclick = openAppSheet;
+  $("as-done").onclick = () => { $("appsheet").hidden = true; renderSettings(); };
+  $("appsheet").addEventListener("click", (e) => { if (e.target.id === "appsheet") $("as-done").onclick(); });
   let lastSK = "";
   function settingsKey() {
     let on = true, batt = true;
@@ -1585,27 +1766,40 @@ details.dev summary { font-size: 14px; }
     cell($("s-count"), on, "켜짐 ✓", "켜기", () => NATIVE && NATIVE.openAccessibilitySettings());
     cell($("s-batt"), batt, "허용됨 ✓", "허용하기", () => NATIVE && NATIVE.openBatterySettings && NATIVE.openBatterySettings());
     $("s-promise").innerHTML = fmtMin(S.session) + " <small>오늘 총 " + usedMin() + "분 사용 · " + (S.sessions || 0) + "회 시청</small>";
-    let apps = WEB_APPS.map((a) => ({ ...a, on: !(S.offApps || []).includes(a.key), installed: true }));
-    if (NATIVE && NATIVE.apps) { try { apps = JSON.parse(NATIVE.apps()); } catch (e) {} }
+    const apps = allApps();
     const box = $("s-apps"); box.innerHTML = "";
     apps.forEach((a) => {
       const row = document.createElement("label"); row.className = "srow";
-      const name = document.createElement("span"); name.textContent = a.label;
+      const name = document.createElement("span");
+      const src = iconFor(a.key); if (src) { const im = document.createElement("img"); im.className = "app-ic"; im.src = src; im.alt = ""; name.appendChild(im); }
+      name.appendChild(document.createTextNode(a.label));
       if (!a.installed) { const sm = document.createElement("small"); sm.textContent = "설치 안 됨"; name.appendChild(sm); }
       const sw = document.createElement("span"); sw.className = "sw";
       const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = a.on; cb.setAttribute("aria-label", a.label + " 감지");
       cb.onchange = () => {
+        if (a.custom) { setCustom(a.key, cb.checked); if (!cb.checked) setTimeout(renderSettings, 250); return; }
         if (NATIVE && NATIVE.setApp) NATIVE.setApp(a.key, cb.checked);
         const off = new Set(S.offApps || []); cb.checked ? off.delete(a.key) : off.add(a.key); S.offApps = [...off]; save();
+        $("h-apps").dataset.k = "";
       };
       sw.append(cb, document.createElement("i"));
       row.append(name, sw); box.appendChild(row);
     });
     clearArmed = false; $("s-clear").textContent = "지우기"; $("s-clear-text").textContent = "기록 모두 지우기";
+    if (document.activeElement !== $("s-reason")) $("s-reason").value = S.reason && S.reason !== "다른 거" ? S.reason : "";
     try { $("s-ver").textContent = NATIVE && NATIVE.appVersion ? NATIVE.appVersion() : "웹 미리보기"; } catch (e) {}
     $("s-reset").textContent = "앱을 나가 " + BREAK_MIN + "분 넘게 쉬면 새 세션이 시작돼요. 하루 기록은 매일 새벽 4시에 자동으로 넘어가요.";
   }
   $("s-reduce").onclick = openGoal;
+  function saveReason() {
+    const v = $("s-reason").value.trim();
+    S.reason = v || "다른 거"; save();
+    if (NATIVE && NATIVE.setReason) { try { NATIVE.setReason(S.reason); } catch (e) {} }
+    $("s-reason-note").textContent = v ? "저장했어요. 다음에 시간이 끝나면 ‘" + v + "’을(를) 다시 보여 드릴게요." : "비워 뒀어요. 시간이 끝나도 할 일은 표시하지 않아요.";
+  }
+  $("s-reason-save").onclick = saveReason;
+  $("s-reason").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("s-reason").blur(); } });
+  $("s-reason").addEventListener("blur", saveReason);
   let clearArmed = false;
   $("s-clear").onclick = () => {
     if (!clearArmed) { clearArmed = true; $("s-clear").textContent = "정말 지우기"; $("s-clear-text").textContent = "되돌릴 수 없어요. 한 번 더 누르면 지워져요."; buzz(15); return; }

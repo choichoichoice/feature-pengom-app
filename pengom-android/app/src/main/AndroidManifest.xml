@@ -2,7 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- 앱 전환 기록으로 쇼츠 앱을 본 시간을 잰다 (사용자가 설정에서 직접 허용) -->
     <uses-permission
@@ -21,6 +20,11 @@
         <package android:name="com.google.android.youtube" />
         <package android:name="com.zhiliaoapp.musically" />
         <package android:name="com.ss.android.ugc.trill" />
+        <!-- 설정 > 다른 앱 추가: 실행할 수 있는 앱 목록만 본다 (QUERY_ALL_PACKAGES 대신) -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
     </queries>
 
     <application
