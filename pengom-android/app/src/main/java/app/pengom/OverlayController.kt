@@ -179,10 +179,10 @@ class OverlayController(
         }
         card.addView(ImageView(svc).apply { setImageResource(R.drawable.mascot_head_melt) },
             LinearLayout.LayoutParams(px(104), px(104)))
-        val first = store.extra() == 0
+        val first = store.extendCount() == 0
         val more = store.canExtend()
         card.addView(TextView(svc).apply {
-            text = when { first -> "${store.budget()}분 다 됐어."; more -> "더 받은 ${store.extra()}분도 끝."; else -> "오늘은 여기까지." }
+            text = when { first -> "${store.budget()}분 다 됐어."; more -> "더 받은 시간도 끝."; else -> "오늘은 여기까지." }
             textSize = 23f; typeface = Typeface.DEFAULT_BOLD; gravity = Gravity.CENTER
             setTextColor(0xFF17232E.toInt()); setLineSpacing(0f, 1.15f)
         }, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply { topMargin = px(8) })
@@ -212,7 +212,8 @@ class OverlayController(
             store.extend(5); removeSheet(); refresh()
             main.postDelayed({ showToast("딱 5분이다?") }, 250)
         }
-        leave.setOnClickListener { store.ackOver(); removeSheet(); goHome() }
+        // 홈으로 먼저 보낸 뒤 시트를 닫는다. 화면에 우리 창이 떠 있어야 백그라운드에서 홈을 열 수 있다
+        leave.setOnClickListener { store.ackOver(); goHome(); removeSheet() }
     }
 
     private fun removeSheet() { sheet?.let { safeRemove(it) }; sheet = null }

@@ -15,8 +15,6 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
-import java.time.LocalDate
-import java.time.ZoneId
 
 /**
  * 인스타·유튜브·틱톡이 화면 맨 앞에 떠 있는 시간을 잰다.
@@ -33,10 +31,13 @@ class UsageWatchService : Service() {
     private lateinit var usm: UsageStatsManager
     private lateinit var power: PowerManager
     private var foreground: String? = null
+    /** 맨 앞 화면(activity) 이름. 같은 앱 안에서 화면이 바뀔 때 앞 화면의 '멈춤'을 앱 전체 멈춤으로 착각하지 않게 */
+    private var foregroundClass: String? = null
     private var lastQuery = 0L
     private var lastTick = 0L
     private var carryMs = 0L
     private var lastNotifiedMin = -1
+    private var running = false
 
     private val loop = object : Runnable {
         override fun run() {
@@ -53,17 +54,23 @@ class UsageWatchService : Service() {
         overlay = OverlayController(this, store) {
             startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         }
-        goForeground()
-        catchUpToday()
-        lastTick = System.currentTimeMillis()
-        handler.post(loop)
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // startForegroundService 를 부를 때마다 startForeground 를 다시 불러야 시스템이 앱을 멈추지 않는다
+        if (!goForeground()) { stopSelf(); return START_NOT_STICKY }
+        if (!running) {
+            running = true
+            catchUpToday()
+            lastTick = System.currentTimeMillis()
+            handler.post(loop)
+        }
+        return START_STICKY
+    }
 
     override fun onDestroy() {
         handler.removeCallbacks(loop)
-        overlay.hide()
+        if (::overlay.isInitialized) overlay.hide()
         super.onDestroy()
     }
 
@@ -72,8 +79,8 @@ class UsageWatchService : Service() {
     /** 서비스가 꺼져 있던 동안의 오늘 사용 시간을 시스템 기록으로 다시 계산한다 */
     private fun catchUpToday() {
         val now = System.currentTimeMillis()
-        val midnight = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-        val events = usm.queryEvents(midnight, now)
+        // 하루는 새벽 4시에 시작한다 (CounterStore 와 같은 기준). 자정부터 세면 0~4시 시간이 이틀에 들어간다
+        val events = usm.queryEvents(store.dayStartMillis(), now)
         val e = UsageEvents.Event()
         var openPkg: String? = null
         var openAt = 0L
@@ -85,9 +92,12 @@ class UsageWatchService : Service() {
                     if (openPkg != null) total += e.timeStamp - openAt
                     openPkg = if (e.packageName in TARGETS) e.packageName else null
                     openAt = e.timeStamp
-                    foreground = e.packageName
+                    foreground = e.packageName; foregroundClass = e.className
                 }
-                PAUSED -> if (e.packageName == openPkg) { total += e.timeStamp - openAt; openPkg = null }
+                PAUSED -> if (e.packageName == foreground && e.className == foregroundClass) {
+                    if (openPkg != null) total += e.timeStamp - openAt
+                    openPkg = null; foreground = null; foregroundClass = null
+                }
             }
         }
         if (openPkg != null) total += now - openAt
@@ -101,8 +111,10 @@ class UsageWatchService : Service() {
         val e = UsageEvents.Event()
         while (events.hasNextEvent()) {
             events.getNextEvent(e)
-            if (e.eventType == RESUMED) foreground = e.packageName
-            else if (e.eventType == PAUSED && e.packageName == foreground) foreground = null
+            if (e.eventType == RESUMED) { foreground = e.packageName; foregroundClass = e.className }
+            else if (e.eventType == PAUSED && e.packageName == foreground && e.className == foregroundClass) {
+                foreground = null; foregroundClass = null
+            }
         }
         lastQuery = now
 
@@ -122,7 +134,8 @@ class UsageWatchService : Service() {
         if (tick.usedSec / 60 != lastNotifiedMin) { lastNotifiedMin = tick.usedSec / 60; updateNotification() }
     }
 
-    private fun goForeground() {
+    /** 알림을 띄우고 포그라운드 서비스로 올린다. 시스템이 막으면 false (그때는 조용히 멈춘다) */
+    private fun goForeground(): Boolean {
         val nm = getSystemService(NotificationManager::class.java)
         nm.deleteNotificationChannel("watch") // 0.3.0 이전 채널 (중요도가 낮아 숨겨졌음)
         nm.createNotificationChannel(
@@ -132,8 +145,15 @@ class UsageWatchService : Service() {
             }
         )
         val n = buildNotification()
-        if (Build.VERSION.SDK_INT >= 34) startForeground(NOTI_ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
-        else startForeground(NOTI_ID, n)
+        return try {
+            if (Build.VERSION.SDK_INT >= 34) startForeground(NOTI_ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            else startForeground(NOTI_ID, n)
+            true
+        } catch (e: Exception) {
+            // 예: 백그라운드에서 다시 시작될 때 시스템이 포그라운드 서비스를 막는 경우.
+            // 앱을 다시 열면 MainActivity 가 서비스를 다시 켠다.
+            false
+        }
     }
 
     private fun buildNotification(): Notification {

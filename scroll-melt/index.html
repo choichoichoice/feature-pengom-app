@@ -645,8 +645,10 @@ details.dev summary { font-size: 14px; }
   const isOver = () => S.budget && S.used > S.budget * 60;
   const limit = () => (S.budget || 0) + (S.extra || 0);
   const overLimit = () => S.budget && S.used > limit() * 60;
-  const MAX_EXTRA = 10; // 안드로이드 CounterStore.MAX_EXTRA 와 같게
-  const canExtend = () => (S.extra || 0) < MAX_EXTRA;
+  const MAX_EXTENDS = 2; // 안드로이드 CounterStore.MAX_EXTENDS 와 같게 (하루 "5분 더" 횟수)
+  // 예전 기록에는 횟수가 없다: 그때는 한 번에 5분이었으니 분으로 셈
+  const extCount = () => typeof S.extCount === "number" ? S.extCount : Math.ceil((S.extra || 0) / 5);
+  const canExtend = () => extCount() < MAX_EXTENDS;
   const buzz = (p) => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
 
   const rig = { p: new Mascot($("p-char")), h: new Mascot($("h-char")), s: new Mascot($("s-char")), t: new Mascot($("t-face")) };
@@ -705,7 +707,7 @@ details.dev summary { font-size: 14px; }
     }
     if (v % 5 === 0) v += 1;
     S.reason = $("p-reason").value.trim() || "다른 거";
-    S.extra = 0; setBudget(v);
+    S.extra = 0; S.extCount = 0; setBudget(v);
     S.homeMsg = "좋아, " + v + "분. 내가 재고 있을게.";
     S.lastMelt = 0; S.lastJoy = false;
     pushPromise();
@@ -741,9 +743,12 @@ details.dev summary { font-size: 14px; }
     S.homeMsg = v + "분으로 줄였어. 좋다.";
     pushPromise(); save(); closeChange(); renderHome();
   };
+  // "5분 더"는 누른 지금부터 5분. 늦게 눌러도 받은 시간이 이미 지나간 상태가 되지 않게 한다
   function extend(min) {
-    if (!canExtend()) return;
-    S.extra = (S.extra || 0) + min; S.overAck = false;
+    if (!canExtend() || !S.budget) return;
+    const fromNow = Math.ceil(S.used / 60) + min - S.budget;
+    const n = extCount() + 1; // extra 를 바꾸기 전에 센다 (예전 기록은 extra 로 횟수를 셈)
+    S.extra = Math.max((S.extra || 0) + min, fromNow); S.extCount = n; S.overAck = false;
     if (NATIVE && NATIVE.extend) { try { NATIVE.extend(min); } catch (e) {} }
     save();
   }
@@ -922,7 +927,7 @@ details.dev summary { font-size: 14px; }
     rig.s.set("melt", 0.35);
     const own = S.reason && S.reason !== "다른 거";
     const more = canExtend();
-    $("s-title").textContent = !S.extra ? S.budget + "분 다 됐어." : more ? "더 받은 " + S.extra + "분도 끝." : "오늘은 여기까지.";
+    $("s-title").textContent = !extCount() ? S.budget + "분 다 됐어." : more ? "더 받은 시간도 끝." : "오늘은 여기까지.";
     $("s-quote").textContent = (own ? "아침에 ‘" + S.reason + "’ 한다고 했잖아.\n" : "") + (more ? "더 보면 오늘 기록에 남아." : "더 받는 건 하루 두 번까지야.");
     $("s-keep").hidden = !more;
     $("sheet").hidden = false; rig.s.talk(1800); buzz([30, 60, 30]); $("s-leave").focus();
@@ -964,7 +969,7 @@ details.dev summary { font-size: 14px; }
     (S.log = S.log || []).push({ day: S.day, date: S.dateKey || new Date().toISOString().slice(0, 10), budget: S.budget, used: um, reason: S.reason, kept, extra: S.extra || 0 });
     S.log = S.log.slice(-120);
     S.lastBudget = S.budget;
-    Object.assign(S, { day: S.day + 1, used: 0, fired: [], overAck: false, exitedOnce: false, extra: 0, morningMsg: msg, homeMsg: "" });
+    Object.assign(S, { day: S.day + 1, used: 0, fired: [], overAck: false, exitedOnce: false, extra: 0, extCount: 0, morningMsg: msg, homeMsg: "" });
     save(); go("promise");
   }
 
@@ -994,7 +999,10 @@ details.dev summary { font-size: 14px; }
       S.dateKey = st.date; nextDay(); return;
     }
     if (S.budget && st.budget == null) pushPromise();
-    if (typeof st.extra === "number" && st.extra !== (S.extra || 0)) { S.extra = st.extra; save(); if (!$("home").hidden) homeNums(); }
+    if (typeof st.extra === "number" && (st.extra !== (S.extra || 0) || st.extCount !== S.extCount)) {
+      S.extra = st.extra; if (typeof st.extCount === "number") S.extCount = st.extCount;
+      save(); if (!$("home").hidden) homeNums();
+    }
     if (st.used !== S.used) {
       const wasOver = isOver();
       S.used = st.used; save();
