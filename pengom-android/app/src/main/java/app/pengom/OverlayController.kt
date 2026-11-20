@@ -184,23 +184,40 @@ class OverlayController(
                 setColor(0xFFF6FAFC.toInt()); cornerRadii = floatArrayOf(r, r, r, r, 0f, 0f, 0f, 0f)
             }
         }
-        card.addView(ImageView(svc).apply { setImageResource(R.drawable.mascot_head_melt) },
-            LinearLayout.LayoutParams(px(104), px(104)))
+        // 펭곰이 얼굴: 연한 하늘색 원 안에 담는다. 그림 아래 일자 단면이 원 테두리에 가려지도록 아래쪽에 붙여 배치.
+        val badge = FrameLayout(svc).apply {
+            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(0xFFE2F2FB.toInt()) }
+            outlineProvider = android.view.ViewOutlineProvider.BACKGROUND
+            clipToOutline = true
+        }
+        badge.addView(ImageView(svc).apply { setImageResource(R.drawable.mascot_head_melt); scaleType = ImageView.ScaleType.FIT_CENTER },
+            FrameLayout.LayoutParams(px(100), px(100), Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply { bottomMargin = -px(10) })
+        card.addView(badge, LinearLayout.LayoutParams(px(108), px(108)))
+
         val first = store.sessionExtra() == 0
         val more = store.canExtend()
+        // 제목
         card.addView(TextView(svc).apply {
-            text = when { first -> "이번엔 ${store.sessionMin()}분 다 봤어요."; more -> "연장한 ${store.sessionExtra()}분도 끝났어요."; else -> "이번 시청은 여기까지예요." }
-            textSize = 23f; typeface = Typeface.DEFAULT_BOLD; gravity = Gravity.CENTER
+            text = when {
+                first -> "약속한 ${store.sessionMin()}분이 지났어요!"
+                more -> "연장한 ${store.sessionExtra()}분도 다 지났어요!"
+                else -> "이번 시청은 여기까지예요!"
+            }
+            textSize = 22f; typeface = Typeface.DEFAULT_BOLD; gravity = Gravity.CENTER
             setTextColor(0xFF17232E.toInt()); setLineSpacing(0f, 1.15f)
-        }, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply { topMargin = px(8) })
+        }, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply { topMargin = px(12) })
+        // 서브 문구 1줄: 아낀 시간에 할 일이 있으면 그것, 없으면 쉬어 가자는 말
         card.addView(TextView(svc).apply {
             val reason = store.reason()
-            text = (if (reason != "다른 거") "아낀 시간엔 ‘$reason’ 하기로 했어요.\n" else "") +
-                "오늘 총 ${store.usedMin()}분 사용 · ${store.sessionsToday()}회 시청\n" +
-                (if (more) "${CounterStore.BREAK_MIN}분 쉬고 다시 켜면 새로 시작해요." else "연장은 한 번 볼 때 두 번까지예요.")
-            textSize = 14f; setTextColor(0xFF687B8B.toInt()); gravity = Gravity.CENTER
-            setPadding(px(12), px(10), px(12), px(10))
-            background = rounded(Color.WHITE, 14, 2, 0xFFE1EAF0.toInt())
+            text = if (reason != "다른 거" && reason.isNotBlank()) "아낀 시간엔 ‘$reason’ 하기로 했어요." else "빙하가 녹기 전에 잠깐 쉬어 갈까요?"
+            textSize = 15f; setTextColor(0xFF4F6576.toInt()); gravity = Gravity.CENTER
+        }, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply { topMargin = px(6) })
+        // 요약 박스: 오늘 누적만 한 줄 (연한 배경, 테두리 없음)
+        card.addView(TextView(svc).apply {
+            text = "오늘 총 ${store.usedMin()}분 · ${store.sessionsToday()}회 시청"
+            textSize = 15f; typeface = Typeface.DEFAULT_BOLD; setTextColor(0xFF2B3E4E.toInt()); gravity = Gravity.CENTER
+            setPadding(px(14), px(11), px(14), px(11))
+            background = rounded(0xFFEAF4FA.toInt(), 14)
         }, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = px(14) })
 
         // 위: 여기서 멈추기(주 버튼) / 아래: +5분 연장하기(꾹 누르면 게이지가 0→100% 차오름)
@@ -208,11 +225,17 @@ class OverlayController(
         card.addView(leave, LinearLayout.LayoutParams(MATCH_PARENT, px(56)).apply { topMargin = px(16) })
         val gauge = ClipDrawable(rounded(0xFFBFE3F7.toInt(), 18), Gravity.START, ClipDrawable.HORIZONTAL)
         val keep = TextView(svc).apply {
-            text = "+5분 연장하기 · 꾹 누르기"; textSize = 16f; typeface = Typeface.DEFAULT_BOLD; gravity = Gravity.CENTER
+            text = KEEP_LABEL; textSize = 16f; typeface = Typeface.DEFAULT_BOLD; gravity = Gravity.CENTER
             setTextColor(0xFF17232E.toInt()); isClickable = true
             background = LayerDrawable(arrayOf(rounded(Color.WHITE, 18, 2, 0xFFE1EAF0.toInt()), gauge))
         }
         if (more) card.addView(keep, LinearLayout.LayoutParams(MATCH_PARENT, px(56)).apply { topMargin = px(10) })
+        // 맨 아래 작은 캡션: 쿨다운 / 연장 한도 안내 (박스와 분리)
+        card.addView(TextView(svc).apply {
+            val b = CounterStore.BREAK_MIN
+            text = if (more) "${b}분 쉬었다 켜면 새 타이머로 시작해요" else "연장은 한 번 볼 때 두 번까지예요 · ${b}분 쉬면 새로 시작해요"
+            textSize = 12.5f; setTextColor(0xFF8A9AA8.toInt()); gravity = Gravity.CENTER
+        }, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = px(12) })
 
         dim.addView(card, FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT, Gravity.BOTTOM))
         try { wm.addView(dim, params(MATCH_PARENT, MATCH_PARENT, true)); sheet = dim } catch (_: Exception) { return }
@@ -250,7 +273,7 @@ class OverlayController(
                     true
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    if (gauge.level < 10000) { keep.text = "+5분 연장하기 · 꾹 누르기"; runGauge(0, 320) }
+                    if (gauge.level < 10000) { keep.text = KEEP_LABEL; runGauge(0, 320) }
                     true
                 }
                 else -> true
@@ -274,5 +297,8 @@ class OverlayController(
         } catch (_: Exception) {}
     }
 
-    companion object { private const val HOLD_MS = 1800L }
+    companion object {
+        private const val HOLD_MS = 1800L
+        private const val KEEP_LABEL = "+5분 더 보기 (꾹 누르기)"
+    }
 }

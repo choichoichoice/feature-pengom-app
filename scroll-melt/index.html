@@ -570,6 +570,16 @@ details.dev summary { font-size: 14px; }
 .app-sheet h2 { text-align: center; }
 .as-list, .as-list .srow { width: 100%; }
 .srow > span:first-child small { display: inline; margin-left: 8px; }
+/* 시간 종료 시트 다듬기 */
+.s-badge { width: 112px; height: 112px; border-radius: 50%; background: #e2f2fb; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; flex: none; }
+.s-badge .mascot { width: 128px; margin-bottom: -26px; }
+.s-badge .mascot .floe2, .s-badge .mascot .floe3, .s-badge .mascot .spk, .s-badge .mascot .flake { display: none; }
+#sheet h2 { margin: 12px 0 0; font-size: 22px; }
+.s-sub { margin: 4px 0 0; font-size: 15px; color: var(--muted); text-align: center; font-weight: 600; }
+#sheet .quote { white-space: normal; border: 0; background: var(--accent-soft); color: var(--fg); font-weight: 700; font-size: 15px; text-align: center; margin-top: 14px; }
+.s-cap { margin: 10px 0 0; font-size: 12.5px; color: var(--muted); opacity: .85; text-align: center; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .s-badge { background: #17384c; } }
+:root[data-theme="dark"] .s-badge { background: #17384c; }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -750,13 +760,15 @@ details.dev summary { font-size: 14px; }
       <div class="sheet-wrap" id="sheet" hidden>
         <div class="sheet">
           <span class="grab"></span>
-          <div class="mascot" id="s-char" style="width:170px"></div>
-          <h2 id="s-title">이번엔 15분 다 봤어요.</h2>
+          <div class="s-badge" aria-hidden="true"><div class="mascot" id="s-char"></div></div>
+          <h2 id="s-title">약속한 15분이 지났어요!</h2>
+          <p class="s-sub" id="s-sub"></p>
           <div class="quote" id="s-quote"></div>
           <div class="row">
-            <button class="btn ghost" id="s-keep">+5분 연장하기 · 꾹 누르기</button>
+            <button class="btn ghost" id="s-keep">+5분 더 보기 (꾹 누르기)</button>
             <button class="btn" id="s-leave">여기서 멈추기</button>
           </div>
+          <p class="s-cap" id="s-cap"></p>
         </div>
       </div>
     </section>
@@ -1237,7 +1249,7 @@ details.dev summary { font-size: 14px; }
       const t = performance.now() - start;
       if (dir > 0) {
         const v = Math.min(1, from + t / ms); set(v);
-        if (v >= 1) { dir = 0; raf = 0; buzz([20, 40, 60]); onDone(); setTimeout(() => set(0), 200); return; }
+        if (v >= 1) { dir = 0; raf = 0; buzz([20, 40, 60]); if (label) el.textContent = label; onDone(); setTimeout(() => set(0), 200); return; }
       } else {
         const v = Math.max(0, from - t / 300); set(v); // 0.3초에 걸쳐 되돌아감
         if (v <= 0) { dir = 0; raf = 0; return; }
@@ -1245,11 +1257,16 @@ details.dev summary { font-size: 14px; }
       raf = requestAnimationFrame(loop);
     };
     const go2 = (d) => { if (dir === d) return; cancelAnimationFrame(raf); dir = d; from = p; start = performance.now(); raf = requestAnimationFrame(loop); };
-    el.addEventListener("pointerdown", (e) => { if (el.dataset.hold !== "1") return; e.preventDefault(); buzz(8); go2(1); });
-    ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => el.addEventListener(ev, () => { if (dir > 0) go2(-1); }));
+    let label = "";
+    el.addEventListener("pointerdown", (e) => {
+      if (el.dataset.hold !== "1") return; e.preventDefault(); buzz(8);
+      if (dir <= 0) { label = el.textContent; el.textContent = "계속 누르고 있어요…"; }
+      go2(1);
+    });
+    ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => el.addEventListener(ev, () => { if (dir > 0) { go2(-1); if (label) el.textContent = label; } }));
     el.addEventListener("contextmenu", (e) => e.preventDefault());
   }
-  const HOLD_LABEL = "+5분 연장하기 · 꾹 누르기";
+  const HOLD_LABEL = "+5분 더 보기 (꾹 누르기)";
 
   /* ---------- 홈 ---------- */
   // 남은 비율 단계(이번 세션 기준): ok(여유) / warn(30% 이하) / danger(10% 이하 또는 5분 미만, 초과 포함)
@@ -1579,10 +1596,12 @@ details.dev summary { font-size: 14px; }
     rig.s.set("melt", 0.35);
     const own = S.reason && S.reason !== "다른 거";
     const more = canExtend();
-    $("s-title").textContent = !S.sExtra ? "이번엔 " + S.session + "분 다 봤어요." : more ? "연장한 " + S.sExtra + "분도 끝났어요." : "이번 시청은 여기까지예요.";
-    $("s-quote").textContent = (own ? "아낀 시간엔 ‘" + S.reason + "’ 하기로 했어요.\n" : "")
-      + "오늘 총 " + usedMin() + "분 사용 · " + (S.sessions || 0) + "회 시청\n"
-      + (more ? BREAK_MIN + "분 쉬고 다시 켜면 새로 시작해요." : "연장은 한 번 볼 때 두 번까지예요.");
+    $("s-title").textContent = !S.sExtra ? "약속한 " + S.session + "분이 지났어요!" : more ? "연장한 " + S.sExtra + "분도 다 지났어요!" : "이번 시청은 여기까지예요!";
+    $("s-sub").textContent = own ? "아낀 시간엔 ‘" + S.reason + "’ 하기로 했어요." : "빙하가 녹기 전에 잠깐 쉬어 갈까요?";
+    // 가운데 박스: 오늘 누적만 한 줄
+    $("s-quote").textContent = "오늘 총 " + usedMin() + "분 · " + (S.sessions || 0) + "회 시청";
+    // 맨 아래 캡션: 쿨다운 / 연장 한도 안내
+    $("s-cap").textContent = more ? BREAK_MIN + "분 쉬었다 켜면 새 타이머로 시작해요" : "연장은 한 번 볼 때 두 번까지예요 · " + BREAK_MIN + "분 쉬면 새로 시작해요";
     $("s-keep").hidden = !more;
     $("sheet").hidden = false; rig.s.talk(1800); buzz([30, 60, 30]); $("s-leave").focus();
   }
