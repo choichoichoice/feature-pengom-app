@@ -130,9 +130,9 @@ class UsageWatchService : Service() {
     private var lastDay: String? = null
 
     private fun step() {
-        // 기상 시간이 지나 새 하루가 되면 아침 약속을 물어본다
+        // 새벽 4시가 지나면 하루 기록이 넘어간다 (알림은 보내지 않음)
         val day = store.dateKey()
-        if (lastDay != null && day != lastDay) morningNudge()
+        if (lastDay != null && day != lastDay) updateNotification()
         lastDay = day
 
         val now = System.currentTimeMillis()
@@ -221,21 +221,6 @@ class UsageWatchService : Service() {
     private var lastWatching = false
     private var lastRestNotify = 0L
 
-    private fun morningNudge() {
-        val nm = getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(MORNING, "아침 인사", NotificationManager.IMPORTANCE_DEFAULT))
-        val open = PendingIntent.getActivity(this, 1, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
-        val n = Notification.Builder(this, MORNING)
-            .setSmallIcon(R.drawable.ic_stat_pengom)
-            .setContentTitle("좋은 아침이에요! 오늘도 한 번에 ${store.sessionMin()}분씩만 봐요.")
-            .setContentText("앱을 켜면 타이머가 바로 시작돼요.")
-            .setContentIntent(open)
-            .setAutoCancel(true)
-            .build()
-        nm.notify(MORNING_ID, n)
-        updateNotification()
-    }
-
     private fun updateNotification() {
         getSystemService(NotificationManager::class.java).notify(NOTI_ID, buildNotification())
     }
@@ -247,8 +232,6 @@ class UsageWatchService : Service() {
         private const val IDLE_MS = 15_000L
         private const val CHANNEL = "remaining"
         private const val NOTI_ID = 7
-        private const val MORNING = "morning"
-        private const val MORNING_ID = 8
 
         fun start(ctx: Context) {
             val i = Intent(ctx, UsageWatchService::class.java)

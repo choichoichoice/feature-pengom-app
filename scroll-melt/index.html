@@ -419,12 +419,6 @@ details.dev summary { font-size: 14px; }
 .btn.hold { touch-action: none; user-select: none; -webkit-user-select: none;
   background: linear-gradient(to right, var(--accent-deep) calc(var(--p, 0) * 100%), var(--accent) 0); }
 .btn.ghost.hold { background: linear-gradient(to right, var(--line) calc(var(--p, 0) * 100%), transparent 0); }
-/* 기상 시간 직접 입력 */
-.tin { display: inline-flex; align-items: center; gap: 4px; background: var(--accent-soft); border-radius: 12px; padding: 4px 10px; }
-.tin input { width: 2.2ch; font: inherit; font-size: 20px; font-weight: 800; text-align: center; border: 0; background: transparent; color: var(--fg); padding: 4px 0; font-variant-numeric: tabular-nums; }
-.tin input:focus { outline: 2px solid var(--accent); border-radius: 6px; }
-.tin b { font-size: 20px; }
-.hint.left { text-align: left; margin: 6px 4px 0; font-size: 14px; }
 /* ---------- 0.11: 탭 가능한 남은 시간, 극지 배경, 떠 있는 펭곰이 ---------- */
 .goal-chip { display: none; }
 .left.tap { cursor: pointer; border-radius: 24px; padding: 10px 12px 12px; margin: 0 -4px; transition: background-color .2s, transform .12s; -webkit-tap-highlight-color: transparent; }
@@ -516,6 +510,23 @@ details.dev summary { font-size: 14px; }
 .ins-row { flex-direction: row; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 .ins-row b { font-size: 16px; }
 .ins-note { margin: 0; font-size: 13px; color: var(--muted); }
+/* 상단 상태 점: 감지 중(초록) / 시청 중(파랑) / 권한 설정 필요(빨강) / 배터리(주황) */
+.ready.ok { color: #1f9d63; }
+.ready.watch { color: #1f8fd6; }
+.ready.watch::before { animation: pg-pulse 1.6s ease-in-out infinite; }
+.ready.need { color: #d63c2f; cursor: pointer; }
+.ready.warn { color: #d9770b; cursor: pointer; }
+@keyframes pg-pulse { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .ready.watch::before { animation: none; } }
+/* 큰 시간 바로 아래 안내 */
+.left .tap-hint { margin-top: -4px; }
+/* 범례: 항목 단위로 줄바꿈 */
+.ch-key { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.ch-key .ki { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.ch-key .ki span { margin-left: 0 !important; }
+/* 시간대 카드: 제목 위, 내용 아래 */
+.ins-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+.ins-row b { font-size: 17px; overflow-wrap: anywhere; }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -575,9 +586,9 @@ details.dev summary { font-size: 14px; }
           <div class="mascot" id="h-char"></div>        </div>
         <div class="left tap" id="h-left-box" role="button" tabindex="0" aria-label="이번 시청 남은 시간. 눌러서 1회 시청 시간 변경">
           <div class="big"><span class="n" id="h-left">31</span><span class="u" id="h-left-u">분 남았어요</span></div>
+          <div class="tap-hint" aria-hidden="true">탭해서 시간을 변경해 보세요 <span>✎</span></div>
           <div class="bar"><i id="h-bar"></i></div>
           <div class="cap" id="h-cap"></div>
-          <div class="tap-hint" aria-hidden="true">탭해서 시간 변경 <span>✎</span></div>
         </div>
         <div class="card perm" id="h-battery" hidden>
           <span class="label" id="h-battery-title">배터리 설정이 필요해요</span>
@@ -602,7 +613,7 @@ details.dev summary { font-size: 14px; }
           <div class="rv-main"><span class="rv-num" id="r-total">0분</span><span class="rv-sub" id="r-diff"></span></div>
           <figure class="chart" id="r-chart" aria-label="하루별 사용 시간">
             <div class="ch-plot" id="r-plot"></div>
-            <figcaption class="ch-key" id="r-key"><span class="k-bar"></span>하루 사용 (블록 = 1회 시청) <span class="k-ext"></span>연장 <span class="k-avg"></span>평균 <span class="k-star">★</span>연장 없이 멈춘 날</figcaption>
+            <figcaption class="ch-key" id="r-key"><span class="ki"><span class="k-bar"></span>하루 사용 (블록 = 1회 시청)</span><span class="ki"><span class="k-ext"></span>연장</span><span class="ki"><span class="k-avg"></span>평균</span><span class="ki"><span class="k-star">★</span>연장 없이 멈춘 날</span></figcaption>
             <div class="ch-tip" id="r-tip" role="status" aria-live="polite" hidden></div>
           </figure>
           <section class="insight" aria-label="종합 결과">
@@ -636,18 +647,6 @@ details.dev summary { font-size: 14px; }
           <div class="gtitle">감지할 앱</div>
           <div id="s-apps"></div>
           <p class="note">켜 둔 앱이 화면에 떠 있는 시간을 재요. 앱 안에서 쇼츠를 보는지 긴 영상을 보는지는 구분하지 못해요.</p>
-        </div>
-        <div class="group">
-          <div class="gtitle">기상 시간</div>
-          <div class="srow"><span>보통 일어나는 시간</span>
-            <span class="tin" role="group" aria-label="일어나는 시간 (24시간)">
-              <input id="s-wake-h" type="text" inputmode="numeric" maxlength="2" placeholder="07" aria-label="시" autocomplete="off">
-              <b>:</b>
-              <input id="s-wake-m" type="text" inputmode="numeric" maxlength="2" placeholder="00" aria-label="분" autocomplete="off">
-            </span>
-          </div>
-          <div class="hint left" id="s-wake-hint">24시간 기준으로 입력해 주세요. 예: 07:30, 22:00</div>
-          <p class="note">사람마다 생활 시간이 달라서, 하루는 자정이 아니라 <b>일어나는 시간</b>에 시작돼요. 늦은 밤에 본 시간은 전날 기록으로 들어가고, 일어날 시간이 되면 펭곰이가 오늘 목표를 물어봐요. 바꾼 시간은 다음 날부터 적용돼요.</p>
         </div>
         <div class="group">
           <div class="gtitle">기록</div>
@@ -1022,7 +1021,7 @@ details.dev summary { font-size: 14px; }
   function openGoal() {
     $("g-cur").textContent = fmtMin(S.session) + (inSession() && S.sExtra ? " (연장 +" + S.sExtra + "분)" : "");
     $("g-used").textContent = fmtMin(usedMin());
-    $("g-reset").textContent = "앱을 나가 " + BREAK_MIN + "분 넘게 쉬면 새로 시작돼요. 하루 기록은 매일 " + hhmm(wakeMinNow()) + "에 초기화돼요.";
+    $("g-reset").textContent = "앱을 나가 " + BREAK_MIN + "분 넘게 쉬면 새로 시작돼요. 하루 기록은 매일 새벽 4시에 넘어가요.";
     gPick.set(S.session);
     goalHint();
     $("goal").hidden = false;
@@ -1056,11 +1055,13 @@ details.dev summary { font-size: 14px; }
   function statusInfo() {
     let on = true, batt = true;
     if (NATIVE) { try { on = !!NATIVE.isCounting(); batt = !NATIVE.batteryOk || NATIVE.batteryOk(); } catch (e) {} }
-    if (!on) return ["need", "권한 필요"];
-    if (!batt) return ["need", "배터리 설정 필요"];
-    if (!inSession() || resting()) return ["wait", "타이머 대기 중"];
-    return ["ok", "사용 감지 중"];
+    if (!on) return ["need", "권한 설정 필요"];
+    if (!batt) return ["warn", "배터리 설정 필요"];
+    if (watchingNow()) return ["watch", "시청 중"];
+    return ["ok", "감지 중"];
   }
+  // 지금 대상 앱을 보고 있는가: 안드로이드는 서비스가 알려 주고, 웹 미리보기는 연습 피드를 보는 중일 때
+  const watchingNow = () => NATIVE ? !!S.nWatch : !$("feed").hidden;
   function renderTopStatus() {
     const [cls, txt] = statusInfo(), r = $("h-ready");
     r.hidden = false; r.className = "ready " + cls; r.textContent = txt;
@@ -1124,7 +1125,9 @@ details.dev summary { font-size: 14px; }
     if (left <= total * 0.3) return "warn";
     return "ok";
   }
-  function wakeMinNow() { let w = S.wake == null ? 420 : S.wake; if (NATIVE && NATIVE.wakeMin) { try { w = NATIVE.wakeMin(); } catch (e) {} } return w; }
+  // 하루 기록이 넘어가는 시각: 새벽 4시 고정 (안드로이드 CounterStore.DAY_START_MIN 과 같게). 밤늦게 본 시간은 전날로.
+  const DAY_START_MIN = 4 * 60;
+  function wakeMinNow() { return DAY_START_MIN; }
   function isNight() { const d = new Date(), m = d.getHours() * 60 + d.getMinutes(); return m >= 21 * 60 || m < wakeMinNow(); }
   const hhmm = (m) => String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
   // 사건이 없을 때 펭곰이가 하는 말: 지금 상태에 맞춰서
@@ -1182,7 +1185,7 @@ details.dev summary { font-size: 14px; }
     renderReview();
   }
 
-  /* ---------- 날짜: 하루는 기상 시간에 바뀐다 ---------- */
+  /* ---------- 날짜: 하루는 새벽 4시에 바뀐다 ---------- */
   const ymd = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
   function dayKey() { return ymd(new Date(Date.now() - wakeMinNow() * 60000)); }
   function shiftDay(key, n) { const d = new Date(key + "T12:00:00"); d.setDate(d.getDate() + n); return ymd(d); }
@@ -1242,7 +1245,7 @@ details.dev summary { font-size: 14px; }
         g += `<g data-i="${i}" class="${d.today ? "today" : ""}${i === chartSel ? " sel" : ""}"><g clip-path="url(#${clip})">${inner}</g>`
           + `<rect class="hit" x="${cx - slot / 2}" y="${top - 16}" width="${slot}" height="${H - top - bot + 16}"/></g>`;
         // 막대 위 값 (이번 주는 모든 막대, 이번 달은 선택한 막대와 오늘만)
-        if (showAllValues || i === chartSel || d.today) {
+        if (showAllValues || i === chartSel) {
           const t = d.used + "분", half = t.length * 3.4 + 2;
           g += `<text class="val${i === chartSel ? " sel" : ""}" x="${lim(cx, half)}" y="${Math.max(13, yt - 6)}" text-anchor="middle">${t}</text>`;
           if (!d.today && !d.ext) g += `<path class="star" transform="translate(${lim(cx, half)},${Math.max(13, yt - 6) - 17}) scale(.55)" d="M0,-9 L2.6,-2.8 9,-2.8 3.8,1.2 5.6,8 0,4 -5.6,8 -3.8,1.2 -9,-2.8 -2.6,-2.8Z"/>`;
@@ -1250,7 +1253,10 @@ details.dev summary { font-size: 14px; }
       } else {
         g += `<g data-i="${i}"><rect class="hit" x="${cx - slot / 2}" y="${top - 16}" width="${slot}" height="${H - top - bot + 16}"/></g>`;
       }
-      if (i % labelEvery === 0 || d.today) g += `<text class="ax${i === chartSel ? " sel" : ""}" x="${lim(cx, 12)}" y="${H - 6}" text-anchor="middle">${d.label}</text>`;
+      // X축: 이번 주는 매일, 이번 달은 7일마다 + 오늘. '오늘'과 4일 이내로 가까운 날짜 눈금은 생략해서 겹치지 않게
+      const todayIdx = days.findIndex((x) => x.today);
+      const showLbl = d.today || (i % labelEvery === 0 && !(labelEvery > 1 && todayIdx >= 0 && todayIdx - i > 0 && todayIdx - i <= 4));
+      if (showLbl) g += `<text class="ax${i === chartSel ? " sel" : ""}" x="${lim(cx, d.label.length * 4 + 2)}" y="${H - 6}" text-anchor="middle">${d.label}</text>`;
     });
     // 평균 점선
     if (avgMin > 0) {
@@ -1536,7 +1542,7 @@ details.dev summary { font-size: 14px; }
     }
     const before = [S.used, S.sUsed, S.sExtra, S.nIn, S.nBreak > 0, S.sessions, S.ext, S.session].join("|");
     S.used = st.used; S.sUsed = st.sessionUsed || 0; S.sExtra = st.sessionExtra || 0;
-    S.nIn = !!st.inSession; S.nBreak = st.breakLeft || 0; S.ext = st.extends || 0;
+    S.nIn = !!st.inSession; S.nBreak = st.breakLeft || 0; S.ext = st.extends || 0; S.nWatch = !!st.watching;
     if (Array.isArray(st.todaySessions)) S.todaySegs = st.todaySessions;
     // 시청 횟수: 저장된 횟수와 세션 목록 중 큰 값 (예전 버전에서 넘어온 날 0회로 보이지 않게)
     S.sessions = Math.max(st.sessions || 0, (S.todaySegs || []).length);
@@ -1597,35 +1603,8 @@ details.dev summary { font-size: 14px; }
     });
     clearArmed = false; $("s-clear").textContent = "지우기"; $("s-clear-text").textContent = "기록 모두 지우기";
     try { $("s-ver").textContent = NATIVE && NATIVE.appVersion ? NATIVE.appVersion() : "웹 미리보기"; } catch (e) {}
-    const wake = wakeMinNow();
-    $("s-wake-h").value = String(Math.floor(wake / 60)).padStart(2, "0");
-    $("s-wake-m").value = String(wake % 60).padStart(2, "0");
-    $("s-reset").textContent = "앱을 나가 " + BREAK_MIN + "분 넘게 쉬면 새 세션이 시작돼요. 하루 기록은 매일 " + hhmm(wake) + "(일어나는 시간)에 초기화돼요.";
+    $("s-reset").textContent = "앱을 나가 " + BREAK_MIN + "분 넘게 쉬면 새 세션이 시작돼요. 하루 기록은 매일 새벽 4시에 자동으로 넘어가요.";
   }
-  // 기상 시간: 시(0~23)·분(0~59)을 숫자로 직접 입력. 두 자리 치면 다음 칸으로, 칸을 벗어나면 저장.
-  function saveWake() {
-    const hs = $("s-wake-h").value.trim(), ms = $("s-wake-m").value.trim(), hint = $("s-wake-hint");
-    const h = parseInt(hs, 10), m = ms === "" ? 0 : parseInt(ms, 10);
-    if (hs === "" || isNaN(h) || h < 0 || h > 23 || isNaN(m) || m < 0 || m > 59) {
-      hint.className = "hint left warn"; hint.textContent = "시간은 0~23, 분은 0~59 사이로 입력해 주세요."; return;
-    }
-    const v = h * 60 + m;
-    $("s-wake-h").value = String(h).padStart(2, "0"); $("s-wake-m").value = String(m).padStart(2, "0");
-    S.wake = v; save();
-    if (NATIVE && NATIVE.setWakeMin) { try { NATIVE.setWakeMin(v); } catch (e) {} }
-    hint.className = "hint left"; hint.textContent = hhmm(v) + "로 저장했어요. 다음 날부터 적용돼요.";
-    $("s-reset").textContent = "앱을 나가 " + BREAK_MIN + "분 넘게 쉬면 새 세션이 시작돼요. 하루 기록은 매일 " + hhmm(v) + "(일어나는 시간)에 초기화돼요.";
-  }
-  ["s-wake-h", "s-wake-m"].forEach((id, k) => {
-    const el = $(id);
-    el.addEventListener("input", () => {
-      el.value = el.value.replace(/\D/g, "").slice(0, 2);
-      if (k === 0 && el.value.length === 2) $("s-wake-m").focus();
-    });
-    el.addEventListener("focus", () => el.select());
-    el.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); el.blur(); } });
-    el.addEventListener("blur", () => setTimeout(() => { if (!["s-wake-h", "s-wake-m"].includes(document.activeElement && document.activeElement.id)) saveWake(); }, 0));
-  });
   $("s-reduce").onclick = openGoal;
   let clearArmed = false;
   $("s-clear").onclick = () => {

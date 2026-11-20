@@ -25,11 +25,11 @@ class CounterStore(context: Context) {
     private val p = context.applicationContext.getSharedPreferences("pengom", Context.MODE_PRIVATE)
 
     /**
-     * 하루는 사용자가 정한 기상 시간에 바뀐다 (사람마다 생활 시간이 달라서).
-     * 밤늦게 본 쇼츠는 전날 기록으로 들어간다.
+     * 하루 누적 기록은 매일 새벽 4시에 넘어간다 (설정 없음). 밤늦게 본 시간은 전날 기록으로 들어간다.
+     * 예전 버전의 기상 시간 설정 값이 남아 있어도 쓰지 않는다. 날짜가 거꾸로 가는 일은 roll() 이 막는다.
      */
-    fun wakeMin(): Int = p.getInt(K_WAKE, DEFAULT_WAKE_MIN)
-    fun setWakeMin(min: Int) { p.edit().putInt(K_WAKE, min.coerceIn(0, 24 * 60 - 1)).apply() }
+    fun wakeMin(): Int = DAY_START_MIN
+    @Suppress("UNUSED_PARAMETER") fun setWakeMin(min: Int) { /* 기상 시간 설정은 없앴다 */ }
 
     private fun today(): String = LocalDateTime.now().minusMinutes(wakeMin().toLong()).toLocalDate().toString()
 
@@ -253,6 +253,7 @@ class CounterStore(context: Context) {
             .put("sessionUsed", if (inSession(now)) p.getInt(K_S_USED, 0) else 0)
             .put("sessionExtra", if (inSession(now)) p.getInt(K_S_EXTRA, 0) else 0)
             .put("inSession", inSession(now))
+            .put("watching", inSession(now) && p.getLong(K_S_LEFT_AT, 0L) == 0L)
             .put("breakLeft", breakLeftSec(now))
             .put("sessions", p.getInt(K_SESSIONS, 0))
             .put("extends", p.getInt(K_EXT_TODAY, 0))
@@ -273,8 +274,8 @@ class CounterStore(context: Context) {
         private const val K_REASON = "reason"
         /** 예전 "하루 목표" 방식의 키 (하루가 바뀔 때 정리) */
         private val LEGACY_KEYS = listOf("budgetMin", "thMin", "overThMin", "fired", "overAck", "extraMin", "lastBudgetMin", "autoBudget")
-        private const val K_WAKE = "wakeMin"
-        const val DEFAULT_WAKE_MIN = 7 * 60
+        /** 하루가 바뀌는 시각: 새벽 4시 */
+        const val DAY_START_MIN = 4 * 60
         private const val K_OFF_APPS = "offApps"
         val APPS = listOf(
             App("instagram", "인스타그램", setOf("com.instagram.android")),
