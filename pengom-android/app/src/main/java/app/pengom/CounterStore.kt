@@ -22,13 +22,24 @@ class CounterStore(context: Context) {
 
     private val p = context.applicationContext.getSharedPreferences("pengom", Context.MODE_PRIVATE)
 
-    /** 하루는 새벽 4시에 바뀐다 (자정 넘어 보는 쇼츠도 그날 기록) */
-    private fun today(): String = LocalDateTime.now().minusHours(DAY_START_HOUR).toLocalDate().toString()
+    /**
+     * 하루는 사용자가 정한 기상 시간에 바뀐다 (사람마다 생활 시간이 달라서).
+     * 밤늦게 본 쇼츠는 전날 기록으로 들어간다.
+     */
+    fun wakeMin(): Int = p.getInt(K_WAKE, DEFAULT_WAKE_MIN)
+    fun setWakeMin(min: Int) { p.edit().putInt(K_WAKE, min.coerceIn(0, 24 * 60 - 1)).apply() }
 
-    /** 오늘이 시작된 시각 (새벽 4시) */
-    fun dayStartMillis(): Long =
-        LocalDateTime.now().minusHours(DAY_START_HOUR).toLocalDate().atTime(DAY_START_HOUR.toInt(), 0)
+    private fun today(): String = LocalDateTime.now().minusMinutes(wakeMin().toLong()).toLocalDate().toString()
+
+    /** 오늘 날짜(기상 시간 기준). 바뀌었으면 하루를 넘긴다 */
+    fun dateKey(): String { roll(); return p.getString(K_DATE, today()) ?: today() }
+
+    /** 오늘이 시작된 시각 (기상 시간) */
+    fun dayStartMillis(): Long {
+        val w = wakeMin().toLong()
+        return LocalDateTime.now().minusMinutes(w).toLocalDate().atStartOfDay().plusMinutes(w)
             .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    }
 
     // ---------- 잴 앱 ----------
     data class App(val key: String, val label: String, val pkgs: Set<String>)
@@ -55,6 +66,8 @@ class CounterStore(context: Context) {
         val d = today()
         val cur = p.getString(K_DATE, null)
         if (cur == d) return
+        // 기상 시간을 늦췄을 때 날짜가 거꾸로 가지 않게: 새 기준은 다음 날부터
+        if (cur != null && d < cur) return
         val e = p.edit()
         if (cur != null) {
             val hist = history()
@@ -177,6 +190,7 @@ class CounterStore(context: Context) {
             .put("extra", p.getInt(K_EXTRA, 0))
             .put("canExtend", canExtend())
             .put("auto", p.getBoolean(K_AUTO, false))
+            .put("wake", wakeMin())
             .put("history", history())
             .toString()
     }
@@ -194,7 +208,8 @@ class CounterStore(context: Context) {
         private const val K_EXTRA = "extraMin"
         private const val K_LAST_BUDGET = "lastBudgetMin"
         private const val K_AUTO = "autoBudget"
-        private const val DAY_START_HOUR = 4L
+        private const val K_WAKE = "wakeMin"
+        const val DEFAULT_WAKE_MIN = 7 * 60
         private const val K_OFF_APPS = "offApps"
         val APPS = listOf(
             App("instagram", "인스타그램", setOf("com.instagram.android")),

@@ -360,6 +360,23 @@ details.dev summary { font-size: 14px; }
 .sw input:checked + i::after { transform: translateX(22px); }
 .srow small { display: block; font-size: 13px; color: var(--muted); font-weight: 500; }
 #history .rv-top { align-items: flex-end; }
+/* ---------- 기록 그래프: 하루 한 막대, 약속은 가로 눈금 ---------- */
+.chart { margin: 6px 0 0; position: relative; }
+.ch-plot svg { display: block; width: 100%; height: auto; overflow: visible; }
+.ch-plot .grid { stroke: var(--line); stroke-width: 1; }
+.ch-plot .ax { fill: var(--muted); font-size: 13px; font-weight: 600; }
+.ch-plot .bar { fill: var(--accent); }
+.ch-plot .bar.today { fill: var(--accent); opacity: .45; }
+.ch-plot .tick { stroke: var(--fg); stroke-width: 2.5; stroke-linecap: round; }
+.ch-plot .hit { fill: transparent; cursor: pointer; }
+.ch-plot .val { fill: var(--fg); font-size: 13px; font-weight: 700; }
+.ch-plot g.sel .bar { fill: var(--accent-deep); }
+.ch-tip { margin-top: 6px; font-size: 15px; font-weight: 700; color: var(--fg); background: var(--accent-soft); padding: 8px 12px; border-radius: 10px; }
+.ch-key { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); font-weight: 600; margin-top: 6px; }
+.ch-key .k-bar { width: 10px; height: 12px; border-radius: 3px 3px 0 0; background: var(--accent); }
+.ch-key .k-tick { width: 14px; height: 2.5px; border-radius: 2px; background: var(--fg); margin-left: 10px; }
+.time { font: inherit; font-size: 18px; font-weight: 700; color: var(--fg); background: var(--accent-soft); border: 0; border-radius: 12px; padding: 8px 12px; }
+.note b { color: var(--fg); }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -438,6 +455,12 @@ details.dev summary { font-size: 14px; }
             </div>
           </div>
           <div class="rv-main"><span class="rv-num" id="r-total">0분</span><span class="rv-sub" id="r-diff"></span></div>
+          <figure class="chart" id="r-chart" aria-label="하루별 쇼츠 본 시간">
+            <div class="ch-plot" id="r-plot"></div>
+            <figcaption class="ch-key" id="r-key"><span class="k-bar"></span>본 시간 <span class="k-tick"></span>그날 약속</figcaption>
+            <div class="ch-tip" id="r-tip" role="status" aria-live="polite" hidden></div>
+          </figure>
+          <div class="rv-line" id="r-first"></div>
           <div class="rv-line" id="r-kept"></div>
           <ul class="rv-reasons" id="r-reasons"></ul>
           <div class="rv-line rv-muted" id="r-extra"></div>
@@ -463,8 +486,9 @@ details.dev summary { font-size: 14px; }
           <p class="note">켜 둔 앱이 화면 맨 앞에 있는 시간을 재. 앱 안에서 쇼츠를 보는지 긴 영상을 보는지는 몰라.</p>
         </div>
         <div class="group">
-          <div class="gtitle">하루 기준</div>
-          <div class="srow"><span>새 하루 시작</span><span class="sval">새벽 4시</span></div>
+          <div class="gtitle">기상 시간</div>
+          <label class="srow"><span>보통 일어나는 시간</span><input class="time" type="time" id="s-wake" value="07:00"></label>
+          <p class="note">사람마다 생활 시간이 달라서, 하루는 자정이 아니라 <b>네가 일어나는 시간</b>에 시작해. 밤늦게 본 쇼츠는 전날 기록으로 들어가고, 일어날 시간이 되면 펭곰이가 오늘 약속을 물어봐. 바꾼 시간은 내일부터 딱 맞아.</p>
         </div>
         <div class="group">
           <div class="gtitle">기록</div>
@@ -873,6 +897,58 @@ details.dev summary { font-size: 14px; }
     renderReview();
   }
 
+  /* ---------- 기록 그래프 ---------- */
+  const WD = ["일", "월", "화", "수", "목", "금", "토"];
+  function dayLabel(d, i, n) {
+    if (d.today) return "오늘";
+    if (d.date && /^\d{4}-\d{2}-\d{2}$/.test(d.date)) {
+      const t = new Date(d.date + "T12:00:00");
+      return n <= 7 ? WD[t.getDay()] : (t.getMonth() + 1) + "/" + t.getDate();
+    }
+    return (d.day || i + 1) + "일";
+  }
+  function renderChart(days) {
+    const plot = $("r-plot"), tip = $("r-tip");
+    tip.hidden = true;
+    if (!days.length) { plot.innerHTML = ""; return; }
+    const W = 340, H = 180, top = 22, bot = 26, left = 34, right = 4;
+    const maxV = Math.max(10, ...days.map((d) => Math.max(d.used, d.budget || 0)));
+    const step = maxV <= 30 ? 10 : maxV <= 60 ? 20 : maxV <= 150 ? 30 : 60;
+    const yMax = Math.ceil(maxV / step) * step;
+    const y = (v) => top + (H - top - bot) * (1 - v / yMax);
+    const slot = (W - left - right) / days.length;
+    const bw = Math.max(4, Math.min(24, slot - 2));
+    const r = Math.min(4, bw / 2);
+    let g = "";
+    for (let v = step; v <= yMax; v += step) g += `<line class="grid" x1="${left - 2}" x2="${W - right}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="0" y="${y(v) + 4}">${v}분</text>`;
+    g += `<line class="grid" x1="${left}" x2="${W - right}" y1="${y(0)}" y2="${y(0)}"/>`;
+    const labelEvery = days.length <= 7 ? 1 : 7;
+    days.forEach((d, i) => {
+      const cx = left + slot * (i + 0.5), x = cx - bw / 2, yt = y(d.used), h = y(0) - yt;
+      // 위만 둥근 막대 (바닥은 각지게)
+      const path = h <= 0 ? "" : h < r ? `M${x},${y(0)}h${bw}v${-h}h${-bw}z`
+        : `M${x},${y(0)}V${yt + r}Q${x},${yt} ${x + r},${yt}H${x + bw - r}Q${x + bw},${yt} ${x + bw},${yt + r}V${y(0)}Z`;
+      const tickW = Math.min(bw + 8, slot - 1);
+      g += `<g data-i="${i}"><path class="bar${d.today ? " today" : ""}" d="${path}"/>`
+        + (d.budget ? `<line class="tick" x1="${cx - tickW / 2}" x2="${cx + tickW / 2}" y1="${y(d.budget)}" y2="${y(d.budget)}"/>` : "")
+        + `<rect class="hit" x="${cx - slot / 2}" y="${top - 10}" width="${slot}" height="${H - top - bot + 10}"/></g>`;
+      if (i % labelEvery === 0 || d.today) g += `<text class="ax" x="${cx}" y="${H - 6}" text-anchor="middle">${dayLabel(d, i, days.length)}</text>`;
+    });
+    // 오늘(또는 마지막 날) 값만 직접 표시
+    const li = days.length - 1, last = days[li];
+    g += `<text class="val" x="${left + slot * (li + 0.5)}" y="${Math.max(12, y(last.used) - 6)}" text-anchor="middle">${last.used}분</text>`;
+    plot.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${days.map((d, i) => dayLabel(d, i, days.length) + " " + d.used + "분").join(", ")}">${g}</svg>`;
+    plot.querySelectorAll("g[data-i]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const i = +el.dataset.i, d = days[i];
+        plot.querySelectorAll("g.sel").forEach((x) => x.classList.remove("sel")); el.classList.add("sel");
+        const state = d.today ? "오늘 진행 중" : d.kept ? "약속 지킴" : "약속 넘김";
+        tip.textContent = dayLabel(d, i, days.length) + " · " + d.used + "분 봄" + (d.budget ? " / 약속 " + d.budget + "분 · " + state : "");
+        tip.hidden = false;
+      });
+    });
+  }
+
   /* ---------- 돌아보기: 앱이 아는 것(본 시간, 약속)만 그대로 말한다 ---------- */
   let reviewDays = 7;
   function renderReview() {
@@ -884,6 +960,13 @@ details.dev summary { font-size: 14px; }
     const sum = (a, f) => a.reduce((t, d) => t + f(d), 0);
     const total = sum(cur, (d) => d.used);
     $("r-total").textContent = fmtMin(total);
+    renderChart(cur);
+    // 처음 7일과 최근 7일 비교 (끝난 날이 14일 넘게 쌓이면)
+    const doneAll = (S.log || []);
+    if (doneAll.length >= 14) {
+      const a = avg(doneAll.slice(0, 7).map((d) => d.used)), b = avg(doneAll.slice(-7).map((d) => d.used));
+      $("r-first").textContent = b < a ? "처음 일주일보다 하루 평균 " + fmtMin(a - b) + " 덜 봐." : b > a ? "처음 일주일보다 하루 평균 " + fmtMin(b - a) + " 더 봐." : "처음 일주일이랑 비슷해.";
+    } else $("r-first").textContent = "";
     const diffEl = $("r-diff");
     diffEl.className = "rv-sub";
     if (!prev.length) diffEl.textContent = "쇼츠 본 시간 · 비교는 " + (n === 7 ? "다음 주" : "다음 달") + "부터";
@@ -1163,7 +1246,16 @@ details.dev summary { font-size: 14px; }
     });
     clearArmed = false; $("s-clear").textContent = "지우기"; $("s-clear-text").textContent = "기록 모두 지우기";
     try { $("s-ver").textContent = NATIVE && NATIVE.appVersion ? NATIVE.appVersion() : "웹 미리보기"; } catch (e) {}
+    let wake = S.wake == null ? 420 : S.wake;
+    if (NATIVE && NATIVE.wakeMin) { try { wake = NATIVE.wakeMin(); } catch (e) {} }
+    $("s-wake").value = String(Math.floor(wake / 60)).padStart(2, "0") + ":" + String(wake % 60).padStart(2, "0");
   }
+  $("s-wake").addEventListener("change", () => {
+    const [h, m] = ($("s-wake").value || "07:00").split(":").map(Number);
+    const v = h * 60 + m;
+    S.wake = v; save();
+    if (NATIVE && NATIVE.setWakeMin) { try { NATIVE.setWakeMin(v); } catch (e) {} }
+  });
   $("s-reduce").onclick = openChange;
   let clearArmed = false;
   $("s-clear").onclick = () => {

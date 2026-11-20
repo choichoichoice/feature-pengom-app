@@ -87,6 +87,10 @@ class MainActivity : Activity() {
 
         @JavascriptInterface fun clearAll() = store.clearAll()
 
+        @JavascriptInterface fun wakeMin(): Int = store.wakeMin()
+
+        @JavascriptInterface fun setWakeMin(min: Int) = store.setWakeMin(min)
+
         @JavascriptInterface fun appVersion(): String =
             try { packageManager.getPackageInfo(packageName, 0).versionName ?: "" } catch (e: Exception) { "" }
 
