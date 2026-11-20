@@ -132,7 +132,7 @@ class UsageWatchService : Service() {
         nm.deleteNotificationChannel("watch") // 0.3.0 이전 채널 (중요도가 낮아 숨겨졌음)
         nm.createNotificationChannel(
             NotificationChannel(CHANNEL, "남은 시간", NotificationManager.IMPORTANCE_LOW).apply {
-                description = "쇼츠 앱을 본 시간을 재는 동안 표시됩니다"
+                description = "사용 시간을 재는 동안 표시돼요"
                 setShowBadge(false)
             }
         )
@@ -154,20 +154,20 @@ class UsageWatchService : Service() {
             .setOngoing(true)
             .setOnlyAlertOnce(true)
         if (b == null) {
-            return nb.setContentTitle("아직 약속 전").setContentText("오늘 ${used / 60}분 봄").build()
+            return nb.setContentTitle("오늘 목표 없음").setContentText("오늘 사용 ${used / 60}분").build()
         }
         val left = b * 60 - used
         val over = left < 0
         nb.setContentTitle(
             when {
-                over -> "오늘 시간 다 씀"
-                promise != null && used > promise * 60 -> "더 받은 ${b - promise}분 중 남은 시간"
-                else -> "약속 ${b}분 중 남은 시간"
+                over -> "목표 시간 종료"
+                promise != null && used > promise * 60 -> "남은 시간 (연장 +${b - promise}분)"
+                else -> "남은 시간 · 목표 ${b}분"
             }
         )
             .setContentText(
-                if (lastWatching) (if (over) "넘긴 시간이 늘고 있어" else "보는 동안 줄어드는 중")
-                else (if (over) "+${-left / 60}분 초과 · 멈춤" else "${left / 60}분 ${left % 60}초 남음 · 멈춤")
+                if (lastWatching) (if (over) "초과 시간 증가 중" else "사용 중")
+                else (if (over) "초과 ${-left / 60}분 · 일시정지" else "남은 시간 ${left / 60}분 ${left % 60}초 · 일시정지")
             )
         if (lastWatching) {
             // 보는 동안만 알림 시계가 1초씩 움직인다 (남으면 거꾸로, 넘기면 앞으로)
@@ -185,13 +185,13 @@ class UsageWatchService : Service() {
 
     private fun morningNudge() {
         val nm = getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(MORNING, "아침 약속", NotificationManager.IMPORTANCE_DEFAULT))
+        nm.createNotificationChannel(NotificationChannel(MORNING, "아침 목표", NotificationManager.IMPORTANCE_DEFAULT))
         val open = PendingIntent.getActivity(this, 1, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         val b = store.budget()
         val n = Notification.Builder(this, MORNING)
             .setSmallIcon(R.drawable.ic_stat_pengom)
-            .setContentTitle("좋은 아침. 오늘 쇼츠 몇 분 볼래?")
-            .setContentText(if (b != null) "안 정하면 어제처럼 ${b}분이야." else "펭곰이 열고 정해줘.")
+            .setContentTitle("좋은 아침이에요! 오늘은 몇 분까지 볼까요?")
+            .setContentText(if (b != null) "정하지 않으면 어제처럼 목표 ${b}분이에요." else "펭곰이를 열어 목표를 정해 주세요.")
             .setContentIntent(open)
             .setAutoCancel(true)
             .build()

@@ -23,9 +23,9 @@ import android.widget.TextView
 
 /**
  * 다른 앱 위에 뜨는 화면들 ("다른 앱 위에 표시" 권한 필요).
- *  - 카운터: 화면 위쪽 가운데 "17분 · 14분 남음"
+ *  - 카운터: 화면 위쪽 가운데 "14:59 남음" (목표 + 연장 기준으로 1초씩 줄어듦)
  *  - 한마디: 캐릭터 얼굴 + 말풍선 (정해둔 분에 도달할 때, 2.8초)
- *  - 약속 초과: 아래에서 올라오는 시트 "네가 정한 거야. 내가 정한 거 아니고."
+ *  - 목표 시간 끝: 아래에서 올라오는 시트 "목표 31분이 끝났어요." [5분 연장] [그만 보기]
  */
 class OverlayController(
     private val svc: Context,
@@ -103,9 +103,9 @@ class OverlayController(
         val red = 0xFFFF9D80.toInt(); val amber = 0xFFFFC56B.toInt()
         var color = Color.WHITE; var sub = 0xCCFFFFFF.toInt()
         when {
-            b == null || lim == null -> { pillNum?.text = "${used / 60}분"; pillSub?.text = "약속 전" }
+            b == null || lim == null -> { pillNum?.text = "${used / 60}분"; pillSub?.text = "목표 없음" }
             used <= b * 60 -> { pillNum?.text = clock(b * 60 - used); pillSub?.text = "남음" }
-            used <= lim * 60 -> { pillNum?.text = clock(lim * 60 - used); pillSub?.text = "더 받은 시간"; color = amber; sub = amber }
+            used <= lim * 60 -> { pillNum?.text = clock(lim * 60 - used); pillSub?.text = "남음 (연장)"; color = amber; sub = amber }
             else -> { pillNum?.text = "+" + clock(used - lim * 60); pillSub?.text = "초과"; color = red; sub = red }
         }
         pillNum?.setTextColor(color)
@@ -182,22 +182,22 @@ class OverlayController(
         val first = store.extra() == 0
         val more = store.canExtend()
         card.addView(TextView(svc).apply {
-            text = when { first -> "${store.budget()}분 다 됐어."; more -> "더 받은 ${store.extra()}분도 끝."; else -> "오늘은 여기까지." }
+            text = when { first -> "목표 ${store.budget()}분이 끝났어요."; more -> "연장한 ${store.extra()}분도 끝났어요."; else -> "오늘은 여기까지예요." }
             textSize = 23f; typeface = Typeface.DEFAULT_BOLD; gravity = Gravity.CENTER
             setTextColor(0xFF17232E.toInt()); setLineSpacing(0f, 1.15f)
         }, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply { topMargin = px(8) })
         card.addView(TextView(svc).apply {
             val reason = store.reason()
-            text = (if (reason != "다른 거") "아침에 ‘$reason’ 한다고 했잖아.\n" else "") +
-                (if (more) "더 보면 오늘 기록에 남아." else "더 받는 건 하루 두 번까지야.")
+            text = (if (reason != "다른 거") "아침에 ‘$reason’ 하기로 했어요.\n" else "") +
+                (if (more) "연장하면 오늘 기록에 남아요." else "연장은 하루 두 번까지예요.")
             textSize = 14f; setTextColor(0xFF687B8B.toInt()); gravity = Gravity.CENTER
             setPadding(px(12), px(10), px(12), px(10))
             background = rounded(Color.WHITE, 14, 2, 0xFFE1EAF0.toInt())
         }, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = px(14) })
 
         val row = LinearLayout(svc).apply { orientation = LinearLayout.HORIZONTAL }
-        val keep = button("5분만 더", Color.WHITE, 0xFF17232E.toInt(), 0xFFE1EAF0.toInt())
-        val leave = button("그만 볼래", 0xFF1FA7E8.toInt(), Color.WHITE, 0xFF1583B9.toInt())
+        val keep = button("5분 연장", Color.WHITE, 0xFF17232E.toInt(), 0xFFE1EAF0.toInt())
+        val leave = button("그만 보기", 0xFF1FA7E8.toInt(), Color.WHITE, 0xFF1583B9.toInt())
         if (more) row.addView(keep, LinearLayout.LayoutParams(0, px(54), 1f).apply { marginEnd = px(10) })
         row.addView(leave, LinearLayout.LayoutParams(0, px(54), 1f))
         card.addView(row, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = px(16) })
@@ -210,7 +210,7 @@ class OverlayController(
 
         keep.setOnClickListener {
             store.extend(5); removeSheet(); refresh()
-            main.postDelayed({ showToast("딱 5분이다?") }, 250)
+            main.postDelayed({ showToast("5분만 더 볼게요! 이번엔 꼭 멈추기로 해요.") }, 250)
         }
         leave.setOnClickListener { store.ackOver(); removeSheet(); goHome() }
     }

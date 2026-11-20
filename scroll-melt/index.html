@@ -78,8 +78,7 @@ svg.i { width: 18px; height: 18px; flex: none; }
 .phone.st-over { --accent: #8b6f6a; --accent-deep: #5f4a46; --accent-soft: #efe6e4; }
 .phone.st-over .hero { filter: saturate(.45) brightness(.97); transition: filter .6s; }
 .phone.st-over #home .scroll { background: linear-gradient(to bottom, rgba(120, 90, 85, .10), transparent 320px); }
-#change .budget-row { justify-content: center; margin: 6px 0 2px; }
-#change h2 { margin: 4px 0 6px; }
+
 
 /* ---------- 돌아보기 (주간·월간) ---------- */
 .review { gap: 8px; }
@@ -377,6 +376,22 @@ details.dev summary { font-size: 14px; }
 .ch-key .k-tick { width: 14px; height: 2.5px; border-radius: 2px; background: var(--fg); margin-left: 10px; }
 .time { font: inherit; font-size: 18px; font-weight: 700; color: var(--fg); background: var(--accent-soft); border: 0; border-radius: 12px; padding: 8px 12px; }
 .note b { color: var(--fg); }
+/* ---------- 목표 시간 고르기: 프리셋 + ±5분 ---------- */
+.picker { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 380px; align-self: center; }
+.pk-main { display: grid; grid-template-columns: 76px 1fr 76px; align-items: center; gap: 8px; }
+.pk-step { height: 56px; border: 0; border-radius: 16px; background: var(--accent-soft); color: var(--accent-deep); font-size: 18px; font-weight: 800; }
+.pk-step:disabled { opacity: .35; }
+.pk-val { text-align: center; }
+.pk-n { font-family: var(--f-display); font-size: 48px; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pk-presets { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.pk-presets button { border: 2px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 999px; padding: 10px 14px; font-size: 16px; font-weight: 700; }
+.pk-presets button.on { border-color: var(--accent); background: var(--accent); color: #fff; }
+.goal-chip { margin-top: 4px; border: 0; background: var(--accent-soft); color: var(--fg); border-radius: 999px; padding: 10px 18px; font-size: 17px; font-weight: 600; }
+.goal-chip b { font-weight: 800; }
+.goal-sheet { gap: 14px; }
+.goal-sheet h2 { margin: 2px 0 0; }
+#g-hint { font-size: 16px; }
+.btn:disabled { background: var(--line); color: var(--muted); }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -398,20 +413,24 @@ details.dev summary { font-size: 14px; }
     <section class="screen" id="promise" hidden>
       <div class="scroll">
         <div class="hero">
-          <div class="bubble" id="p-bubble">오늘 쇼츠 몇 분 볼래?</div>
+          <div class="bubble" id="p-bubble">안녕하세요, 저는 펭곰이에요.</div>
           <div class="mascot" id="p-char"></div>
         </div>
         <div class="ask">
-          <label class="q" for="p-num">오늘 쇼츠·릴스 볼 시간,<br>총 몇 분으로 할래?</label>
-          <div class="budget-row">
-            <input id="p-num" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="31" autocomplete="off" aria-label="오늘 볼 시간(분)">
-            <span class="unit">분</span>
+          <div class="q" id="p-q">오늘 쇼츠·릴스는<br>몇 분까지 볼까요?</div>
+          <div class="picker" id="p-pick">
+            <div class="pk-main">
+              <button type="button" class="pk-step" data-d="-5" aria-label="5분 줄이기">−5분</button>
+              <div class="pk-val" aria-live="polite"><span class="pk-n">30분</span></div>
+              <button type="button" class="pk-step" data-d="5" aria-label="5분 늘리기">+5분</button>
+            </div>
+            <div class="pk-presets"><button type="button" data-v="15">15분</button><button type="button" data-v="30">30분</button><button type="button" data-v="45">45분</button><button type="button" data-v="60">1시간</button><button type="button" data-v="90">1시간 30분</button></div>
           </div>
           <div class="hint" id="p-hint"></div>
-          <label class="why">아낀 시간엔 <input id="p-reason" maxlength="20" placeholder="운동, 공부…" autocomplete="off"> 할래</label>
+          <label class="why">아낀 시간에 할 일 <input id="p-reason" maxlength="20" placeholder="운동, 공부…" autocomplete="off"></label>
         </div>
       </div>
-      <div class="dock"><button class="btn" id="p-go">약속</button></div>
+      <div class="dock"><button class="btn" id="p-go">목표 정하기</button></div>
     </section>
 
     <!-- 홈 -->
@@ -419,27 +438,28 @@ details.dev summary { font-size: 14px; }
       <div class="scroll">
         <div class="topbar">
           <span class="ready" id="h-ready" hidden></span>
-          <span class="cnt fire" title="연속으로 약속을 지킨 날"><svg class="i"><use href="#i-fire"/></svg><span id="h-streak">0</span>일</span>
+          <span class="cnt fire" title="목표를 연속으로 지킨 날"><svg class="i"><use href="#i-fire"/></svg>연속 <span id="h-streak">0</span>일</span>
         </div>
         <div class="hero">
-          <div class="bubble" id="h-bubble">오늘도 잘 버텨보자.</div>
+          <div class="bubble" id="h-bubble">아직 빙하가 튼튼해요! 천천히 즐겨요.</div>
           <div class="mascot" id="h-char"></div>        </div>
         <div class="card perm" id="h-perm" hidden>
-          <span class="label">시간 재기가 꺼져 있어</span>
-          <p class="perm-text">인스타·유튜브·틱톡을 본 시간을 재려면 "사용 정보 접근"과 "다른 앱 위에 표시" 권한이 필요해. 화면 속 글자나 영상은 보지 않고, 어떤 앱이 몇 분 켜져 있었는지만 이 폰에 저장해.</p>
-          <button class="btn ghost" id="h-perm-btn">권한 켜러 가기</button>
+          <span class="label">사용 감지가 꺼져 있어요</span>
+          <p class="perm-text">인스타그램·유튜브·틱톡 사용 시간을 재려면 ‘사용 정보 접근’과 ‘다른 앱 위에 표시’ 권한이 필요해요. 화면 속 글자나 영상은 보지 않고, 어떤 앱이 몇 분 켜져 있었는지만 확인해요.</p>
+          <button class="btn" id="h-perm-btn">권한 설정하기</button>
         </div>
         <div class="left" id="h-left-box">
           <div class="big"><span class="n" id="h-left">31</span><span class="u" id="h-left-u">분 남음</span></div>
           <div class="bar"><i id="h-bar"></i></div>
           <div class="cap" id="h-cap"></div>
+          <button class="goal-chip" id="h-goal" aria-label="하루 목표 시간 바꾸기">하루 목표 <b id="h-goal-v">30분</b> <span aria-hidden="true">✎</span></button>
         </div>
         <div class="card perm" id="h-battery" hidden>
-          <span class="label" id="h-battery-title">배터리 설정이 필요해</span>
-          <p class="perm-text" id="h-battery-text">안 하면 폰이 배터리를 아끼려고 시간 재기를 멈출 수 있어. 버튼 누르고 ‘허용’만 누르면 끝.</p>
-          <button class="btn" id="h-battery-btn">허용하러 가기</button>
+          <span class="label" id="h-battery-title">배터리 설정이 필요해요</span>
+          <p class="perm-text" id="h-battery-text">배터리 절약 때문에 사용 감지가 멈출 수 있어요. 버튼을 누르고 ‘허용’만 눌러 주세요.</p>
+          <button class="btn" id="h-battery-btn">허용하기</button>
         </div>
-        <button class="rv-open" id="h-review-open"><span id="r-sum">이번 주 돌아보기</span><span aria-hidden="true">›</span></button>
+        <button class="rv-open" id="h-review-open"><span id="r-sum">이번 주 기록</span><span aria-hidden="true">›</span></button>
       </div>
       <div class="dock" id="h-dock"><button class="btn" id="h-watch" hidden></button></div>
     </section>
@@ -455,9 +475,9 @@ details.dev summary { font-size: 14px; }
             </div>
           </div>
           <div class="rv-main"><span class="rv-num" id="r-total">0분</span><span class="rv-sub" id="r-diff"></span></div>
-          <figure class="chart" id="r-chart" aria-label="하루별 쇼츠 본 시간">
+          <figure class="chart" id="r-chart" aria-label="하루별 사용 시간">
             <div class="ch-plot" id="r-plot"></div>
-            <figcaption class="ch-key" id="r-key"><span class="k-bar"></span>본 시간 <span class="k-tick"></span>그날 약속</figcaption>
+            <figcaption class="ch-key" id="r-key"><span class="k-bar"></span>사용 시간 <span class="k-tick"></span>목표</figcaption>
             <div class="ch-tip" id="r-tip" role="status" aria-live="polite" hidden></div>
           </figure>
           <div class="rv-line" id="r-first"></div>
@@ -473,22 +493,22 @@ details.dev summary { font-size: 14px; }
         <h1 class="pg">설정</h1>
         <div class="group">
           <div class="gtitle">준비 상태</div>
-          <div class="srow"><span>시간 재기</span><span class="sval" id="s-count"></span></div>
+          <div class="srow"><span>사용 감지</span><span class="sval" id="s-count"></span></div>
           <div class="srow"><span>배터리 설정</span><span class="sval" id="s-batt"></span></div>
         </div>
         <div class="group">
-          <div class="gtitle">오늘 약속</div>
-          <div class="srow"><span id="s-promise">-</span><button class="link" id="s-reduce">줄이기</button></div>
+          <div class="gtitle">하루 목표</div>
+          <div class="srow"><span id="s-promise">-</span><button class="link" id="s-reduce">변경</button></div>
         </div>
         <div class="group">
-          <div class="gtitle">잴 앱</div>
+          <div class="gtitle">감지할 앱</div>
           <div id="s-apps"></div>
-          <p class="note">켜 둔 앱이 화면 맨 앞에 있는 시간을 재. 앱 안에서 쇼츠를 보는지 긴 영상을 보는지는 몰라.</p>
+          <p class="note">켜 둔 앱이 화면에 떠 있는 시간을 재요. 앱 안에서 쇼츠를 보는지 긴 영상을 보는지는 구분하지 못해요.</p>
         </div>
         <div class="group">
           <div class="gtitle">기상 시간</div>
           <label class="srow"><span>보통 일어나는 시간</span><input class="time" type="time" id="s-wake" value="07:00"></label>
-          <p class="note">사람마다 생활 시간이 달라서, 하루는 자정이 아니라 <b>네가 일어나는 시간</b>에 시작해. 밤늦게 본 쇼츠는 전날 기록으로 들어가고, 일어날 시간이 되면 펭곰이가 오늘 약속을 물어봐. 바꾼 시간은 내일부터 딱 맞아.</p>
+          <p class="note">사람마다 생활 시간이 달라서, 하루는 자정이 아니라 <b>일어나는 시간</b>에 시작돼요. 늦은 밤에 본 시간은 전날 기록으로 들어가고, 일어날 시간이 되면 펭곰이가 오늘 목표를 물어봐요. 바꾼 시간은 다음 날부터 적용돼요.</p>
         </div>
         <div class="group">
           <div class="gtitle">기록</div>
@@ -496,7 +516,7 @@ details.dev summary { font-size: 14px; }
         </div>
         <div class="group">
           <div class="gtitle">정보</div>
-          <p class="note">화면 속 글자나 영상은 보지 않아. 기록은 이 폰에만 저장돼.</p>
+          <p class="note">화면 속 글자나 영상은 보지 않아요. 기록은 이 휴대폰에만 저장돼요.</p>
           <div class="srow"><span>버전</span><span class="sval" id="s-ver">-</span></div>
         </div>
         <details class="dev">
@@ -526,11 +546,11 @@ details.dev summary { font-size: 14px; }
         <div class="sheet">
           <span class="grab"></span>
           <div class="mascot" id="s-char" style="width:170px"></div>
-          <h2 id="s-title">다 됐어.</h2>
+          <h2 id="s-title">목표 시간이 끝났어요.</h2>
           <div class="quote" id="s-quote"></div>
           <div class="row">
-            <button class="btn ghost" id="s-keep">5분만 더</button>
-            <button class="btn" id="s-leave">그만 볼래</button>
+            <button class="btn ghost" id="s-keep">5분 연장</button>
+            <button class="btn" id="s-leave">그만 보기</button>
           </div>
         </div>
       </div>
@@ -542,21 +562,25 @@ details.dev summary { font-size: 14px; }
     <button data-go="history"><svg class="i"><use href="#i-chart"/></svg>기록</button>
     <button data-go="settings"><svg class="i"><use href="#i-gear"/></svg>설정</button>
   </nav>
-  <div class="sheet-wrap" id="change" hidden>
-        <div class="sheet">
-          <span class="grab"></span>
-          <h2>약속 줄이기</h2>
-          <div class="budget-row">
-            <input id="c-num" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" aria-label="새 약속 시간(분)">
-            <span class="unit">분</span>
+  <div class="sheet-wrap" id="goal" hidden>
+    <div class="sheet goal-sheet" role="dialog" aria-labelledby="g-title">
+      <span class="grab"></span>
+      <h2 id="g-title">하루 목표</h2>
+      <div class="picker" id="g-pick">
+            <div class="pk-main">
+              <button type="button" class="pk-step" data-d="-5" aria-label="5분 줄이기">−5분</button>
+              <div class="pk-val" aria-live="polite"><span class="pk-n">30분</span></div>
+              <button type="button" class="pk-step" data-d="5" aria-label="5분 늘리기">+5분</button>
+            </div>
+            <div class="pk-presets"><button type="button" data-v="15">15분</button><button type="button" data-v="30">30분</button><button type="button" data-v="45">45분</button><button type="button" data-v="60">1시간</button><button type="button" data-v="90">1시간 30분</button></div>
           </div>
-          <div class="hint" id="c-hint"></div>
-          <div class="row">
-            <button class="btn ghost" id="c-cancel">그대로</button>
-            <button class="btn" id="c-ok">줄이기</button>
-          </div>
-        </div>
+      <div class="hint" id="g-hint">오늘부터 바로 적용돼요.</div>
+      <div class="row">
+        <button class="btn ghost" id="g-cancel">취소</button>
+        <button class="btn" id="g-ok">저장</button>
       </div>
+    </div>
+  </div>
   <div class="statusbar"><span id="clock">9:41</span><span>82%</span></div>
 </div>
 
@@ -730,7 +754,7 @@ details.dev summary { font-size: 14px; }
   const fresh = () => ({
     day: 1, mins: [], kept: [], size: 10.0, streak: 0, log: [], extra: 0,
     budget: null, reason: "", used: 0, fired: [], overAck: false, exitedOnce: false,
-    morningMsg: "안녕, 난 펭곰이.", homeMsg: "",
+    morningMsg: "안녕하세요, 저는 펭곰이에요.", homeMsg: "",
     lastMelt: 0, lastJoy: false,
   });
   let S;
@@ -757,9 +781,9 @@ details.dev summary { font-size: 14px; }
     r.talk(Math.min(2600, 300 + text.length * 55));
   }
   const POKE = {
-    idle: ["왜. 할 말 있어?", "간지러워.", "찌르지 말고 약속이나 지켜.", "나 말랑해 보여도 차가워."],
-    melt: ["찌르지 마. 녹는 중이야.", "지금 그럴 때야?", "…물 튄다."],
-    joy: ["헤헤. 나 좀 컸지?", "오늘도 잘 해보자."],
+    idle: ["불렀어요?", "간지러워요!", "찔러도 시간은 안 늘어나요.", "말랑해 보여도 저 차가워요."],
+    melt: ["지금 녹는 중이에요…", "건드리면 흘러내려요.", "물 튀어요!"],
+    joy: ["헤헤, 저 좀 컸죠?", "오늘도 같이 해요!"],
   };
   ["p", "h"].forEach((k) => {
     rig[k].el.addEventListener("poke", () => {
@@ -782,43 +806,49 @@ details.dev summary { font-size: 14px; }
   }
   document.querySelectorAll("#tabs button").forEach((b) => { b.onclick = () => go(b.dataset.go); });
 
-  /* ---------- 아침 약속 (분) ---------- */
-  const noRound = (v) => { v = Math.round(v); while (v % 5 === 0) v += 1; return v; };
+  /* ---------- 목표 시간 고르기: 프리셋 + ±5분 (아침 화면과 목표 시트에서 같이 씀) ---------- */
+  const GOAL_MIN = 5, GOAL_MAX = 300;
+  function Picker(el, onChange) {
+    let v = 30;
+    const n = el.querySelector(".pk-n"), down = el.querySelector('[data-d="-5"]'), up = el.querySelector('[data-d="5"]');
+    const draw = () => {
+      n.textContent = fmtMin(v);
+      down.disabled = v <= GOAL_MIN; up.disabled = v >= GOAL_MAX;
+      el.querySelectorAll(".pk-presets button").forEach((b) => b.classList.toggle("on", +b.dataset.v === v));
+    };
+    const set = (x) => { v = Math.max(GOAL_MIN, Math.min(GOAL_MAX, Math.round(x))); draw(); onChange && onChange(v); };
+    el.querySelectorAll(".pk-step").forEach((b) => { b.onclick = () => { set(v + +b.dataset.d); buzz(8); }; });
+    el.querySelectorAll(".pk-presets button").forEach((b) => { b.onclick = () => { set(+b.dataset.v); buzz(8); }; });
+    return { get: () => v, set };
+  }
+
+  /* ---------- 아침 목표 ---------- */
+  const noRound = (v) => { v = Math.round(v); while (v % 5 === 0) v += 1; return v; }; // 개입 지점 계산용
+  const pPick = Picker($("p-pick"), () => budgetHint());
   function renderPromise() {
     rig.p.el.style.width = growPx(200) + "px";
     rig.p.set(S.lastMelt ? "melt" : S.lastJoy ? "joy" : "idle", S.lastMelt);
     say($("p-bubble"), rig.p, S.morningMsg);
-    $("p-num").value = S.lastBudget ? String(S.lastBudget) : "";
+    pPick.set(S.lastBudget || 30);
     $("p-reason").value = S.reason && S.reason !== "다른 거" ? S.reason : "";
     budgetHint();
   }
-  const readBudget = () => { const v = parseInt($("p-num").value, 10); return v > 0 ? v : null; };
   function budgetHint() {
-    const v = readBudget(), h = $("p-hint");
-    if (v && v % 5 === 0) { h.className = "hint warn"; h.textContent = v + "분 말고 " + (v + 1) + "분. 딱 떨어지면 더 보게 되거든."; return; }
+    const h = $("p-hint");
     h.className = "hint";
-    h.textContent = S.mins.length ? "어제는 " + fmtMin(S.mins[S.mins.length - 1]) + " 봤어." : "";
+    h.textContent = S.mins.length ? "어제 사용 " + fmtMin(S.mins[S.mins.length - 1]) : "";
   }
-  $("p-num").addEventListener("input", () => {
-    $("p-num").value = $("p-num").value.replace(/\D/g, "").slice(0, 3);
-    budgetHint();
-  });
   $("p-go").onclick = () => {
-    let v = readBudget();
-    if (!v) {
-      const h = $("p-hint"); h.className = "hint warn"; h.textContent = "몇 분인지 숫자로 적어줘.";
-      $("p-num").focus(); buzz(15); return;
-    }
-    if (v % 5 === 0) v += 1;
+    const v = pPick.get();
     S.reason = $("p-reason").value.trim() || "다른 거";
-    S.extra = 0; setBudget(v);
-    S.homeMsg = "좋아, " + v + "분. 내가 재고 있을게.";
+    S.extra = 0; S.raised = 0; setBudget(v);
+    S.homeMsg = "좋아요, 목표는 " + fmtMin(v) + "! 제가 시간을 잴게요.";
     S.lastMelt = 0; S.lastJoy = false;
     pushPromise();
     save(); go("home");
   };
 
-  // 약속 시간과 개입 지점. 넘긴 뒤에는 5분마다 끼어든다(2시간까지)
+  // 목표와 개입 지점(41%, 72%, 2분 전)
   function setBudget(b) {
     S.budget = b;
     S.th = [noRound(b * 0.41), noRound(b * 0.72), Math.max(1, b - 2)].filter((t) => t < b);
@@ -828,71 +858,94 @@ details.dev summary { font-size: 14px; }
     if (um <= limit()) S.overAck = false;
   }
 
-  /* ---------- 약속 줄이기 (언제든) / 더 받기 (시간을 다 쓴 뒤에만) ---------- */
-  const minAllowed = () => usedMin() + 1;
-  function openChange() {
-    $("c-num").value = S.budget;
-    $("c-hint").className = "hint"; $("c-hint").textContent = "지금까지 " + usedMin() + "분 봤어. 그보다 적게는 못 줄여.";
-    $("change").hidden = false; $("c-num").focus(); $("c-num").select();
+  /* ---------- 하루 목표 바꾸기 (바텀시트): 오늘부터 바로 적용, 이미 쓴 시간보다 낮게는 안 됨 ---------- */
+  const gPick = Picker($("g-pick"), () => goalHint());
+  function goalHint() {
+    const v = gPick.get(), h = $("g-hint"), ok = $("g-ok");
+    ok.disabled = false; h.className = "hint";
+    if (v * 60 <= S.used) {
+      h.className = "hint warn";
+      h.textContent = "오늘 이미 " + fmtMin(usedMin()) + " 사용했어요. 그보다 긴 목표로 정해 주세요.";
+      ok.disabled = true; return;
+    }
+    if (S.budget && v > S.budget) { h.textContent = "오늘부터 바로 적용돼요. 목표를 늘리면 기록에 함께 남아요."; return; }
+    h.textContent = "오늘부터 바로 적용돼요.";
   }
-  const closeChange = () => { $("change").hidden = true; };
-  $("c-num").addEventListener("input", () => { $("c-num").value = $("c-num").value.replace(/\D/g, "").slice(0, 3); });
-  $("c-cancel").onclick = closeChange;
-  $("c-ok").onclick = () => {
-    const v = parseInt($("c-num").value, 10), h = $("c-hint");
-    if (!(v > 0)) { h.className = "hint warn"; h.textContent = "숫자로 적어줘."; buzz(15); return; }
-    if (v >= S.budget) { h.className = "hint warn"; h.textContent = "여긴 줄이는 곳이야. 늘리는 건 시간 다 쓰고 나서."; buzz(15); return; }
-    if (v < minAllowed()) { h.className = "hint warn"; h.textContent = "벌써 " + usedMin() + "분 봤어. " + minAllowed() + "분부터 돼."; buzz(15); return; }
+  function openGoal() {
+    gPick.set(S.budget || 30);
+    goalHint();
+    $("goal").hidden = false;
+  }
+  const closeGoal = () => { $("goal").hidden = true; };
+  $("g-cancel").onclick = closeGoal;
+  $("goal").addEventListener("click", (e) => { if (e.target.id === "goal") closeGoal(); });
+  $("g-ok").onclick = () => {
+    const v = gPick.get(), before = S.budget;
+    if (v * 60 <= S.used) { goalHint(); buzz(15); return; }
+    if (v === before) return closeGoal();
+    if (before && v > before) S.raised = (S.raised || 0) + (v - before);
     setBudget(v);
-    S.homeMsg = v + "분으로 줄였어. 좋다.";
-    pushPromise(); save(); closeChange();
+    S.homeMsg = !before ? "좋아요, 목표는 " + fmtMin(v) + "! 제가 시간을 잴게요."
+      : v < before ? "목표를 " + v + "분으로 줄였어요! 같이 지켜봐요."
+      : "목표를 " + v + "분으로 늘렸어요. 기록에 함께 남겨 둘게요.";
+    pushPromise(); save(); closeGoal();
     if (!$("settings").hidden) renderSettings(); else renderHome();
   };
+  $("h-goal").onclick = openGoal;
+
   function extend(min) {
     if (!canExtend()) return;
     S.extra = (S.extra || 0) + min; S.overAck = false;
     if (NATIVE && NATIVE.extend) { try { NATIVE.extend(min); } catch (e) {} }
     save();
   }
+  const EXTEND_MSG = (n) => n + "분만 더 볼게요! 이번엔 꼭 멈추기로 해요.";
 
   /* ---------- 홈 ---------- */
+  // 사건이 없을 때 펭곰이가 하는 말: 지금 상태에 맞춰서
+  function stateMsg() {
+    if (!S.budget) return "오늘 목표를 정해 볼까요?";
+    if (overLimit()) return canExtend() ? "목표 시간이 끝났어요. 여기서 멈춰 볼까요?" : "오늘은 여기까지예요. 내일 다시 같이 해요.";
+    if (isOver()) return "연장한 시간이에요. 이번엔 꼭 멈추기로 해요.";
+    if (S.used >= limit() * 60 * 0.8) return "빙하가 녹고 있어요. 슬슬 마무리해 볼까요?";
+    return "아직 빙하가 튼튼해요! 천천히 즐겨요.";
+  }
   function renderHome() {
     $("h-streak").textContent = S.streak;
     rig.h.el.style.width = growPx(220) + "px";
-    say($("h-bubble"), rig.h, S.homeMsg || "오늘도 잘 버텨보자.");
+    // 사건 메시지(목표 변경, 연장 등)는 한 번만 보여 주고 다음부터는 상태 메시지
+    say($("h-bubble"), rig.h, S.homeMsg || stateMsg());
+    if (S.homeMsg) { S.homeMsg = ""; save(); }
     homeNums();
     if (NATIVE) nativeUi();
   }
-  // 홈 아래 버튼: 시간이 남았으면 줄이기, 다 썼으면 5분 더 받기, 더 받은 시간 쓰는 중이면 숨김
+  // 홈 아래 버튼: 감지가 꺼졌으면 켜기, 시간을 다 썼으면 5분 연장
   function homeButton() {
     const b = $("h-watch");
-    if (NATIVE && !NATIVE.isCounting()) { b.hidden = false; b.textContent = "시간 재기 켜기"; b.classList.remove("ghost"); return; }
-    // 시간이 남았을 땐 버튼 없음. 다 썼을 때만 "5분만 더" (약속 줄이기는 설정으로)
+    if (NATIVE && !NATIVE.isCounting()) { b.hidden = false; b.textContent = "사용 감지 켜기"; b.classList.remove("ghost"); return; }
     const timeUp = S.budget && S.used >= limit() * 60;
     b.hidden = !timeUp || !canExtend();
-    b.textContent = "5분만 더 받기"; b.classList.remove("ghost");
+    b.textContent = "5분 연장하기"; b.classList.remove("ghost");
   }
   function setMood() {
-    const frac = S.budget ? S.used / (S.budget * 60) : 0;
+    const frac = S.budget ? S.used / (limit() * 60) : 0;
     $("phone").classList.toggle("st-over", isOver());
     $("phone").classList.toggle("st-near", !isOver() && frac >= 0.8);
   }
+  // 총 허용 시간 = 목표 + 연장. 남은 시간과 막대는 모두 이 값을 기준으로 한다.
   function homeNums() {
     setMood();
     const over = isOver(), m = meltNow(), um = usedMin();
     rig.h.set(over ? "melt" : "idle", m);
     const lim = limit(), box = $("h-left-box");
-    const inExtra = over && !overLimit();
+    const left = lim - um, inExtra = over && !overLimit();
     box.classList.toggle("extra", inExtra);
     box.classList.toggle("over", !!overLimit());
-    $("h-left").textContent = !over ? Math.max(0, S.budget - um) : inExtra ? Math.max(0, lim - um) : "+" + (um - lim);
-    $("h-left-u").textContent = !over ? "분 남음" : inExtra ? "분 · 더 받은 시간" : "분 넘음";
+    $("h-left").textContent = overLimit() ? "+" + Math.max(1, um - lim) : Math.max(0, left);
+    $("h-left-u").textContent = overLimit() ? "분 초과" : inExtra ? "분 남음 (연장)" : "분 남음";
     $("h-bar").style.width = Math.min(100, S.used / (lim * 60) * 100) + "%";
-    const cap = ["오늘 " + fmtMin(um) + " 봤어"];
-    if (S.mins.length) cap.push("어제 " + fmtMin(S.mins[S.mins.length - 1]));
-    if (S.extra) cap.push(S.extra + "분 더 받음");
-    if (overLimit() && !canExtend()) cap.push("오늘은 여기까지");
-    $("h-cap").textContent = cap.join(" · ");
+    $("h-cap").textContent = "오늘 " + um + "분 / 목표 " + S.budget + "분" + (S.extra ? " (연장 +" + S.extra + "분)" : "");
+    $("h-goal-v").textContent = fmtMin(S.budget);
     homeButton();
     renderReview();
   }
@@ -942,8 +995,8 @@ details.dev summary { font-size: 14px; }
       el.addEventListener("click", () => {
         const i = +el.dataset.i, d = days[i];
         plot.querySelectorAll("g.sel").forEach((x) => x.classList.remove("sel")); el.classList.add("sel");
-        const state = d.today ? "오늘 진행 중" : d.kept ? "약속 지킴" : "약속 넘김";
-        tip.textContent = dayLabel(d, i, days.length) + " · " + d.used + "분 봄" + (d.budget ? " / 약속 " + d.budget + "분 · " + state : "");
+        const state = d.today ? "진행 중" : d.kept ? "달성" : "초과";
+        tip.textContent = dayLabel(d, i, days.length) + " · 사용 " + d.used + "분" + (d.budget ? " / 목표 " + d.budget + "분 · " + state : "");
         tip.hidden = false;
       });
     });
@@ -954,7 +1007,7 @@ details.dev summary { font-size: 14px; }
   function renderReview() {
     const n = reviewDays, word = n === 7 ? "지난주" : "지난달";
     // 오늘은 아직 안 끝났으니 본 시간 합계에만 넣고, 지킨 날·아낀 시간은 끝난 날로만 센다
-    const today = { used: usedMin(), budget: S.budget, reason: S.reason, kept: !isOver(), extra: S.extra || 0, today: true };
+    const today = { used: usedMin(), budget: S.budget, reason: S.reason, kept: !isOver(), extra: S.extra || 0, raised: S.raised || 0, today: true };
     const all = (S.log || []).concat(S.budget ? [today] : []);
     const cur = all.slice(-n), prev = all.slice(-2 * n, -n);
     const sum = (a, f) => a.reduce((t, d) => t + f(d), 0);
@@ -965,21 +1018,21 @@ details.dev summary { font-size: 14px; }
     const doneAll = (S.log || []);
     if (doneAll.length >= 14) {
       const a = avg(doneAll.slice(0, 7).map((d) => d.used)), b = avg(doneAll.slice(-7).map((d) => d.used));
-      $("r-first").textContent = b < a ? "처음 일주일보다 하루 평균 " + fmtMin(a - b) + " 덜 봐." : b > a ? "처음 일주일보다 하루 평균 " + fmtMin(b - a) + " 더 봐." : "처음 일주일이랑 비슷해.";
+      $("r-first").textContent = b < a ? "첫 주 대비 하루 평균 −" + fmtMin(a - b) : b > a ? "첫 주 대비 하루 평균 +" + fmtMin(b - a) : "첫 주와 하루 평균 동일";
     } else $("r-first").textContent = "";
     const diffEl = $("r-diff");
     diffEl.className = "rv-sub";
-    if (!prev.length) diffEl.textContent = "쇼츠 본 시간 · 비교는 " + (n === 7 ? "다음 주" : "다음 달") + "부터";
+    if (!prev.length) diffEl.textContent = "총 사용 시간 · 비교는 " + (n === 7 ? "다음 주" : "다음 달") + "부터";
     else {
       // 날 수가 다르면 하루 평균으로 비교
       const a = total / cur.length, b = sum(prev, (d) => d.used) / prev.length;
       const same = prev.length === cur.length, gap = Math.round(same ? total - sum(prev, (d) => d.used) : a - b);
       const unit = same ? "" : "하루 평균 ";
-      if (gap === 0) diffEl.textContent = word + "랑 " + unit + "같음";
-      else { diffEl.textContent = word + "보다 " + unit + fmtMin(Math.abs(gap)) + (gap < 0 ? " 덜 봄" : " 더 봄"); diffEl.classList.add(gap < 0 ? "down" : "up"); }
+      if (gap === 0) diffEl.textContent = word + " 대비 " + unit + "동일";
+      else { diffEl.textContent = word + " 대비 " + unit + (gap < 0 ? "−" : "+") + fmtMin(Math.abs(gap)); diffEl.classList.add(gap < 0 ? "down" : "up"); }
     }
     const done = cur.filter((d) => !d.today);
-    $("r-kept").textContent = done.length ? "약속 지킨 날 " + done.filter((d) => d.kept).length + " / " + done.length + "일" : "하루가 끝나면 여기 쌓여.";
+    $("r-kept").textContent = done.length ? "목표 달성 " + done.filter((d) => d.kept).length + " / " + done.length + "일" : "하루가 끝나면 여기에 기록돼요.";
     const by = {};
     done.forEach((d) => {
       const left = Math.max(0, (d.budget || 0) - d.used);
@@ -992,18 +1045,18 @@ details.dev summary { font-size: 14px; }
     rows.forEach(([k, m]) => {
       const li = document.createElement("li");
       const label = document.createElement("span");
-      label.textContent = k ? "‘" + k + "’ 하려고 아낀 시간" : "이유 안 적은 날 아낀 시간";
+      label.textContent = k ? "‘" + k + "’ 하려고 아낀 시간" : "할 일을 적지 않은 날 아낀 시간";
       const v = document.createElement("b"); v.textContent = fmtMin(m);
       li.append(label, v); ul.appendChild(li);
     });
     if (rows.length) {
       const note = document.createElement("li"); note.className = "rv-muted"; note.style.background = "none"; note.style.padding = "0 2px";
-      note.textContent = "쇼츠 대신 남은 시간이야. 그 시간에 뭘 했는지는 너만 알지.";
+      note.textContent = "목표보다 덜 쓴 시간이에요. 그 시간에 한 일은 기록하지 않아요.";
       ul.appendChild(note);
     }
-    const extra = sum(cur, (d) => d.extra || d.raised || 0);
-    $("r-extra").textContent = extra ? "다 쓰고 더 받은 시간 " + fmtMin(extra) : "";
-    if (n === 7) $("r-sum").textContent = "이번 주 " + fmtMin(total) + (diffEl.classList.contains("down") ? " · " + diffEl.textContent : "");
+    const extra = sum(cur, (d) => d.extra || 0), raised = sum(cur, (d) => d.raised || 0);
+    $("r-extra").textContent = [extra ? "연장 " + fmtMin(extra) : "", raised ? "목표 상향 " + fmtMin(raised) : ""].filter(Boolean).join(" · ");
+    if (n === 7) $("r-sum").textContent = "이번 주 총 " + fmtMin(total);
   }
   $("h-review-open").onclick = () => go("history");
   document.querySelectorAll("#history .seg button").forEach((b) => {
@@ -1037,7 +1090,7 @@ details.dev summary { font-size: 14px; }
     go("feed"); reel.scrollTop = 0; reel.focus({ preventScroll: true });
     updateMeter();
     clearInterval(clock); clock = setInterval(() => addTime(1), 1000);
-    if (S.exitedOnce) setTimeout(() => toast("어? 아까 나가지 않았냐?"), 350);
+    if (S.exitedOnce) setTimeout(() => toast("어? 아까 나가지 않았어요?"), 350);
     save();
   }
   function addTime(sec) {
@@ -1065,7 +1118,7 @@ details.dev summary { font-size: 14px; }
     clearTimeout(toastT); toastT = setTimeout(() => $("toast").classList.remove("show"), 2800);
   }
   // 안드로이드 CounterStore.thLine 과 같은 말
-  const TH_LINES = [(t) => "벌써 " + t + "분 봤어", (t) => t + "분째. 아직 괜찮아", (t) => (S.budget - t) + "분 남았다. 마지막 영상 골라"];
+  const TH_LINES = [(t) => "벌써 " + t + "분 봤어요.", (t) => t + "분째예요. 빙하가 녹고 있어요.", (t) => (S.budget - t) + "분 남았어요. 슬슬 마무리해 볼까요?"];
   // prev, now: 분 단위(소수)
   function onAdvance(prev, now) {
     let line = null;
@@ -1086,25 +1139,25 @@ details.dev summary { font-size: 14px; }
     rig.s.set("melt", 0.35);
     const own = S.reason && S.reason !== "다른 거";
     const more = canExtend();
-    $("s-title").textContent = !S.extra ? S.budget + "분 다 됐어." : more ? "더 받은 " + S.extra + "분도 끝." : "오늘은 여기까지.";
-    $("s-quote").textContent = (own ? "아침에 ‘" + S.reason + "’ 한다고 했잖아.\n" : "") + (more ? "더 보면 오늘 기록에 남아." : "더 받는 건 하루 두 번까지야.");
+    $("s-title").textContent = !S.extra ? "목표 " + S.budget + "분이 끝났어요." : more ? "연장한 " + S.extra + "분도 끝났어요." : "오늘은 여기까지예요.";
+    $("s-quote").textContent = (own ? "아침에 ‘" + S.reason + "’ 하기로 했어요.\n" : "") + (more ? "연장하면 오늘 기록에 남아요." : "연장은 하루 두 번까지예요.");
     $("s-keep").hidden = !more;
     $("sheet").hidden = false; rig.s.talk(1800); buzz([30, 60, 30]); $("s-leave").focus();
   }
   function hideSheet() { $("sheet").hidden = true; locked = false; reel.style.overflowY = "scroll"; }
-  $("s-keep").onclick = () => { extend(5); hideSheet(); setTimeout(() => toast("딱 5분이다?"), 250); };
+  $("s-keep").onclick = () => { extend(5); hideSheet(); setTimeout(() => toast(EXTEND_MSG(5)), 250); };
   $("s-leave").onclick = () => { hideSheet(); exitFeed(); };
   $("f-exit").onclick = exitFeed;
   function exitFeed() {
     clearInterval(clock); clock = null;
     if (practice) {
       Object.assign(S, practice); practice = null;
-      S.homeMsg = "연습 끝. 진짜 기록은 그대로야.";
+      S.homeMsg = "연습이 끝났어요. 실제 기록은 그대로예요.";
       save(); go("home"); return;
     }
     S.exitedOnce = true;
-    if (isOver()) S.homeMsg = "오늘은 좀 넘었네. 내일 다시 하자.";
-    else S.homeMsg = S.used < 60 ? "들어갔다 바로 나왔네? 잘했어." : "잘 나왔다. 아직 " + (S.budget - usedMin()) + "분 남았어.";
+    if (isOver()) S.homeMsg = "";
+    else S.homeMsg = S.used < 60 ? "들어갔다 바로 나왔네요? 잘했어요!" : "잘 멈췄어요! 아직 " + (S.budget - usedMin()) + "분 남았어요.";
     save(); go("home");
     if (!isOver() && S.used >= 60) rig.h.hop(700);
   }
@@ -1118,17 +1171,17 @@ details.dev summary { font-size: 14px; }
       const base = Math.max(5, S.mins.length ? avg(S.mins.slice(-7)) : S.budget);
       const g = 0.3 + Math.max(0, (base - um) / base) * 3;
       S.size += g; S.streak += 1;
-      msg = "어제 약속 지켰다! 나 좀 컸어.";
+      msg = "어제 빙하를 지켜냈어요! 오늘도 같이 해요.";
     } else {
       S.streak = 0; S.size = Math.max(6, S.size - 0.6); S.lastMelt = 0.35;
-      msg = "어제는 어제. 오늘 다시 해보자.";
+      msg = "어제는 어제예요. 오늘 다시 같이 해요.";
     }
     S.mins.push(um); S.kept.push(kept);
     // 주간·월간 돌아보기용 하루 기록
-    (S.log = S.log || []).push({ day: S.day, date: S.dateKey || new Date().toISOString().slice(0, 10), budget: S.budget, used: um, reason: S.reason, kept, extra: S.extra || 0 });
+    (S.log = S.log || []).push({ day: S.day, date: S.dateKey || new Date().toISOString().slice(0, 10), budget: S.budget, used: um, reason: S.reason, kept, extra: S.extra || 0, raised: S.raised || 0 });
     S.log = S.log.slice(-120);
     S.lastBudget = S.budget;
-    Object.assign(S, { day: S.day + 1, used: 0, fired: [], overAck: false, exitedOnce: false, extra: 0, morningMsg: msg, homeMsg: "" });
+    Object.assign(S, { day: S.day + 1, used: 0, fired: [], overAck: false, exitedOnce: false, extra: 0, raised: 0, morningMsg: msg, homeMsg: "" });
     save(); go("promise");
   }
 
@@ -1152,7 +1205,7 @@ details.dev summary { font-size: 14px; }
     if (on && !batt) {
       battWasOff = true; clearTimeout(battDoneT);
       card.hidden = false; card.classList.remove("done");
-      $("h-battery-title").textContent = "배터리 설정이 필요해";
+      $("h-battery-title").textContent = "배터리 설정이 필요해요";
       $("h-battery-text").hidden = false; $("h-battery-btn").hidden = false;
     } else if (on && batt && battWasOff) {
       battWasOff = false;
@@ -1167,7 +1220,7 @@ details.dev summary { font-size: 14px; }
     ready.hidden = false;
     const okAll = on && batt;
     ready.className = "ready " + (okAll ? "ok" : "need");
-    ready.textContent = okAll ? "준비 완료" : !on ? "시간 재기 꺼짐" : "배터리 설정 필요";
+    ready.textContent = okAll ? "사용 감지 중" : !on ? "감지 꺼짐" : "배터리 설정 필요";
     homeButton();
   }
   function nativeSync() {
@@ -1187,7 +1240,7 @@ details.dev summary { font-size: 14px; }
       if (!$("home").hidden) {
         homeNums();
         if (isOver() !== wasOver && isOver()) {
-          S.homeMsg = S.budget + "분 다 됐어. 오늘은 여기까지 하자.";
+          S.homeMsg = "목표 " + S.budget + "분이 끝났어요. 여기서 멈춰 볼까요?";
           say($("h-bubble"), rig.h, S.homeMsg);
         }
       }
@@ -1200,7 +1253,7 @@ details.dev summary { font-size: 14px; }
     if (NATIVE && !NATIVE.isCounting()) return NATIVE.openAccessibilitySettings();
     if (S.used >= limit() * 60) {
       if (!canExtend()) return;
-      extend(5); S.homeMsg = "5분 더. 기록엔 남아."; renderHome(); return;
+      extend(5); S.homeMsg = EXTEND_MSG(5); renderHome(); return;
     }
   };
   $("h-perm-btn").onclick = () => NATIVE && NATIVE.openAccessibilitySettings();
@@ -1226,17 +1279,16 @@ details.dev summary { font-size: 14px; }
     };
     cell($("s-count"), on, "켜짐 ✓", "켜기", () => NATIVE && NATIVE.openAccessibilitySettings());
     cell($("s-batt"), batt, "허용됨 ✓", "허용하기", () => NATIVE && NATIVE.openBatterySettings && NATIVE.openBatterySettings());
-    $("s-promise").innerHTML = S.budget ? S.budget + "분 <small>지금까지 " + usedMin() + "분 봤어</small>" : "아직 약속 전";
-    $("s-reduce").hidden = !S.budget || S.used >= S.budget * 60 - 60;
+    $("s-promise").innerHTML = S.budget ? fmtMin(S.budget) + " <small>오늘 사용 " + usedMin() + "분" + (S.extra ? " · 연장 +" + S.extra + "분" : "") + "</small>" : "목표 없음";
     let apps = WEB_APPS.map((a) => ({ ...a, on: !(S.offApps || []).includes(a.key), installed: true }));
     if (NATIVE && NATIVE.apps) { try { apps = JSON.parse(NATIVE.apps()); } catch (e) {} }
     const box = $("s-apps"); box.innerHTML = "";
     apps.forEach((a) => {
       const row = document.createElement("label"); row.className = "srow";
       const name = document.createElement("span"); name.textContent = a.label;
-      if (!a.installed) { const sm = document.createElement("small"); sm.textContent = "이 폰에 없음"; name.appendChild(sm); }
+      if (!a.installed) { const sm = document.createElement("small"); sm.textContent = "설치 안 됨"; name.appendChild(sm); }
       const sw = document.createElement("span"); sw.className = "sw";
-      const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = a.on; cb.setAttribute("aria-label", a.label + " 재기");
+      const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = a.on; cb.setAttribute("aria-label", a.label + " 감지");
       cb.onchange = () => {
         if (NATIVE && NATIVE.setApp) NATIVE.setApp(a.key, cb.checked);
         const off = new Set(S.offApps || []); cb.checked ? off.delete(a.key) : off.add(a.key); S.offApps = [...off]; save();
@@ -1256,10 +1308,10 @@ details.dev summary { font-size: 14px; }
     S.wake = v; save();
     if (NATIVE && NATIVE.setWakeMin) { try { NATIVE.setWakeMin(v); } catch (e) {} }
   });
-  $("s-reduce").onclick = openChange;
+  $("s-reduce").onclick = openGoal;
   let clearArmed = false;
   $("s-clear").onclick = () => {
-    if (!clearArmed) { clearArmed = true; $("s-clear").textContent = "정말 지우기"; $("s-clear-text").textContent = "되돌릴 수 없어. 한 번 더 누르면 지워져."; buzz(15); return; }
+    if (!clearArmed) { clearArmed = true; $("s-clear").textContent = "정말 지우기"; $("s-clear-text").textContent = "되돌릴 수 없어요. 한 번 더 누르면 지워져요."; buzz(15); return; }
     if (NATIVE && NATIVE.clearAll) { try { NATIVE.clearAll(); } catch (e) {} }
     S = fresh(); save(); go("promise");
   };

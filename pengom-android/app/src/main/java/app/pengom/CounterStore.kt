@@ -129,7 +129,8 @@ class CounterStore(context: Context) {
         val fired = ints(K_TH).withIndex().filter { usedMin >= it.value }.map { "t${it.index}" } +
             ints(K_OVER_TH).withIndex().filter { usedMin >= it.value }.map { "o${it.index}" }
         val e = p.edit().putString(K_FIRED, fired.joinToString(","))
-        if (usedMin <= budgetMin) e.putBoolean(K_ACK, false)
+        // 총 허용 시간(목표 + 연장)보다 덜 썼으면 다시 끝날 때 시트가 뜨게
+        if (usedMin <= budgetMin + p.getInt(K_EXTRA, 0)) e.putBoolean(K_ACK, false)
         e.apply()
     }
 
@@ -175,9 +176,9 @@ class CounterStore(context: Context) {
 
     // 웹(scroll-melt/index.html)의 TH_LINES 와 같은 말
     private fun thLine(i: Int, t: Int, b: Int): String = when (i) {
-        0 -> "벌써 ${t}분 봤어"
-        1 -> "${t}분째. 아직 괜찮아"
-        else -> "${b - t}분 남았다. 마지막 영상 골라"
+        0 -> "벌써 ${t}분 봤어요."
+        1 -> "${t}분째예요. 빙하가 녹고 있어요."
+        else -> "${b - t}분 남았어요. 슬슬 마무리해 볼까요?"
     }
 
     /** 웹 화면으로 넘기는 상태 (used, history 는 초 단위) */
