@@ -109,8 +109,8 @@ class CounterStore(context: Context) {
     fun reason(): String = p.getString(K_REASON, "다른 거") ?: "다른 거"
 
     // ================= 1회 시청 세션 =================
-    // 대상 앱을 켜면 세션이 시작된다. 앱을 나가 BREAK_MIN 분 이상 쉬면 다음에 켤 때 새 세션.
-    // 그보다 빨리 돌아오면 같은 세션이 이어진다. 하루 총 사용 시간은 기록용일 뿐 막지 않는다.
+    // 대상 앱을 켜면 세션이 시작된다. "여기서 멈추기"를 누르거나 앱을 나가 GRACE_SEC 초가 지나면 끝.
+    // 하루 총 사용 시간은 기록용일 뿐 막지 않는다.
 
     private fun jsonOf(key: String): JSONObject =
         try { JSONObject(p.getString(key, "{}") ?: "{}") } catch (e: Exception) { JSONObject() }
@@ -159,19 +159,20 @@ class CounterStore(context: Context) {
     /** 연장은 세션당 MAX_EXTENDS 번 */
     fun canExtend(): Boolean = sessionExtra() < MAX_EXTENDS * EXTEND_MIN
 
-    /** 앱을 나간 뒤 쉰 시간을 따져 아직 같은 세션인가 */
+    /**
+     * 아직 같은 세션인가: 대상 앱을 보는 중이거나, 나간 지 GRACE_SEC 초가 안 됐을 때(카톡 답장 같은 짧은 전환).
+     * 그보다 오래 나가 있었거나 "여기서 멈추기"를 눌렀으면 세션은 끝났다(기록은 이미 저장돼 있다).
+     */
     fun inSession(now: Long = System.currentTimeMillis()): Boolean {
         roll()
         if (!p.getBoolean(K_S_ACTIVE, false)) return false
         val left = p.getLong(K_S_LEFT_AT, 0L)
-        return left == 0L || now - left < BREAK_MIN * 60_000L
+        return left == 0L || now - left < GRACE_SEC * 1000L
     }
-    /** 새 세션까지 더 쉬어야 하는 시간(초). 쉬는 중이 아니면 0 */
-    fun breakLeftSec(now: Long = System.currentTimeMillis()): Int {
-        val left = p.getLong(K_S_LEFT_AT, 0L)
-        if (!inSession(now) || left == 0L) return 0
-        return ((BREAK_MIN * 60_000L - (now - left)) / 1000).toInt().coerceAtLeast(0)
-    }
+
+    /** "여기서 멈추기": 지금 세션을 바로 끝낸다. 다음에 대상 앱을 켜면 새 세션 */
+    @Synchronized
+    fun endSession() { p.edit().putBoolean(K_S_ACTIVE, false).putLong(K_S_LEFT_AT, 0L).apply() }
 
     @Synchronized
     fun onWatchStart(now: Long = System.currentTimeMillis()) {
@@ -267,7 +268,6 @@ class CounterStore(context: Context) {
             .put("sessionExtra", if (inSession(now)) p.getInt(K_S_EXTRA, 0) else 0)
             .put("inSession", inSession(now))
             .put("watching", inSession(now) && p.getLong(K_S_LEFT_AT, 0L) == 0L)
-            .put("breakLeft", breakLeftSec(now))
             .put("sessions", p.getInt(K_SESSIONS, 0))
             .put("extends", p.getInt(K_EXT_TODAY, 0))
             .put("canExtend", canExtend())
@@ -311,8 +311,8 @@ class CounterStore(context: Context) {
         private const val K_TODAY_SLIST = "todaySessionList"
         private const val K_HIST_SLIST = "historySessionList"
         const val DEFAULT_SESSION_MIN = 15
-        /** 앱을 나가 이만큼(분) 쉬면 다음에 켤 때 새 세션 */
-        const val BREAK_MIN = 10
+        /** 대상 앱을 나간 뒤 이만큼(초) 지나면 세션 종료. 그 안에 돌아오면(짧은 전환) 같은 세션 */
+        const val GRACE_SEC = 30
         const val EXTEND_MIN = 5
         const val MAX_EXTENDS = 2
     }

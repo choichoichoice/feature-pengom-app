@@ -580,6 +580,29 @@ details.dev summary { font-size: 14px; }
 .s-cap { margin: 10px 0 0; font-size: 12.5px; color: var(--muted); opacity: .85; text-align: center; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .s-badge { background: #17384c; } }
 :root[data-theme="dark"] .s-badge { background: #17384c; }
+/* ---------- 0.17: 빙하 변화 강화 ---------- */
+.mascot .chunks2, .mascot .chunks3, .mascot .meltfx { opacity: 0; transition: opacity .8s; }
+.mascot.stage-2 .chunks2, .mascot.stage-3 .chunks2, .mascot.stage-3 .chunks3 { opacity: 1; }
+.mascot .chunks2 path, .mascot .chunks3 path { animation: pg-bob 3.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.mascot .chunks2 path:nth-child(2n), .mascot .chunks3 path:nth-child(2n) { animation-delay: 1.3s; }
+@keyframes pg-bob { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(6px) rotate(-2deg); } }
+/* 녹는 중: 빙하가 작아지고(가장자리가 물에 잠김) 균열이 생기고, 반짝임·눈송이는 사라짐 */
+.mascot.melting .meltfx { opacity: 1; }
+.mascot .meltpool { opacity: 0; transition: opacity .8s; }
+.mascot.melting .meltpool { opacity: .85; }
+.mascot.melting .floe2, .mascot.melting .floe3, .mascot.melting .chunks3, .mascot.melting .spk, .mascot.melting .flake { opacity: 0 !important; }
+.mascot.melting .chunks2 { opacity: .8; }
+.mascot .meltfx .drop { animation: pg-drip 1.6s ease-in infinite; transform-box: fill-box; }
+@keyframes pg-drip { 0% { transform: translateY(-10px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(16px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .mascot .chunks2 path, .mascot .chunks3 path, .mascot .meltfx .drop { animation: none; } }
+.ice-badge { margin-top: 8px; font-size: 14px; font-weight: 700; color: #1d6f9c; background: rgba(255, 255, 255, .72); border-radius: 999px; padding: 6px 14px; white-space: nowrap; }
+.ice-badge.melt { color: #b4532a; background: #fff1e8; }
+#home .hero .ice-badge { position: relative; z-index: 2; }
+.left .bar { display: none; }
+/* 상단 좌우 여백: 화면 끝에 붙거나 잘리지 않게 */
+#home .topbar { padding: 2px 12px 0 10px; }
+#home .scroll { padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+.cnt.fire { margin-right: 2px; }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -636,7 +659,9 @@ details.dev summary { font-size: 14px; }
         </div>
         <div class="hero">
           <div class="bubble" id="h-bubble">이번엔 15분만 딱 보기로 해요!</div>
-          <div class="mascot" id="h-char"></div>        </div>
+          <div class="mascot" id="h-char"></div>
+          <div class="ice-badge" id="h-ice"></div>
+        </div>
         <div class="left tap" id="h-left-box" role="button" tabindex="0" aria-label="이번 시청 남은 시간. 눌러서 1회 시청 시간 변경">
           <div class="big"><span class="n" id="h-left"></span><span class="u" id="h-left-u"></span></div>
           <div class="tap-hint" aria-hidden="true">탭해서 시간을 변경해 보세요 <span>✎</span></div>
@@ -831,6 +856,7 @@ details.dev summary { font-size: 14px; }
     const flake = (x, y, r) => `<g class="flake" stroke="#7cc9ef" stroke-width="8" stroke-linecap="round"><path d="M${x} ${y - r}V${y + r}M${x - r * .87} ${y - r / 2}L${x + r * .87} ${y + r / 2}M${x - r * .87} ${y + r / 2}L${x + r * .87} ${y - r / 2}M${x - r * .3} ${y - r * .75}L${x} ${y - r * .5}L${x + r * .3} ${y - r * .75}M${x - r * .3} ${y + r * .75}L${x} ${y + r * .5}L${x + r * .3} ${y + r * .75}"/></g>`;
     return `<defs><linearGradient id="${id}ice" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9f8ff"/><stop offset=".3" stop-color="#b3e3fa"/><stop offset="1" stop-color="#4fb4e6"/></linearGradient>
         <linearGradient id="${id}ice3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".25" stop-color="#c7ecfc"/><stop offset="1" stop-color="#2f9fd9"/></linearGradient></defs>
+      <ellipse class="meltpool" cx="627" cy="1150" rx="560" ry="58" fill="#9ed8f3"/>
       <g class="floe2"><path d="M140 1104 L250 1052 L1004 1052 L1118 1106 L1064 1178 L196 1178Z" fill="url(#${id}ice)"/>
         <path d="M250 1052 L1004 1052 L1050 1074 L200 1074Z" fill="#fff" opacity=".75"/>
         <path d="M230 1140 l38 -34 l26 34Z M960 1146 l30 -38 l30 38Z" fill="#8fd6f7" opacity=".8"/></g>
@@ -838,6 +864,9 @@ details.dev summary { font-size: 14px; }
         <path d="M170 1020 L1090 1020 L1160 1056 C1060 1080 950 1056 850 1072 C730 1092 560 1062 440 1080 C320 1096 220 1074 100 1062Z" fill="#fff"/>
         <path d="M150 1160 l54 -56 l42 56Z M1050 1170 l48 -64 l46 62Z M330 1206 l30 -36 l28 36Z M880 1210 l26 -32 l24 32Z" fill="#a6e0f8"/>
         <path d="M80 1012 l26 -70 l26 70Z M1160 1004 l22 -60 l22 60Z" fill="#c9effd" stroke="#7cc9ef" stroke-width="5"/></g>
+      <g class="chunks2"><path d="M30 1130 l60 -22 l52 12 l-14 32 l-80 4Z" fill="url(#${id}ice)"/><path d="M1150 1140 l54 -18 l46 16 l-18 28 l-70 2Z" fill="url(#${id}ice)"/></g>
+      <g class="chunks3"><path d="M-60 1150 l70 -26 l60 14 l-16 36 l-94 6Z" fill="url(#${id}ice3)"/><path d="M1250 1160 l66 -22 l56 18 l-20 34 l-86 4Z" fill="url(#${id}ice3)"/>
+        <path d="M-20 1030 l40 -14 l34 10 l-10 22 l-56 2Z" fill="#d6f2fd"/><path d="M1240 1020 l36 -12 l30 10 l-10 20 l-50 2Z" fill="#d6f2fd"/></g>
       ${spk(210, 990, 30)}${spk(1060, 980, 34)}${spk(300, 880, 20)}${spk(990, 860, 22)}
       ${flake(150, 800, 34)}${flake(1110, 740, 30)}${flake(200, 600, 24)}${flake(1070, 540, 26)}`;
   }
@@ -888,11 +917,19 @@ details.dev summary { font-size: 14px; }
           </g>
           <path class="p-sweat" d="M940 300 C912 350 912 380 940 380 C968 380 968 350 940 300 Z" fill="${WATER}" stroke="${EDGE}" stroke-width="7" opacity="0"/>
         </g>
+        <g class="meltfx">
+          <path d="M180 1086 C230 1040 300 1040 330 1066 L344 1136 C290 1150 220 1150 176 1132Z" fill="${WATER}" opacity=".92"/>
+          <path d="M1074 1086 C1024 1040 954 1040 924 1066 L910 1136 C964 1150 1034 1150 1078 1132Z" fill="${WATER}" opacity=".92"/>
+          <path d="M360 1068 l46 20 l-26 18 l40 22 l-18 16 M880 1064 l-40 24 l30 16 l-44 24 l20 14 M600 1108 l22 14 l-18 14 l20 10" fill="none" stroke="#2b78a8" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M360 1068 l46 20 l-26 18 l40 22 l-18 16 M880 1064 l-40 24 l30 16 l-44 24 l20 14 M600 1108 l22 14 l-18 14 l20 10" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".6" transform="translate(3 -3)"/>
+          <path class="drop" d="M300 1180 c-10 14 -10 22 0 22 c10 0 10 -8 0 -22Z M980 1186 c-10 14 -10 22 0 22 c10 0 10 -8 0 -22Z" fill="${EDGE}"/>
+        </g>
       </svg>`;
     }
     set(mood, melt) {
       const prev = this.mood;
       this.mood = mood; this.melt = Math.max(0, Math.min(1, melt || 0));
+      this.el.classList.toggle("melting", mood === "melt");
       if (mood === "joy" && prev !== "joy") { this.hop(1400); this.sparkUntil = performance.now() + 2200; }
       this.el.setAttribute("aria-label", mood === "melt" ? "얼음이 녹아 심드렁한 펭곰이" : mood === "joy" ? "신나서 뛰는 펭곰이" : "얼음 위의 펭곰이");
       this.frame(performance.now());
@@ -1007,7 +1044,7 @@ details.dev summary { font-size: 14px; }
   const NATIVE = window.PengomNative || null;
   const avg = (a) => Math.round(a.reduce((s, v) => s + v, 0) / a.length);
   // 하이브리드: 1회 시청 세션으로 멈추게 하고(session분 + 연장), 하루 누적(used)은 기록만 한다.
-  const DEFAULT_SESSION = 15, BREAK_MIN = 10, EXTEND_MIN = 5, MAX_EXTENDS = 2;
+  const DEFAULT_SESSION = 15, GRACE_SEC = 30, EXTEND_MIN = 5, MAX_EXTENDS = 2;
   const SESSION_TIP = "쇼츠·릴스 위주는 10~15분, 긴 영상 위주는 20~30분을 추천해요.";
   const fresh = () => ({
     day: 1, mins: [], kept: [], size: 10.0, streak: 0, log: [],
@@ -1030,11 +1067,10 @@ details.dev summary { font-size: 14px; }
   const fmtMin = (m) => m >= 60 ? Math.floor(m / 60) + "시간" + (m % 60 ? " " + (m % 60) + "분" : "") : m + "분";
   const fmtClock = (sec) => minOf(sec) + ":" + String(Math.floor(sec % 60)).padStart(2, "0");
   const usedMin = () => minOf(S.used);
-  // 세션: 앱을 나가 BREAK_MIN 분 넘게 쉬면 끝(다음에 켜면 새 세션). 안드로이드에서는 네이티브 값을 쓴다.
-  const webInSession = () => S.sActive && (!S.sLeftAt || Date.now() - S.sLeftAt < BREAK_MIN * 60000);
+  // 세션: "여기서 멈추기"를 누르거나 대상 앱을 나가 GRACE_SEC 초가 지나면 끝(기록은 이미 저장됨).
+  // 30초 안에 돌아오면(카톡 답장 같은 짧은 전환) 같은 세션. 안드로이드에서는 네이티브 값을 쓴다.
+  const webInSession = () => S.sActive && (!S.sLeftAt || Date.now() - S.sLeftAt < GRACE_SEC * 1000);
   const inSession = () => NATIVE ? !!S.nIn : webInSession();
-  const breakLeft = () => NATIVE ? (S.nBreak || 0) : (inSession() && S.sLeftAt ? Math.max(0, Math.round((BREAK_MIN * 60000 - (Date.now() - S.sLeftAt)) / 1000)) : 0);
-  const resting = () => inSession() && breakLeft() > 0;
   const limit = () => S.session + (inSession() ? (S.sExtra || 0) : 0);
   // isOver: 이번 세션이 1회 시간을 넘었다(연장 중 포함). overLimit: 연장까지 다 썼다.
   const isOver = () => inSession() && S.sUsed > S.session * 60;
@@ -1170,7 +1206,7 @@ details.dev summary { font-size: 14px; }
   function openGoal() {
     $("g-cur").textContent = fmtMin(S.session) + (inSession() && S.sExtra ? " (연장 +" + S.sExtra + "분)" : "");
     $("g-used").textContent = fmtMin(usedMin());
-    $("g-reset").textContent = "앱을 나가 " + BREAK_MIN + "분 넘게 쉬면 새로 시작돼요. 하루 기록은 매일 새벽 4시에 넘어가요.";
+    $("g-reset").textContent = "앱을 나가면 이번 시청이 끝나요(30초 안에 돌아오면 이어져요). 하루 기록은 매일 새벽 4시에 넘어가요.";
     gPick.set(S.session);
     goalHint();
     $("goal").hidden = false;
@@ -1282,14 +1318,12 @@ details.dev summary { font-size: 14px; }
   function wakeMinNow() { return DAY_START_MIN; }
   function isNight() { const d = new Date(), m = d.getHours() * 60 + d.getMinutes(); return m >= 21 * 60 || m < wakeMinNow(); }
   const hhmm = (m) => String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
-  // 사건이 없을 때 펭곰이가 하는 말: 지금 상태에 맞춰서
+  // 오늘 연장(초과)한 적이 있으면 그날 하루 동안 빙하가 녹은 모습
+  const meltToday = () => (S.ext || 0) > 0;
+  // 사건이 없을 때 펭곰이가 하는 말
   function stateMsg() {
-    if (overLimit()) return canExtend() ? "이번 시청 시간이 끝났어요. 여기서 멈춰 볼까요?" : "이번 시청은 여기까지예요. 잠깐 쉬어 가요.";
-    if (resting()) return "잘 쉬고 있어요! " + Math.ceil(breakLeft() / 60) + "분 더 쉬면 새로 시작해요.";
-    if (isOver()) return "연장한 시간이에요. 이번엔 꼭 멈추기로 해요.";
-    if (inSession() && level() !== "ok") return "빙하가 녹고 있어요. 슬슬 마무리해 볼까요?";
-    if (inSession()) return "아직 빙하가 튼튼해요! 천천히 즐겨요.";
-    if (isNight() && !(S.ext || 0) && (S.sessions || 0) > 0) return "오늘 빙하를 지켜냈어요! 내일도 같이 해요.";
+    if (meltToday()) return "오늘은 빙하가 조금 녹았어요. 다음엔 꾹 참아 봐요!";
+    if (isNight() && (S.sessions || 0) > 0) return "오늘 빙하를 지켜냈어요! 내일도 같이 해요.";
     return "이번엔 " + S.session + "분만 딱 보기로 해요!";
   }
   function renderHome() {
@@ -1301,41 +1335,35 @@ details.dev summary { font-size: 14px; }
     homeNums();
     if (NATIVE) nativeUi();
   }
-  // 홈 아래 버튼: 감지가 꺼졌으면 켜기, 이번 세션 시간을 다 썼으면 꾹 눌러 연장
+  // 홈 아래 버튼: 감지가 꺼졌을 때만 "사용 감지 켜기" (연장은 유튜브 위 시트에서만)
   function homeButton() {
     const b = $("h-watch");
-    if (NATIVE && !NATIVE.isCounting()) { b.hidden = false; b.textContent = "사용 감지 켜기"; b.classList.remove("ghost", "hold"); b.dataset.hold = "0"; return; }
-    b.hidden = !(overLimit() && canExtend());
-    b.textContent = HOLD_LABEL; b.classList.remove("ghost"); b.classList.add("hold"); b.dataset.hold = "1";
+    const need = NATIVE && !NATIVE.isCounting();
+    b.hidden = !need; b.textContent = "사용 감지 켜기"; b.classList.remove("ghost", "hold"); b.dataset.hold = "0";
   }
   function setMood() {
-    $("phone").classList.toggle("st-over", isOver());
-    $("phone").classList.toggle("st-near", !isOver() && level() !== "ok");
+    $("phone").classList.toggle("st-over", false);
+    $("phone").classList.toggle("st-near", meltToday());
   }
-  // 큰 숫자 = 이번 세션 남은 시간(1회 시간 + 연장 기준). 세션이 없으면 1회 시간.
+  // 홈은 늘 리셋된 모습: 큰 숫자 = 내 1회 시청 시간, 아래 = 오늘 총 사용·시청 횟수
   function homeNums() {
     setMood();
-    const over = isOver();
-    rig.h.set(over ? "melt" : "idle", meltNow());
-    const box = $("h-left-box"), lim = limit(), su = minOf(S.sUsed || 0);
-    const live = inSession(), inExtra = over && !overLimit();
-    box.classList.toggle("extra", inExtra);
-    box.classList.toggle("over", !!overLimit());
-    const lv = level();
-    box.classList.toggle("lv-warn", lv === "warn"); box.classList.toggle("lv-danger", lv === "danger");
-    $("home").dataset.sky = overLimit() ? "over" : lv === "ok" ? "ok" : "warn";
+    const melt = meltToday();
+    rig.h.set(melt ? "melt" : "idle", melt ? 0.6 : 0);
+    const box = $("h-left-box");
+    box.classList.remove("extra", "over", "lv-warn", "lv-danger");
+    $("home").dataset.sky = melt ? "warn" : "ok";
     renderTopStatus();
-    if (!live) {
-      $("h-left").textContent = S.session; $("h-left-u").textContent = "분 · 1회 시청";
-      $("h-bar").style.width = "0%";
-    } else {
-      $("h-left").textContent = overLimit() ? "+" + Math.max(1, su - lim) : Math.max(0, lim - su);
-      $("h-left-u").textContent = overLimit() ? "분 넘었어요" : resting() ? "분 남았어요 (쉬는 중)" : inExtra ? "분 남았어요 (연장)" : "분 남았어요";
-      $("h-bar").style.width = Math.min(100, S.sUsed / (lim * 60) * 100) + "%";
-    }
+    $("h-left").textContent = S.session; $("h-left-u").textContent = "분 · 1회 시청";
     $("h-cap").textContent = "오늘 총 " + usedMin() + "분 사용 · " + (S.sessions || 0) + "회 시청";
+    renderIceBadge(melt);
     homeButton();
     renderReview();
+  }
+  function renderIceBadge(melt) {
+    const d = S.streak || 0, b = $("h-ice");
+    b.classList.toggle("melt", melt);
+    b.textContent = melt ? "💧 빙하가 녹고 있어요" : "🧊 빙하 Lv." + iceStage() + " · " + (d ? d + "일째 지키는 중" : "오늘부터 지켜 봐요");
   }
 
   /* ---------- 날짜: 하루는 새벽 4시에 바뀐다 ---------- */
@@ -1601,21 +1629,22 @@ details.dev summary { font-size: 14px; }
     // 가운데 박스: 오늘 누적만 한 줄
     $("s-quote").textContent = "오늘 총 " + usedMin() + "분 · " + (S.sessions || 0) + "회 시청";
     // 맨 아래 캡션: 쿨다운 / 연장 한도 안내
-    $("s-cap").textContent = more ? BREAK_MIN + "분 쉬었다 켜면 새 타이머로 시작해요" : "연장은 한 번 볼 때 두 번까지예요 · " + BREAK_MIN + "분 쉬면 새로 시작해요";
+    $("s-cap").textContent = more ? "" : "연장은 한 번 볼 때 두 번까지예요";
     $("s-keep").hidden = !more;
     $("sheet").hidden = false; rig.s.talk(1800); buzz([30, 60, 30]); $("s-leave").focus();
   }
   function hideSheet() { $("sheet").hidden = true; locked = false; reel.style.overflowY = "scroll"; }
   $("s-keep").dataset.hold = "1"; $("s-keep").classList.add("hold"); $("s-keep").textContent = HOLD_LABEL;
   holdable($("s-keep"), HOLD_MS, () => { extend(); hideSheet(); updateMeter(); setTimeout(() => toast(EXTEND_MSG(EXTEND_MIN)), 250); });
-  $("s-leave").onclick = () => { S.overAck = true; hideSheet(); exitFeed(); };
+  // 여기서 멈추기: 세션을 바로 끝낸다 (기록은 저장돼 있음)
+  $("s-leave").onclick = () => { hideSheet(); exitFeed(true); };
   $("f-exit").onclick = exitFeed;
-  function exitFeed() {
+  function exitFeed(stopNow) {
     clearInterval(clock); clock = null;
     if (practice) { S = practice; practice = null; S.homeMsg = "연습이 끝났어요. 실제 기록은 그대로예요."; save(); go("home"); return; }
-    watchStop();
-    S.homeMsg = overLimit() ? "잘 멈췄어요! " + BREAK_MIN + "분 쉬고 와요."
-      : S.sUsed < 60 ? "들어갔다 바로 나왔네요? 잘했어요!" : "잘 멈췄어요! 이번 세션은 " + Math.max(0, limit() - minOf(S.sUsed)) + "분 남았어요.";
+    const short = S.sUsed < 60;
+    if (stopNow === true) { S.sActive = false; S.sLeftAt = 0; } else watchStop();
+    S.homeMsg = short ? "들어갔다 바로 나왔네요? 잘했어요!" : "잘 멈췄어요! 이번 시청을 기록해 뒀어요.";
     save(); go("home");
     if (!isOver() && S.sUsed >= 60) rig.h.hop(700);
   }
@@ -1699,7 +1728,7 @@ details.dev summary { font-size: 14px; }
     }
     const before = [S.used, S.sUsed, S.sExtra, S.nIn, S.nBreak > 0, S.sessions, S.ext, S.session].join("|");
     S.used = st.used; S.sUsed = st.sessionUsed || 0; S.sExtra = st.sessionExtra || 0;
-    S.nIn = !!st.inSession; S.nBreak = st.breakLeft || 0; S.ext = st.extends || 0; S.nWatch = !!st.watching;
+    S.nIn = !!st.inSession; S.ext = st.extends || 0; S.nWatch = !!st.watching;
     if (Array.isArray(st.todaySessions)) S.todaySegs = st.todaySessions;
     // 시청 횟수: 저장된 횟수와 세션 목록 중 큰 값 (예전 버전에서 넘어온 날 0회로 보이지 않게)
     S.sessions = Math.max(st.sessions || 0, (S.todaySegs || []).length);
@@ -1811,7 +1840,7 @@ details.dev summary { font-size: 14px; }
     clearArmed = false; $("s-clear").textContent = "지우기"; $("s-clear-text").textContent = "기록 모두 지우기";
     if (document.activeElement !== $("s-reason")) $("s-reason").value = S.reason && S.reason !== "다른 거" ? S.reason : "";
     try { $("s-ver").textContent = NATIVE && NATIVE.appVersion ? NATIVE.appVersion() : "웹 미리보기"; } catch (e) {}
-    $("s-reset").textContent = "앱을 나가 " + BREAK_MIN + "분 넘게 쉬면 새 세션이 시작돼요. 하루 기록은 매일 새벽 4시에 자동으로 넘어가요.";
+    $("s-reset").textContent = "유튜브 등을 나가면 이번 시청이 끝나요(30초 안에 돌아오면 이어져요). 하루 기록은 매일 새벽 4시에 자동으로 넘어가요.";
   }
   $("s-reduce").onclick = openGoal;
   function saveReason() {

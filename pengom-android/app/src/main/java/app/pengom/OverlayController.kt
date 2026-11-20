@@ -76,6 +76,74 @@ class OverlayController(
     private fun safeRemove(v: View) = try { wm.removeView(v) } catch (_: Exception) {}
 
     // ---------------- 카운터 ----------------
+    // ---------- 알약 위치: 드래그로 옮기고, 탭하면 화면 가장자리로 접혔다 펼쳐진다 ----------
+    private val prefs = svc.getSharedPreferences("pengom_overlay", Context.MODE_PRIVATE)
+    private var pillLp: WindowManager.LayoutParams? = null
+    private var collapsed = false
+
+    private fun screenW() = svc.resources.displayMetrics.widthPixels
+    private fun screenH() = svc.resources.displayMetrics.heightPixels
+
+    private fun applyCollapsed() {
+        val row = pill ?: return; val lp = pillLp ?: return
+        pillNum?.visibility = if (collapsed) View.GONE else View.VISIBLE
+        pillSub?.visibility = if (collapsed) View.GONE else View.VISIBLE
+        if (collapsed) {
+            // 가까운 쪽 가장자리로 붙고, 바깥쪽 모서리는 각지게 (화면 옆에 꽂힌 탭처럼)
+            val toRight = lp.x + row.width / 2 > screenW() / 2
+            val r = px(20).toFloat()
+            row.background = GradientDrawable().apply {
+                setColor(0xE60E161E.toInt())
+                cornerRadii = if (toRight) floatArrayOf(r, r, 0f, 0f, 0f, 0f, r, r) else floatArrayOf(0f, 0f, r, r, r, r, 0f, 0f)
+            }
+            row.setPadding(px(if (toRight) 8 else 6), px(6), px(if (toRight) 6 else 8), px(6))
+            row.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+            lp.x = if (toRight) screenW() - row.measuredWidth else 0
+        } else {
+            row.background = rounded(0xE60E161E.toInt(), 20, 1, 0x40FFFFFF)
+            row.setPadding(px(8), px(5), px(14), px(5))
+            lp.x = prefs.getInt("x", -1).let { if (it < 0) centerX(row) else it.coerceIn(0, screenW() - px(60)) }
+        }
+        try { wm.updateViewLayout(row, lp) } catch (_: Exception) {}
+        prefs.edit().putBoolean("collapsed", collapsed).apply()
+    }
+
+    private fun centerX(row: View): Int { row.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED); return (screenW() - row.measuredWidth) / 2 }
+
+    @android.annotation.SuppressLint("ClickableViewAccessibility")
+    private fun attachGestures(row: View) {
+        val slop = android.view.ViewConfiguration.get(svc).scaledTouchSlop
+        var downX = 0f; var downY = 0f; var startX = 0; var startY = 0; var dragging = false
+        row.setOnTouchListener { _, e ->
+            val lp = pillLp ?: return@setOnTouchListener false
+            when (e.actionMasked) {
+                MotionEvent.ACTION_DOWN -> { downX = e.rawX; downY = e.rawY; startX = lp.x; startY = lp.y; dragging = false; true }
+                MotionEvent.ACTION_MOVE -> {
+                    val dx = e.rawX - downX; val dy = e.rawY - downY
+                    if (!dragging && Math.hypot(dx.toDouble(), dy.toDouble()) > slop) dragging = true
+                    if (dragging) {
+                        lp.x = (startX + dx).toInt().coerceIn(0, screenW() - row.width)
+                        lp.y = (startY + dy).toInt().coerceIn(0, screenH() - row.height - px(40))
+                        try { wm.updateViewLayout(row, lp) } catch (_: Exception) {}
+                    }
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    if (dragging) {
+                        // 접힌 상태로 옮겼으면 다시 가까운 가장자리에 붙인다. 펼친 상태면 그 자리를 기억
+                        if (collapsed) applyCollapsed() else prefs.edit().putInt("x", lp.x).apply()
+                        prefs.edit().putInt("y", lp.y).apply()
+                    } else {
+                        collapsed = !collapsed; applyCollapsed()
+                        row.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                    }
+                    true
+                }
+                else -> true
+            }
+        }
+    }
+
     fun show() {
         if (pill != null) { refresh(); return }
         val row = LinearLayout(svc).apply {
@@ -83,24 +151,32 @@ class OverlayController(
             gravity = Gravity.CENTER_VERTICAL
             setPadding(px(8), px(5), px(14), px(5))
             background = rounded(0xE60E161E.toInt(), 20, 1, 0x40FFFFFF)
+            contentDescription = "남은 시간. 탭하면 옆으로 접히고, 끌어서 옮길 수 있어요"
         }
         pillIcon = ImageView(svc).apply { setImageResource(R.drawable.mascot_head) }
         row.addView(pillIcon, LinearLayout.LayoutParams(px(26), px(26)).apply { marginEnd = px(6) })
         pillNum = TextView(svc).apply { setTextColor(Color.WHITE); textSize = 17f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum" }
         pillSub = TextView(svc).apply { textSize = 12f; typeface = Typeface.DEFAULT_BOLD; setPadding(px(8), 0, 0, 0) }
         row.addView(pillNum); row.addView(pillSub)
-        val lp = params(WRAP_CONTENT, WRAP_CONTENT, false).apply {
-            gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
-            y = dimen("status_bar_height") + px(6)
+        refreshInto()
+        val lp = params(WRAP_CONTENT, WRAP_CONTENT, true).apply {
+            gravity = Gravity.TOP or Gravity.START
+            x = prefs.getInt("x", -1).let { if (it < 0) centerX(row) else it }
+            y = prefs.getInt("y", dimen("status_bar_height") + px(6))
         }
-        try { wm.addView(row, lp); pill = row } catch (_: Exception) { return }
+        try { wm.addView(row, lp); pill = row; pillLp = lp } catch (_: Exception) { return }
+        attachGestures(row)
+        collapsed = prefs.getBoolean("collapsed", false)
+        if (collapsed) row.post { applyCollapsed() }
         refresh()
-        // 시간을 다 쓴 채로 다시 들어오면 시트를 다시 보여준다
+        // 시간을 다 쓴 채로 다시 들어오면(짧은 전환 뒤) 시트를 다시 보여준다
         if (store.sessionOver()) main.post { showSheet() }
     }
 
+    private fun refreshInto() = refresh()
+
     fun hide() {
-        pill?.let { safeRemove(it) }; pill = null
+        pill?.let { safeRemove(it) }; pill = null; pillLp = null
         removeToast()
         sheet?.let { safeRemove(it) }; sheet = null
     }
@@ -230,10 +306,9 @@ class OverlayController(
             background = LayerDrawable(arrayOf(rounded(Color.WHITE, 18, 2, 0xFFE1EAF0.toInt()), gauge))
         }
         if (more) card.addView(keep, LinearLayout.LayoutParams(MATCH_PARENT, px(56)).apply { topMargin = px(10) })
-        // 맨 아래 작은 캡션: 쿨다운 / 연장 한도 안내 (박스와 분리)
-        card.addView(TextView(svc).apply {
-            val b = CounterStore.BREAK_MIN
-            text = if (more) "${b}분 쉬었다 켜면 새 타이머로 시작해요" else "연장은 한 번 볼 때 두 번까지예요 · ${b}분 쉬면 새로 시작해요"
+        // 연장 한도에 닿았을 때만 맨 아래 작은 캡션
+        if (!more) card.addView(TextView(svc).apply {
+            text = "연장은 한 번 볼 때 두 번까지예요"
             textSize = 12.5f; setTextColor(0xFF8A9AA8.toInt()); gravity = Gravity.CENTER
         }, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = px(12) })
 
@@ -279,7 +354,8 @@ class OverlayController(
                 else -> true
             }
         }
-        leave.setOnClickListener { store.ackOver(); removeSheet(); goHome() }
+        // 여기서 멈추기: 세션을 바로 끝내고(기록 저장) 홈으로
+        leave.setOnClickListener { store.endSession(); removeSheet(); hide(); goHome() }
     }
 
     private fun removeSheet() { sheet?.let { safeRemove(it) }; sheet = null }

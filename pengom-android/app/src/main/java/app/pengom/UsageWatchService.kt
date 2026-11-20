@@ -107,12 +107,12 @@ class UsageWatchService : Service() {
         return spans
     }
 
-    /** 오늘 대상 앱이 켜져 있던 구간을 세션으로 묶는다 (쉰 시간이 BREAK_MIN 분 미만이면 같은 세션) */
+    /** 오늘 대상 앱이 켜져 있던 구간을 세션으로 묶는다 (나가 있던 시간이 GRACE_SEC 초 미만이면 같은 세션) */
     private fun rebuildSessions(spans: List<LongArray>) {
         val segs = mutableListOf<Pair<Long, Int>>()
         var start = -1L; var end = -1L; var sec = 0L
         for (sp in spans) {
-            if (start >= 0 && sp[0] - end < CounterStore.BREAK_MIN * 60_000L) { sec += sp[1] - sp[0]; end = sp[1] }
+            if (start >= 0 && sp[0] - end < CounterStore.GRACE_SEC * 1000L) { sec += sp[1] - sp[0]; end = sp[1] }
             else {
                 if (start >= 0) segs += Pair(start / 1000, (sec / 1000).toInt())
                 start = sp[0]; end = sp[1]; sec = sp[1] - sp[0]
@@ -164,8 +164,9 @@ class UsageWatchService : Service() {
             if (watching) store.onWatchStart(now) else store.onWatchStop(now)
             lastWatching = watching; updateNotification()
         }
-        // 쉬는 중에는 30초마다 알림을 고쳐서 "새 세션까지 N분"을 맞춘다
-        if (!watching && now - lastRestNotify > 30_000) { lastRestNotify = now; updateNotification() }
+        // 앱을 나가 GRACE_SEC 초가 지나 세션이 끝나면 화면 위 시트도 정리한다
+        if (!watching && endedNotified.not() && !store.inSession()) { endedNotified = true; overlay.hide() }
+        if (watching) endedNotified = false
         if (watching) overlay.show() else if (foreground != null && foreground != "com.android.systemui") overlay.hide()
 
         val dt = (now - lastTick).coerceIn(0, 5_000)
@@ -204,22 +205,20 @@ class UsageWatchService : Service() {
             .setOngoing(true)
             .setOnlyAlertOnce(true)
         val today = "오늘 총 ${store.usedMin()}분 사용 · ${store.sessionsToday()}회 시청"
-        if (!store.inSession()) {
-            return nb.setShowWhen(false).setContentTitle("1회 ${store.sessionMin()}분 · 대기 중").setContentText(today).build()
+        // 보고 있지 않으면 세션 상태는 보여 주지 않는다 (쉬는 중 표시 없음)
+        if (!lastWatching || !store.inSession()) {
+            return nb.setShowWhen(false).setContentTitle("1회 ${store.sessionMin()}분 · 감지 중").setContentText(today).build()
         }
         val lim = store.sessionLimit()
         val left = lim * 60 - store.sessionSec()
         val over = left < 0
-        val rest = store.breakLeftSec()
         nb.setContentTitle(
             when {
                 over -> "이번 시청 시간 종료"
                 store.sessionExtra() > 0 -> "이번 시청 남은 시간 (연장 +${store.sessionExtra()}분)"
                 else -> "이번 시청 남은 시간 · 1회 ${store.sessionMin()}분"
             }
-        ).setContentText(
-            if (!lastWatching && rest > 0) "쉬는 중 · ${(rest + 59) / 60}분 더 쉬면 새로 시작 · $today" else today
-        )
+        ).setContentText(today)
         if (lastWatching) {
             // 보는 동안만 알림 시계가 1초씩 움직인다 (남으면 거꾸로, 넘기면 앞으로)
             val now = System.currentTimeMillis()
@@ -233,7 +232,7 @@ class UsageWatchService : Service() {
     }
 
     private var lastWatching = false
-    private var lastRestNotify = 0L
+    private var endedNotified = true
 
     private fun updateNotification() {
         getSystemService(NotificationManager::class.java).notify(NOTI_ID, buildNotification())
