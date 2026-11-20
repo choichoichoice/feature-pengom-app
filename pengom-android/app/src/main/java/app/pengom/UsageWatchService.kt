@@ -72,48 +72,43 @@ class UsageWatchService : Service() {
     /** 서비스가 꺼져 있던 동안의 오늘 사용 시간을 시스템 기록으로 다시 계산한다 */
     private fun catchUpToday() {
         val now = System.currentTimeMillis()
-        val events = usm.queryEvents(store.dayStartMillis(), now)
-        val targets = store.targets()
-        val e = UsageEvents.Event()
-        var openPkg: String? = null
-        var openAt = 0L
-        var total = 0L
-        while (events.hasNextEvent()) {
-            events.getNextEvent(e)
-            when (e.eventType) {
-                RESUMED -> {
-                    if (openPkg != null) total += e.timeStamp - openAt
-                    openPkg = if (e.packageName in targets) e.packageName else null
-                    openAt = e.timeStamp
-                    foreground = e.packageName
-                }
-                PAUSED -> if (e.packageName == openPkg) { total += e.timeStamp - openAt; openPkg = null }
-            }
-        }
-        if (openPkg != null) total += now - openAt
-        store.raiseUsedTo((total / 1000).toInt())
-        rebuildSessions(now)
+        val spans = targetSpans(store.dayStartMillis(), now, initService = true)
+        store.raiseUsedTo((spans.sumOf { it[1] - it[0] } / 1000).toInt())
+        rebuildSessions(spans)
         lastQuery = now
     }
 
-    /** 오늘 대상 앱이 켜져 있던 구간을 세션으로 묶는다 (쉰 시간이 BREAK_MIN 분 미만이면 같은 세션) */
-    private fun rebuildSessions(now: Long) {
-        val events = usm.queryEvents(store.dayStartMillis(), now)
+    /**
+     * 오늘 대상 앱이 앞에 떠 있던 구간들 [시작, 끝] (ms). track() 과 같은 화면 단위 판단을 쓴다.
+     * initService 면 서비스의 "지금 앞 화면" 상태도 함께 맞춘다.
+     */
+    private fun targetSpans(from: Long, now: Long, initService: Boolean): List<LongArray> {
+        val events = usm.queryEvents(from, now)
         val targets = store.targets()
         val e = UsageEvents.Event()
+        val open = LinkedHashMap<String, String>()
+        var fg: String? = null
         val spans = mutableListOf<LongArray>()
-        var openAt = -1L; var openPkg: String? = null
+        var since = -1L
         while (events.hasNextEvent()) {
             events.getNextEvent(e)
+            if (initService) track(e)
+            val key = e.packageName + "/" + (e.className ?: "")
             when (e.eventType) {
-                RESUMED -> {
-                    if (openPkg != null) { spans += longArrayOf(openAt, e.timeStamp); openPkg = null }
-                    if (e.packageName in targets) { openPkg = e.packageName; openAt = e.timeStamp }
-                }
-                PAUSED -> if (e.packageName == openPkg) { spans += longArrayOf(openAt, e.timeStamp); openPkg = null }
+                RESUMED -> { open.remove(key); open[key] = e.packageName; fg = e.packageName }
+                PAUSED -> { open.remove(key); if (e.packageName == fg && open.values.none { it == fg }) fg = open.values.lastOrNull() }
+                else -> continue
             }
+            val inTarget = fg in targets
+            if (inTarget && since < 0) since = e.timeStamp
+            else if (!inTarget && since >= 0) { spans += longArrayOf(since, e.timeStamp); since = -1L }
         }
-        if (openPkg != null) spans += longArrayOf(openAt, now)
+        if (since >= 0) spans += longArrayOf(since, now)
+        return spans
+    }
+
+    /** 오늘 대상 앱이 켜져 있던 구간을 세션으로 묶는다 (쉰 시간이 BREAK_MIN 분 미만이면 같은 세션) */
+    private fun rebuildSessions(spans: List<LongArray>) {
         val segs = mutableListOf<Pair<Long, Int>>()
         var start = -1L; var end = -1L; var sec = 0L
         for (sp in spans) {
@@ -127,6 +122,29 @@ class UsageWatchService : Service() {
         store.rebuildToday(segs.filter { it.second >= 5 })
     }
 
+    /**
+     * 지금 앞에 떠 있는 화면들 ("패키지/화면 이름" → 패키지). 앱 단위가 아니라 화면 단위로 본다.
+     * 한 앱 안에서 화면이 바뀔 때(쇼츠 넘기기, 댓글, 전체 화면 회전 등) 기록이
+     * "새 화면 앞으로 → 옛 화면 뒤로" 순서로 올 수 있는데, 앱 단위로 보면 그걸 "앱을 닫았다"로
+     * 착각해 시간이 멈췄다. 그 앱의 화면이 하나도 안 남았을 때만 닫은 것으로 본다.
+     */
+    private val resumed = LinkedHashMap<String, String>()
+
+    private fun track(e: UsageEvents.Event) {
+        val key = e.packageName + "/" + (e.className ?: "")
+        when (e.eventType) {
+            RESUMED -> { resumed.remove(key); resumed[key] = e.packageName; foreground = e.packageName }
+            PAUSED -> {
+                resumed.remove(key)
+                // 방금 뒤로 간 화면이 지금 앞 앱의 것이면, 남은 화면 중 가장 최근 것의 앱으로
+                if (e.packageName == foreground && resumed.values.none { it == foreground }) {
+                    foreground = resumed.values.lastOrNull()
+                }
+            }
+        }
+        if (resumed.size > 40) resumed.remove(resumed.keys.first())
+    }
+
     private var lastDay: String? = null
 
     private fun step() {
@@ -138,11 +156,7 @@ class UsageWatchService : Service() {
         val now = System.currentTimeMillis()
         val events = usm.queryEvents(lastQuery, now)
         val e = UsageEvents.Event()
-        while (events.hasNextEvent()) {
-            events.getNextEvent(e)
-            if (e.eventType == RESUMED) foreground = e.packageName
-            else if (e.eventType == PAUSED && e.packageName == foreground) foreground = null
-        }
+        while (events.hasNextEvent()) { events.getNextEvent(e); track(e) }
         lastQuery = now
 
         val watching = power.isInteractive && foreground in store.targets()
