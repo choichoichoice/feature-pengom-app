@@ -470,6 +470,17 @@ details.dev summary { font-size: 14px; }
 }
 :root[data-theme="dark"] .phone.st-near { --accent: #f2a04a; --accent-deep: #f7b56b; --accent-soft: #3a2a1c; }
 :root[data-theme="dark"] .phone.st-over { --accent: #86695f; --accent-deep: #a8887d; --accent-soft: #2f2826; }
+/* ---------- 0.13: 하이브리드 세션 ---------- */
+.pk-presets button small { font-size: 12px; font-weight: 800; color: var(--accent-deep); margin-left: 2px; }
+.pk-presets button.on small { color: #fff; }
+.g-tip { margin: -2px 0 0; font-size: 15px; color: var(--muted); text-align: center; line-height: 1.5; }
+/* 꾹 누르기 게이지: 버튼 안에서 왼쪽부터 차오름 (--p: 0~1) */
+.btn.hold { position: relative; overflow: hidden; isolation: isolate; background: var(--accent); }
+.btn.hold::before { content: ""; position: absolute; inset: 0; z-index: -1; transform-origin: left center;
+  transform: scaleX(var(--p, 0)); background: rgba(255, 255, 255, .35); }
+.btn.ghost.hold { background: var(--accent-soft); color: var(--fg); }
+.btn.ghost.hold::before { background: var(--accent); opacity: .35; }
+#sheet .row { flex-direction: column-reverse; }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -495,20 +506,20 @@ details.dev summary { font-size: 14px; }
           <div class="mascot" id="p-char"></div>
         </div>
         <div class="ask">
-          <div class="q" id="p-q">오늘 쇼츠·릴스는<br>몇 분까지 볼까요?</div>
+          <div class="q" id="p-q">쇼츠·릴스, 한 번 볼 때<br>몇 분까지 볼까요?</div>
           <div class="picker" id="p-pick">
             <div class="pk-main">
               <button type="button" class="pk-step" data-d="-5" aria-label="5분 줄이기">−5분</button>
               <div class="pk-val" aria-live="polite"><span class="pk-n">30분</span></div>
               <button type="button" class="pk-step" data-d="5" aria-label="5분 늘리기">+5분</button>
             </div>
-            <div class="pk-presets"><button type="button" data-v="15">15분</button><button type="button" data-v="30">30분</button><button type="button" data-v="45">45분</button><button type="button" data-v="60">1시간</button><button type="button" data-v="90">1시간 30분</button></div>
+            <div class="pk-presets"><button type="button" data-v="10">10분</button><button type="button" data-v="15">15분 <small>추천</small></button><button type="button" data-v="20">20분</button><button type="button" data-v="30">30분</button></div>
           </div>
           <div class="hint" id="p-hint"></div>
           <label class="why">아낀 시간에 할 일 <input id="p-reason" maxlength="20" placeholder="운동, 공부…" autocomplete="off"></label>
         </div>
       </div>
-      <div class="dock"><button class="btn" id="p-go">목표 정하기</button></div>
+      <div class="dock"><button class="btn" id="p-go">시작하기</button></div>
     </section>
 
     <!-- 홈 -->
@@ -525,13 +536,13 @@ details.dev summary { font-size: 14px; }
           <span class="tip" id="h-streak-tip" role="tooltip" hidden>목표를 연속으로 지킨 날이에요</span>
         </div>
         <div class="hero">
-          <div class="bubble" id="h-bubble">아직 빙하가 튼튼해요! 천천히 즐겨요.</div>
+          <div class="bubble" id="h-bubble">이번엔 15분만 딱 보기로 해요!</div>
           <div class="mascot" id="h-char"></div>        </div>
-        <div class="left tap" id="h-left-box" role="button" tabindex="0" aria-label="남은 시간. 눌러서 하루 목표 변경">
+        <div class="left tap" id="h-left-box" role="button" tabindex="0" aria-label="이번 시청 남은 시간. 눌러서 1회 시청 시간 변경">
           <div class="big"><span class="n" id="h-left">31</span><span class="u" id="h-left-u">분 남았어요</span></div>
           <div class="bar"><i id="h-bar"></i></div>
           <div class="cap" id="h-cap"></div>
-          <div class="tap-hint" aria-hidden="true">탭해서 목표 변경 <span>✎</span></div>
+          <div class="tap-hint" aria-hidden="true">탭해서 시간 변경 <span>✎</span></div>
         </div>
         <div class="card perm" id="h-battery" hidden>
           <span class="label" id="h-battery-title">배터리 설정이 필요해요</span>
@@ -556,7 +567,7 @@ details.dev summary { font-size: 14px; }
           <div class="rv-main"><span class="rv-num" id="r-total">0분</span><span class="rv-sub" id="r-diff"></span></div>
           <figure class="chart" id="r-chart" aria-label="하루별 사용 시간">
             <div class="ch-plot" id="r-plot"></div>
-            <figcaption class="ch-key" id="r-key"><span class="k-bar"></span>사용 시간 <span class="k-tick"></span>목표</figcaption>
+            <figcaption class="ch-key" id="r-key"><span class="k-bar"></span>하루 총 사용 시간</figcaption>
             <div class="ch-tip" id="r-tip" role="status" aria-live="polite" hidden></div>
           </figure>
           <div class="rv-line" id="r-first"></div>
@@ -576,7 +587,7 @@ details.dev summary { font-size: 14px; }
           <div class="srow"><span>배터리 설정</span><span class="sval" id="s-batt"></span></div>
         </div>
         <div class="group">
-          <div class="gtitle">하루 목표</div>
+          <div class="gtitle">1회 시청 시간</div>
           <div class="srow"><span id="s-promise">-</span><button class="link" id="s-reduce">변경</button></div>
           <p class="note" id="s-reset"></p>
         </div>
@@ -633,11 +644,11 @@ details.dev summary { font-size: 14px; }
         <div class="sheet">
           <span class="grab"></span>
           <div class="mascot" id="s-char" style="width:170px"></div>
-          <h2 id="s-title">목표 시간이 끝났어요.</h2>
+          <h2 id="s-title">이번엔 15분 다 봤어요.</h2>
           <div class="quote" id="s-quote"></div>
           <div class="row">
-            <button class="btn ghost" id="s-keep">5분 연장</button>
-            <button class="btn" id="s-leave">그만 보기</button>
+            <button class="btn ghost" id="s-keep">+5분 연장하기 · 꾹 누르기</button>
+            <button class="btn" id="s-leave">여기서 멈추기</button>
           </div>
         </div>
       </div>
@@ -652,17 +663,18 @@ details.dev summary { font-size: 14px; }
   <div class="sheet-wrap" id="goal" hidden>
     <div class="sheet goal-sheet" role="dialog" aria-labelledby="g-title">
       <span class="grab"></span>
-      <h2 id="g-title">하루 목표 시간 설정</h2>
-      <div class="g-now" id="g-now"><span>현재 목표 <b id="g-cur">30분</b></span><span>오늘 사용 <b id="g-used">0분</b></span></div>
+      <h2 id="g-title">1회 시청 시간 설정</h2>
+      <div class="g-now" id="g-now"><span>지금 1회 <b id="g-cur">15분</b></span><span>오늘 총 <b id="g-used">0분</b></span></div>
       <div class="picker" id="g-pick">
             <div class="pk-main">
               <button type="button" class="pk-step" data-d="-5" aria-label="5분 줄이기">−5분</button>
               <div class="pk-val" aria-live="polite"><span class="pk-n">30분</span></div>
               <button type="button" class="pk-step" data-d="5" aria-label="5분 늘리기">+5분</button>
             </div>
-            <div class="pk-presets"><button type="button" data-v="15">15분</button><button type="button" data-v="30">30분</button><button type="button" data-v="45">45분</button><button type="button" data-v="60">1시간</button><button type="button" data-v="90">1시간 30분</button></div>
+            <div class="pk-presets"><button type="button" data-v="10">10분</button><button type="button" data-v="15">15분 <small>추천</small></button><button type="button" data-v="20">20분</button><button type="button" data-v="30">30분</button></div>
           </div>
-      <div class="hint" id="g-hint">오늘부터 바로 적용돼요.</div>
+      <p class="g-tip">쇼츠·릴스 위주는 10~15분, 긴 영상 위주는 20~30분을 추천해요.</p>
+      <div class="hint" id="g-hint">지금 보고 있는 세션부터 바로 적용돼요.</div>
       <p class="reset-note" id="g-reset"></p>
       <div class="row">
         <button class="btn ghost" id="g-cancel">취소</button>
@@ -840,30 +852,45 @@ details.dev summary { font-size: 14px; }
   // 안드로이드 앱 안에서 열리면 실제 사용 시간(네이티브)과 연결된다
   const NATIVE = window.PengomNative || null;
   const avg = (a) => Math.round(a.reduce((s, v) => s + v, 0) / a.length);
+  // 하이브리드: 1회 시청 세션으로 멈추게 하고(session분 + 연장), 하루 누적(used)은 기록만 한다.
+  const DEFAULT_SESSION = 15, BREAK_MIN = 10, EXTEND_MIN = 5, MAX_EXTENDS = 2;
+  const SESSION_TIP = "쇼츠·릴스 위주는 10~15분, 긴 영상 위주는 20~30분을 추천해요.";
   const fresh = () => ({
-    day: 1, mins: [], kept: [], size: 10.0, streak: 0, log: [], extra: 0,
-    budget: null, reason: "", used: 0, fired: [], overAck: false, exitedOnce: false,
+    day: 1, mins: [], kept: [], size: 10.0, streak: 0, log: [],
+    session: DEFAULT_SESSION, setupDone: false, reason: "", used: 0,
+    sUsed: 0, sExtra: 0, sActive: false, sLeftAt: 0, sessions: 0, ext: 0,
+    fired: [], overAck: false,
     morningMsg: "안녕하세요, 저는 펭곰이에요.", homeMsg: "",
     lastMelt: 0, lastJoy: false,
   });
   let S;
   try { S = JSON.parse(localStorage.getItem("pengom-v3")) || fresh(); } catch (e) { S = fresh(); }
+  // 예전 버전(하루 목표 방식) 데이터를 그대로 두고 새 값만 채운다
+  (() => {
+    const f = fresh();
+    Object.keys(f).forEach((k) => { if (S[k] === undefined) S[k] = f[k]; });
+    if (S.budget && !S.setupDone) S.setupDone = true;
+  })();
   const save = () => { try { localStorage.setItem("pengom-v3", JSON.stringify(S)); } catch (e) {} };
   const minOf = (sec) => Math.floor(sec / 60);
   const fmtMin = (m) => m >= 60 ? Math.floor(m / 60) + "시간" + (m % 60 ? " " + (m % 60) + "분" : "") : m + "분";
   const fmtClock = (sec) => minOf(sec) + ":" + String(Math.floor(sec % 60)).padStart(2, "0");
   const usedMin = () => minOf(S.used);
-  // isOver: 아침 약속을 넘겼다 (약속 깨짐). limit: 약속 + 다 쓴 뒤 더 받은 시간
-  const isOver = () => S.budget && S.used > S.budget * 60;
-  const limit = () => (S.budget || 0) + (S.extra || 0);
-  const overLimit = () => S.budget && S.used > limit() * 60;
-  const MAX_EXTRA = 10; // 안드로이드 CounterStore.MAX_EXTRA 와 같게
-  const canExtend = () => (S.extra || 0) < MAX_EXTRA;
+  // 세션: 앱을 나가 BREAK_MIN 분 넘게 쉬면 끝(다음에 켜면 새 세션). 안드로이드에서는 네이티브 값을 쓴다.
+  const webInSession = () => S.sActive && (!S.sLeftAt || Date.now() - S.sLeftAt < BREAK_MIN * 60000);
+  const inSession = () => NATIVE ? !!S.nIn : webInSession();
+  const breakLeft = () => NATIVE ? (S.nBreak || 0) : (inSession() && S.sLeftAt ? Math.max(0, Math.round((BREAK_MIN * 60000 - (Date.now() - S.sLeftAt)) / 1000)) : 0);
+  const resting = () => inSession() && breakLeft() > 0;
+  const limit = () => S.session + (inSession() ? (S.sExtra || 0) : 0);
+  // isOver: 이번 세션이 1회 시간을 넘었다(연장 중 포함). overLimit: 연장까지 다 썼다.
+  const isOver = () => inSession() && S.sUsed > S.session * 60;
+  const overLimit = () => inSession() && S.sUsed > limit() * 60;
+  const canExtend = () => (S.sExtra || 0) < MAX_EXTENDS * EXTEND_MIN;
   const buzz = (p) => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
 
   const rig = { p: new Mascot($("p-char")), h: new Mascot($("h-char")), s: new Mascot($("s-char")), t: new Mascot($("t-face")) };
   const growPx = (base) => Math.round(base * Math.min(1.35, 0.9 + (S.size - 10) / 30));
-  const meltNow = () => isOver() ? Math.min(1, 0.3 + (S.used / 60 - S.budget) / (S.budget * 0.9)) : 0;
+  const meltNow = () => isOver() ? Math.min(1, 0.3 + (S.sUsed / 60 - S.session) / (S.session * 0.9)) : 0;
 
   function say(el, r, text) {
     el.textContent = text; el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
@@ -895,10 +922,10 @@ details.dev summary { font-size: 14px; }
   }
   document.querySelectorAll("#tabs button").forEach((b) => { b.onclick = () => go(b.dataset.go); });
 
-  /* ---------- 목표 시간 고르기: 프리셋 + ±5분 (아침 화면과 목표 시트에서 같이 씀) ---------- */
-  const GOAL_MIN = 5, GOAL_MAX = 300;
+  /* ---------- 시간 고르기: 프리셋 + ±5분 (첫 화면과 1회 시청 시간 시트에서 같이 씀) ---------- */
+  const GOAL_MIN = 5, GOAL_MAX = 60;
   function Picker(el, onChange) {
-    let v = 30;
+    let v = 15;
     const n = el.querySelector(".pk-n"), down = el.querySelector('[data-d="-5"]'), up = el.querySelector('[data-d="5"]');
     const draw = () => {
       n.textContent = fmtMin(v);
@@ -911,62 +938,41 @@ details.dev summary { font-size: 14px; }
     return { get: () => v, set };
   }
 
-  /* ---------- 아침 목표 ---------- */
-  const noRound = (v) => { v = Math.round(v); while (v % 5 === 0) v += 1; return v; }; // 개입 지점 계산용
-  const pPick = Picker($("p-pick"), () => budgetHint());
+  /* ---------- 첫 화면: 1회 시청 시간 정하기 ---------- */
+  const pPick = Picker($("p-pick"));
   function renderPromise() {
     rig.p.el.style.width = growPx(200) + "px";
-    rig.p.set(S.lastMelt ? "melt" : S.lastJoy ? "joy" : "idle", S.lastMelt);
-    say($("p-bubble"), rig.p, S.morningMsg);
-    pPick.set(S.lastBudget || 30);
+    rig.p.set("idle", 0);
+    say($("p-bubble"), rig.p, S.morningMsg || "안녕하세요, 저는 펭곰이에요.");
+    pPick.set(S.session || DEFAULT_SESSION);
     $("p-reason").value = S.reason && S.reason !== "다른 거" ? S.reason : "";
-    budgetHint();
-  }
-  function budgetHint() {
-    const h = $("p-hint");
-    h.className = "hint";
-    h.textContent = S.mins.length ? "어제 사용 " + fmtMin(S.mins[S.mins.length - 1]) : "";
+    $("p-hint").className = "hint"; $("p-hint").textContent = SESSION_TIP;
   }
   $("p-go").onclick = () => {
     const v = pPick.get();
     S.reason = $("p-reason").value.trim() || "다른 거";
-    S.extra = 0; S.raised = 0; setBudget(v);
-    S.homeMsg = "좋아요, 목표는 " + fmtMin(v) + "! 제가 시간을 잴게요.";
-    S.lastMelt = 0; S.lastJoy = false;
-    pushPromise();
-    save(); go("home");
+    S.session = v; S.setupDone = true;
+    S.homeMsg = "이번엔 " + v + "분만 딱 보기로 해요!";
+    pushSession(); save(); go("home");
   };
 
-  // 목표와 개입 지점(41%, 72%, 2분 전)
-  function setBudget(b) {
-    S.budget = b;
-    S.th = [noRound(b * 0.41), noRound(b * 0.72), Math.max(1, b - 2)].filter((t) => t < b);
-    S.overTh = [];
-    const um = S.used / 60;
-    S.fired = S.th.map((t, i) => um >= t ? "t" + i : null).filter(Boolean);
-    if (um <= limit()) S.overAck = false;
-  }
-
-  /* ---------- 하루 목표 바꾸기 (바텀시트): 오늘부터 바로 적용, 이미 쓴 시간보다 낮게는 안 됨 ---------- */
+  /* ---------- 1회 시청 시간 바꾸기 (바텀시트): 지금 세션에도 바로 적용 ---------- */
   const gPick = Picker($("g-pick"), () => goalHint());
   function goalHint() {
     const v = gPick.get(), h = $("g-hint"), ok = $("g-ok");
-    ok.disabled = false; h.className = "hint";
-    ok.textContent = "저장";
-    if (v === S.budget) { h.textContent = "오늘부터 바로 적용돼요."; return; }
-    if (v * 60 <= S.used) {
+    ok.disabled = false; h.className = "hint"; ok.textContent = "저장";
+    h.textContent = "지금 보고 있는 세션부터 바로 적용돼요.";
+    if (v !== S.session && inSession() && v * 60 <= S.sUsed) {
       h.className = "hint warn";
-      h.textContent = "오늘 이미 " + fmtMin(usedMin()) + " 사용했어요. " + fmtMin(v) + "으로 바꾸면 바로 목표 시간이 끝나요.";
-      ok.textContent = "그래도 바꾸기"; return;
+      h.textContent = "이번 세션에 벌써 " + fmtMin(minOf(S.sUsed)) + " 봤어요. " + fmtMin(v) + "으로 바꾸면 바로 시간이 끝나요.";
+      ok.textContent = "그래도 바꾸기";
     }
-    if (S.budget && v > S.budget) { h.textContent = "오늘부터 바로 적용돼요. 목표를 늘리면 기록에 함께 남아요."; return; }
-    h.textContent = "오늘부터 바로 적용돼요.";
   }
   function openGoal() {
-    $("g-cur").textContent = S.budget ? fmtMin(S.budget) + (S.extra ? " (연장 +" + S.extra + "분)" : "") : "없음";
+    $("g-cur").textContent = fmtMin(S.session) + (inSession() && S.sExtra ? " (연장 +" + S.sExtra + "분)" : "");
     $("g-used").textContent = fmtMin(usedMin());
-    $("g-reset").textContent = "매일 " + hhmm(wakeMinNow()) + "(일어나는 시간)에 사용량이 초기화돼요.";
-    gPick.set(S.budget || 30);
+    $("g-reset").textContent = "앱을 나가 " + BREAK_MIN + "분 넘게 쉬면 새로 시작돼요. 하루 기록은 매일 " + hhmm(wakeMinNow()) + "에 초기화돼요.";
+    gPick.set(S.session);
     goalHint();
     $("goal").hidden = false;
   }
@@ -974,23 +980,22 @@ details.dev summary { font-size: 14px; }
   $("g-cancel").onclick = closeGoal;
   $("goal").addEventListener("click", (e) => { if (e.target.id === "goal") closeGoal(); });
   $("g-ok").onclick = () => {
-    const v = gPick.get(), before = S.budget;
+    const v = gPick.get(), before = S.session;
     if (v === before) return closeGoal();
-    if (before && v > before) S.raised = (S.raised || 0) + (v - before);
-    setBudget(v);
-    S.homeMsg = !before ? "좋아요, 목표는 " + fmtMin(v) + "! 제가 시간을 잴게요."
-      : v < before ? "목표를 " + v + "분으로 줄였어요! 같이 지켜봐요."
-      : "목표를 " + v + "분으로 늘렸어요. 기록에 함께 남겨 둘게요.";
-    pushPromise(); save(); closeGoal();
+    S.session = v;
+    if (!overLimit()) S.overAck = false;
+    S.homeMsg = v < before ? "한 번에 " + v + "분으로 줄였어요! 같이 지켜봐요." : "이번엔 " + v + "분만 딱 보기로 해요!";
+    pushSession(); save(); closeGoal();
     if (!$("settings").hidden) renderSettings(); else renderHome();
   };
   $("h-left-box").onclick = openGoal;
   $("h-left-box").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openGoal(); } });
 
-  function extend(min) {
+  // 세션 시간을 다 쓴 뒤에만 +5분 (세션당 두 번까지)
+  function extend() {
     if (!canExtend()) return;
-    S.extra = (S.extra || 0) + min; S.overAck = false;
-    if (NATIVE && NATIVE.extend) { try { NATIVE.extend(min); } catch (e) {} }
+    S.sExtra = (S.sExtra || 0) + EXTEND_MIN; S.ext = (S.ext || 0) + 1; S.overAck = false;
+    if (NATIVE && NATIVE.extend) { try { NATIVE.extend(EXTEND_MIN); } catch (e) {} }
     save();
   }
   const EXTEND_MSG = (n) => n + "분만 더 볼게요! 이번엔 꼭 멈추기로 해요.";
@@ -1001,7 +1006,7 @@ details.dev summary { font-size: 14px; }
     if (NATIVE) { try { on = !!NATIVE.isCounting(); batt = !NATIVE.batteryOk || NATIVE.batteryOk(); } catch (e) {} }
     if (!on) return ["need", "권한 필요"];
     if (!batt) return ["need", "배터리 설정 필요"];
-    if (!S.budget) return ["wait", "타이머 대기 중"];
+    if (!inSession() || resting()) return ["wait", "타이머 대기 중"];
     return ["ok", "사용 감지 중"];
   }
   function renderTopStatus() {
@@ -1033,87 +1038,94 @@ details.dev summary { font-size: 14px; }
     tipT = setTimeout(() => { t.hidden = true; }, 2500);
   };
 
-  /* ---------- 길게 누르기 (2초): 연장처럼 마찰이 필요한 버튼 ---------- */
+  /* ---------- 꾹 눌러 게이지 채우기 (연장 버튼) ----------
+     누르는 동안 버튼 안 게이지가 0→100% 부드럽게 차오르고, 다 차면 진동과 함께 실행.
+     중간에 손을 떼면 게이지가 자연스럽게 되돌아간다. */
+  const HOLD_MS = 1800;
   function holdable(el, ms, onDone) {
-    let raf = 0, start = 0;
-    const stop = () => { cancelAnimationFrame(raf); raf = 0; el.style.setProperty("--p", 0); };
-    el.addEventListener("pointerdown", (e) => {
-      if (el.dataset.hold !== "1") return;
-      e.preventDefault(); start = performance.now();
-      const tick = () => {
-        const p = Math.min(1, (performance.now() - start) / ms);
-        el.style.setProperty("--p", p);
-        if (p >= 1) { stop(); buzz(30); onDone(); } else raf = requestAnimationFrame(tick);
-      };
-      raf = requestAnimationFrame(tick);
-    });
-    ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => el.addEventListener(ev, stop));
+    let raf = 0, p = 0, from = 0, start = 0, dir = 0;
+    const set = (v) => { p = v; el.style.setProperty("--p", v.toFixed(3)); };
+    const loop = () => {
+      const t = performance.now() - start;
+      if (dir > 0) {
+        const v = Math.min(1, from + t / ms); set(v);
+        if (v >= 1) { dir = 0; raf = 0; buzz([20, 40, 60]); onDone(); setTimeout(() => set(0), 200); return; }
+      } else {
+        const v = Math.max(0, from - t / 300); set(v); // 0.3초에 걸쳐 되돌아감
+        if (v <= 0) { dir = 0; raf = 0; return; }
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    const go2 = (d) => { if (dir === d) return; cancelAnimationFrame(raf); dir = d; from = p; start = performance.now(); raf = requestAnimationFrame(loop); };
+    el.addEventListener("pointerdown", (e) => { if (el.dataset.hold !== "1") return; e.preventDefault(); buzz(8); go2(1); });
+    ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => el.addEventListener(ev, () => { if (dir > 0) go2(-1); }));
     el.addEventListener("contextmenu", (e) => e.preventDefault());
   }
-  const HOLD_LABEL = "5분 연장 · 2초간 길게 누르기";
+  const HOLD_LABEL = "+5분 연장하기 · 꾹 누르기";
 
   /* ---------- 홈 ---------- */
-  // 사건이 없을 때 펭곰이가 하는 말: 지금 상태에 맞춰서
-  // 남은 비율 단계: ok(여유) / warn(30% 이하) / danger(10% 이하 또는 5분 미만, 초과 포함)
+  // 남은 비율 단계(이번 세션 기준): ok(여유) / warn(30% 이하) / danger(10% 이하 또는 5분 미만, 초과 포함)
   function level() {
-    if (!S.budget) return "ok";
-    const total = limit() * 60, left = total - S.used;
+    if (!inSession()) return "ok";
+    const total = limit() * 60, left = total - S.sUsed;
     if (left <= 0 || left <= total * 0.1 || left < 5 * 60) return "danger";
     if (left <= total * 0.3) return "warn";
     return "ok";
   }
-  // 하루가 거의 끝난 시간(21시 이후 ~ 기상 시간 전)
   function wakeMinNow() { let w = S.wake == null ? 420 : S.wake; if (NATIVE && NATIVE.wakeMin) { try { w = NATIVE.wakeMin(); } catch (e) {} } return w; }
   function isNight() { const d = new Date(), m = d.getHours() * 60 + d.getMinutes(); return m >= 21 * 60 || m < wakeMinNow(); }
   const hhmm = (m) => String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
+  // 사건이 없을 때 펭곰이가 하는 말: 지금 상태에 맞춰서
   function stateMsg() {
-    if (!S.budget) return "오늘 목표를 정해 볼까요?";
-    if (overLimit()) return canExtend() ? "목표 시간이 끝났어요. 여기서 멈춰 볼까요?" : "오늘은 여기까지예요. 내일 다시 같이 해요.";
+    if (overLimit()) return canExtend() ? "이번 시청 시간이 끝났어요. 여기서 멈춰 볼까요?" : "이번 시청은 여기까지예요. 잠깐 쉬어 가요.";
+    if (resting()) return "잘 쉬고 있어요! " + Math.ceil(breakLeft() / 60) + "분 더 쉬면 새로 시작해요.";
     if (isOver()) return "연장한 시간이에요. 이번엔 꼭 멈추기로 해요.";
-    if (level() !== "ok") return "빙하가 녹고 있어요. 슬슬 마무리해 볼까요?";
-    if (isNight()) return "오늘 빙하를 지켜냈어요! 내일도 같이 해요.";
-    return "아직 빙하가 튼튼해요! 천천히 즐겨요.";
+    if (inSession() && level() !== "ok") return "빙하가 녹고 있어요. 슬슬 마무리해 볼까요?";
+    if (inSession()) return "아직 빙하가 튼튼해요! 천천히 즐겨요.";
+    if (isNight() && !(S.ext || 0) && (S.sessions || 0) > 0) return "오늘 빙하를 지켜냈어요! 내일도 같이 해요.";
+    return "이번엔 " + S.session + "분만 딱 보기로 해요!";
   }
   function renderHome() {
     $("h-streak").textContent = S.streak;
     rig.h.el.style.width = growPx(220) + "px";
-    // 사건 메시지(목표 변경, 연장 등)는 한 번만 보여 주고 다음부터는 상태 메시지
     say($("h-bubble"), rig.h, S.homeMsg || stateMsg());
     if (S.homeMsg) { S.homeMsg = ""; save(); }
     homeNums();
     if (NATIVE) nativeUi();
   }
-  // 홈 아래 버튼: 감지가 꺼졌으면 켜기, 시간을 다 썼으면 5분 연장
+  // 홈 아래 버튼: 감지가 꺼졌으면 켜기, 이번 세션 시간을 다 썼으면 꾹 눌러 연장
   function homeButton() {
     const b = $("h-watch");
     if (NATIVE && !NATIVE.isCounting()) { b.hidden = false; b.textContent = "사용 감지 켜기"; b.classList.remove("ghost", "hold"); b.dataset.hold = "0"; return; }
-    const timeUp = S.budget && S.used >= limit() * 60;
-    b.hidden = !timeUp || !canExtend();
+    b.hidden = !(overLimit() && canExtend());
     b.textContent = HOLD_LABEL; b.classList.remove("ghost"); b.classList.add("hold"); b.dataset.hold = "1";
   }
   function setMood() {
-    const frac = S.budget ? S.used / (limit() * 60) : 0;
     $("phone").classList.toggle("st-over", isOver());
     $("phone").classList.toggle("st-near", !isOver() && level() !== "ok");
   }
-  // 총 허용 시간 = 목표 + 연장. 남은 시간과 막대는 모두 이 값을 기준으로 한다.
+  // 큰 숫자 = 이번 세션 남은 시간(1회 시간 + 연장 기준). 세션이 없으면 1회 시간.
   function homeNums() {
     setMood();
-    const over = isOver(), m = meltNow(), um = usedMin();
-    rig.h.set(over ? "melt" : "idle", m);
-    const lim = limit(), box = $("h-left-box");
-    const left = lim - um, inExtra = over && !overLimit();
+    const over = isOver();
+    rig.h.set(over ? "melt" : "idle", meltNow());
+    const box = $("h-left-box"), lim = limit(), su = minOf(S.sUsed || 0);
+    const live = inSession(), inExtra = over && !overLimit();
     box.classList.toggle("extra", inExtra);
     box.classList.toggle("over", !!overLimit());
     const lv = level();
     box.classList.toggle("lv-warn", lv === "warn"); box.classList.toggle("lv-danger", lv === "danger");
-    // 배경: 여유 = 맑은 하늘, 남은 30% 이하 = 노을, 목표 초과 = 밤하늘
-    $("home").dataset.sky = isOver() ? "over" : lv === "ok" ? "ok" : "warn";
+    $("home").dataset.sky = overLimit() ? "over" : lv === "ok" ? "ok" : "warn";
     renderTopStatus();
-    $("h-left").textContent = overLimit() ? "+" + Math.max(1, um - lim) : Math.max(0, left);
-    $("h-left-u").textContent = overLimit() ? "분 넘었어요" : inExtra ? "분 남았어요 (연장)" : "분 남았어요";
-    $("h-bar").style.width = Math.min(100, S.used / (lim * 60) * 100) + "%";
-    $("h-cap").textContent = "오늘 " + um + "분 / 목표 " + S.budget + "분" + (S.extra ? " (연장 +" + S.extra + "분)" : "");
+    if (!live) {
+      $("h-left").textContent = S.session; $("h-left-u").textContent = "분 · 1회 시청";
+      $("h-bar").style.width = "0%";
+    } else {
+      $("h-left").textContent = overLimit() ? "+" + Math.max(1, su - lim) : Math.max(0, lim - su);
+      $("h-left-u").textContent = overLimit() ? "분 넘었어요" : resting() ? "분 남았어요 (쉬는 중)" : inExtra ? "분 남았어요 (연장)" : "분 남았어요";
+      $("h-bar").style.width = Math.min(100, S.sUsed / (lim * 60) * 100) + "%";
+    }
+    $("h-cap").textContent = "오늘 총 " + usedMin() + "분 사용 · " + (S.sessions || 0) + "회 시청";
     homeButton();
     renderReview();
   }
@@ -1128,61 +1140,60 @@ details.dev summary { font-size: 14px; }
     }
     return (d.day || i + 1) + "일";
   }
+  // 깔끔한 눈금 간격: 1, 2, 5 × 10^n
+  function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; }
   function renderChart(days) {
     const plot = $("r-plot"), tip = $("r-tip");
     tip.hidden = true;
     if (!days.length) { plot.innerHTML = ""; return; }
-    const W = 340, H = 180, top = 22, bot = 26, left = 34, right = 4;
-    const maxV = Math.max(10, ...days.map((d) => Math.max(d.used, d.budget || 0)));
-    const step = maxV <= 30 ? 10 : maxV <= 60 ? 20 : maxV <= 150 ? 30 : 60;
-    const yMax = Math.ceil(maxV / step) * step;
+    // 위쪽 여백(top)을 넉넉히 두고, 최댓값의 1.2배까지 축을 잡아 맨 위 라벨·값이 절대 잘리지 않게
+    const W = 340, H = 196, top = 30, bot = 26, right = 14;
+    const maxV = Math.max(10, ...days.map((d) => d.used));
+    const step = Math.max(5, niceStep(maxV * 1.2 / 4));
+    const yMax = Math.ceil(maxV * 1.2 / step) * step;
+    // 왼쪽 여백은 가장 긴 눈금 라벨("150분")이 들어가게: 글자 수만큼 넓힌다
+    const left = 14 + String(yMax).length * 8 + 14;
     const y = (v) => top + (H - top - bot) * (1 - v / yMax);
     const slot = (W - left - right) / days.length;
     const bw = Math.max(4, Math.min(24, slot - 2));
     const r = Math.min(4, bw / 2);
     let g = "";
-    for (let v = step; v <= yMax; v += step) g += `<line class="grid" x1="${left - 2}" x2="${W - right}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="0" y="${y(v) + 4}">${v}분</text>`;
+    for (let v = step; v <= yMax; v += step) g += `<line class="grid" x1="${left - 2}" x2="${W - right}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${left - 8}" y="${y(v) + 4}" text-anchor="end">${v}분</text>`;
     g += `<line class="grid" x1="${left}" x2="${W - right}" y1="${y(0)}" y2="${y(0)}"/>`;
     const labelEvery = days.length <= 7 ? 1 : 7;
     days.forEach((d, i) => {
       const cx = left + slot * (i + 0.5), x = cx - bw / 2, yt = y(d.used), h = y(0) - yt;
-      // 위만 둥근 막대 (바닥은 각지게)
       const path = h <= 0 ? "" : h < r ? `M${x},${y(0)}h${bw}v${-h}h${-bw}z`
         : `M${x},${y(0)}V${yt + r}Q${x},${yt} ${x + r},${yt}H${x + bw - r}Q${x + bw},${yt} ${x + bw},${yt + r}V${y(0)}Z`;
-      const tickW = Math.min(bw + 8, slot - 1);
       g += `<g data-i="${i}"><path class="bar${d.today ? " today" : ""}" d="${path}"/>`
-        + (d.budget ? `<line class="tick" x1="${cx - tickW / 2}" x2="${cx + tickW / 2}" y1="${y(d.budget)}" y2="${y(d.budget)}"/>` : "")
         + `<rect class="hit" x="${cx - slot / 2}" y="${top - 10}" width="${slot}" height="${H - top - bot + 10}"/></g>`;
-      if (i % labelEvery === 0 || d.today) g += `<text class="ax" x="${cx}" y="${H - 6}" text-anchor="middle">${dayLabel(d, i, days.length)}</text>`;
+      if (i % labelEvery === 0 || d.today) g += `<text class="ax" x="${Math.min(W - right - 12, Math.max(left + 12, cx))}" y="${H - 6}" text-anchor="middle">${dayLabel(d, i, days.length)}</text>`;
     });
-    // 오늘(또는 마지막 날) 값만 직접 표시
-    const li = days.length - 1, last = days[li];
-    g += `<text class="val" x="${left + slot * (li + 0.5)}" y="${Math.max(12, y(last.used) - 6)}" text-anchor="middle">${last.used}분</text>`;
+    const li = days.length - 1, last = days[li], lx = left + slot * (li + 0.5);
+    const half = (String(last.used).length + 1) * 4.6; // 값 라벨 반폭(대략) — 오른쪽 끝에서 잘리지 않게
+    g += `<text class="val" x="${Math.min(W - half - 4, lx)}" y="${Math.max(14, y(last.used) - 6)}" text-anchor="middle">${last.used}분</text>`;
     plot.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${days.map((d, i) => dayLabel(d, i, days.length) + " " + d.used + "분").join(", ")}">${g}</svg>`;
     plot.querySelectorAll("g[data-i]").forEach((el) => {
       el.addEventListener("click", () => {
         const i = +el.dataset.i, d = days[i];
         plot.querySelectorAll("g.sel").forEach((x) => x.classList.remove("sel")); el.classList.add("sel");
-        const state = d.today ? "진행 중" : d.kept ? "달성" : "초과";
-        tip.textContent = dayLabel(d, i, days.length) + " · 사용 " + d.used + "분" + (d.budget ? " / 목표 " + d.budget + "분 · " + state : "");
+        tip.textContent = dayLabel(d, i, days.length) + " · 사용 " + d.used + "분" + (d.sessions != null ? " · " + d.sessions + "회 시청" : "") + (d.ext ? " · 연장 " + d.ext + "회" : "");
         tip.hidden = false;
       });
     });
   }
 
-  /* ---------- 돌아보기: 앱이 아는 것(본 시간, 약속)만 그대로 말한다 ---------- */
+  /* ---------- 기록: 하루 누적 사용은 막는 기준이 아니라 스스로 보는 기록 ---------- */
   let reviewDays = 7;
   function renderReview() {
     const n = reviewDays, word = n === 7 ? "지난주" : "지난달";
-    // 오늘은 아직 안 끝났으니 본 시간 합계에만 넣고, 지킨 날·아낀 시간은 끝난 날로만 센다
-    const today = { used: usedMin(), budget: S.budget, reason: S.reason, kept: !isOver(), extra: S.extra || 0, raised: S.raised || 0, today: true };
-    const all = (S.log || []).concat(S.budget ? [today] : []);
+    const today = { used: usedMin(), sessions: S.sessions || 0, ext: S.ext || 0, today: true };
+    const all = (S.log || []).map((d) => ({ ...d, ext: d.ext != null ? d.ext : (d.extra ? 1 : 0) })).concat(S.setupDone || S.budget ? [today] : []);
     const cur = all.slice(-n), prev = all.slice(-2 * n, -n);
-    const sum = (a, f) => a.reduce((t, d) => t + f(d), 0);
+    const sum = (a, f) => a.reduce((t, d) => t + (f(d) || 0), 0);
     const total = sum(cur, (d) => d.used);
     $("r-total").textContent = fmtMin(total);
     renderChart(cur);
-    // 처음 7일과 최근 7일 비교 (끝난 날이 14일 넘게 쌓이면)
     const doneAll = (S.log || []);
     if (doneAll.length >= 14) {
       const a = avg(doneAll.slice(0, 7).map((d) => d.used)), b = avg(doneAll.slice(-7).map((d) => d.used));
@@ -1192,7 +1203,6 @@ details.dev summary { font-size: 14px; }
     diffEl.className = "rv-sub";
     if (!prev.length) diffEl.textContent = "총 사용 시간 · 비교는 " + (n === 7 ? "다음 주" : "다음 달") + "부터";
     else {
-      // 날 수가 다르면 하루 평균으로 비교
       const a = total / cur.length, b = sum(prev, (d) => d.used) / prev.length;
       const same = prev.length === cur.length, gap = Math.round(same ? total - sum(prev, (d) => d.used) : a - b);
       const unit = same ? "" : "하루 평균 ";
@@ -1200,30 +1210,13 @@ details.dev summary { font-size: 14px; }
       else { diffEl.textContent = word + " 대비 " + unit + (gap < 0 ? "−" : "+") + fmtMin(Math.abs(gap)); diffEl.classList.add(gap < 0 ? "down" : "up"); }
     }
     const done = cur.filter((d) => !d.today);
-    $("r-kept").textContent = done.length ? "목표 달성 " + done.filter((d) => d.kept).length + " / " + done.length + "일" : "하루가 끝나면 여기에 기록돼요.";
-    const by = {};
-    done.forEach((d) => {
-      const left = Math.max(0, (d.budget || 0) - d.used);
-      if (!left) return;
-      const k = d.reason && d.reason !== "다른 거" ? d.reason : "";
-      by[k] = (by[k] || 0) + left;
-    });
-    const rows = Object.entries(by).sort((x, y) => y[1] - x[1]);
-    const ul = $("r-reasons"); ul.innerHTML = "";
-    rows.forEach(([k, m]) => {
-      const li = document.createElement("li");
-      const label = document.createElement("span");
-      label.textContent = k ? "‘" + k + "’ 하려고 아낀 시간" : "할 일을 적지 않은 날 아낀 시간";
-      const v = document.createElement("b"); v.textContent = fmtMin(m);
-      li.append(label, v); ul.appendChild(li);
-    });
-    if (rows.length) {
-      const note = document.createElement("li"); note.className = "rv-muted"; note.style.background = "none"; note.style.padding = "0 2px";
-      note.textContent = "목표보다 덜 쓴 시간이에요. 그 시간에 한 일은 기록하지 않아요.";
-      ul.appendChild(note);
-    }
-    const extra = sum(cur, (d) => d.extra || 0), raised = sum(cur, (d) => d.raised || 0);
-    $("r-extra").textContent = [extra ? "연장 " + fmtMin(extra) : "", raised ? "목표 상향 " + fmtMin(raised) : ""].filter(Boolean).join(" · ");
+    const days = cur.length || 1;
+    $("r-kept").textContent = done.length
+      ? "하루 평균 " + fmtMin(Math.round(total / days)) + " · 연장 없이 지킨 날 " + done.filter((d) => !d.ext).length + " / " + done.length + "일"
+      : "하루가 끝나면 여기에 기록돼요.";
+    $("r-reasons").innerHTML = "";
+    const sess = sum(cur, (d) => d.sessions), ext = sum(cur, (d) => d.ext);
+    $("r-extra").textContent = "시청 " + sess + "회 · 연장 " + ext + "회";
     if (n === 7) $("r-sum").textContent = "이번 주 총 " + fmtMin(total);
   }
   $("h-review-open").onclick = () => go("history");
@@ -1235,7 +1228,7 @@ details.dev summary { font-size: 14px; }
     };
   });
 
-  /* ---------- 연습 피드: 보는 동안 실제로 시간이 흐른다 ---------- */
+  /* ---------- 연습 피드 (웹 미리보기용): 보는 동안 실제로 시간이 흐르고 세션이 돈다 ---------- */
   const reel = $("reel");
   let made = 0, toastT, locked = false, clock = null;
   const icon = (n) => `<svg><use href="#i-${n}"/></svg>`;
@@ -1253,27 +1246,28 @@ details.dev summary { font-size: 14px; }
   }
   let practice = null;
   function openFeed() {
-    if (NATIVE) practice = { used: S.used, fired: S.fired.slice(), overAck: S.overAck };
+    if (NATIVE) practice = JSON.parse(JSON.stringify(S));
+    watchStart();
     reel.innerHTML = ""; made = 0; addShorts(8);
     go("feed"); reel.scrollTop = 0; reel.focus({ preventScroll: true });
     updateMeter();
     clearInterval(clock); clock = setInterval(() => addTime(1), 1000);
-    if (S.exitedOnce) setTimeout(() => toast("어? 아까 나가지 않았어요?"), 350);
+    if (overLimit()) setTimeout(showSheet, 300);
     save();
   }
   function addTime(sec) {
     if (locked || $("feed").hidden) return;
-    const prev = S.used; S.used += sec;
-    updateMeter(minOf(prev) !== minOf(S.used));
-    onAdvance(prev / 60, S.used / 60);
+    const prev = S.sUsed; S.sUsed += sec; S.used += sec;
+    updateMeter(minOf(prev) !== minOf(S.sUsed));
+    onAdvance(prev / 60, S.sUsed / 60);
     if (sec > 1 || S.used % 5 === 0) save();
   }
   function updateMeter(bump) {
-    const over = isOver(), left = S.budget * 60 - S.used;
-    $("f-n").textContent = fmtClock(S.used);
-    $("f-meter").classList.toggle("over", over);
-    $("f-r").textContent = over ? "+" + (usedMin() - S.budget) + "분 초과" : Math.ceil(left / 60) + "분 남음";
-    $("f-bar").style.width = Math.min(100, S.used / (S.budget * 60) * 100) + "%";
+    const lim = limit(), left = lim * 60 - S.sUsed;
+    $("f-n").textContent = fmtClock(S.sUsed);
+    $("f-meter").classList.toggle("over", left < 0);
+    $("f-r").textContent = left < 0 ? "+" + Math.ceil(-left / 60) + "분 초과" : Math.ceil(left / 60) + "분 남음";
+    $("f-bar").style.width = Math.min(100, S.sUsed / (lim * 60) * 100) + "%";
     setMood();
     if (bump) { const mt = $("f-meter"); mt.classList.remove("bump"); void mt.offsetWidth; mt.classList.add("bump"); }
   }
@@ -1285,16 +1279,12 @@ details.dev summary { font-size: 14px; }
     $("toast").classList.add("show"); buzz(25);
     clearTimeout(toastT); toastT = setTimeout(() => $("toast").classList.remove("show"), 2800);
   }
-  // 안드로이드 CounterStore.thLine 과 같은 말
-  const TH_LINES = [(t) => "벌써 " + t + "분 봤어요.", (t) => t + "분째예요. 빙하가 녹고 있어요.", (t) => (S.budget - t) + "분 남았어요. 슬슬 마무리해 볼까요?"];
-  // prev, now: 분 단위(소수)
+  // 안드로이드 CounterStore.thLine 과 같은 말 (세션 절반, 끝나기 2분 전)
+  const TH_LINES = ["벌써 절반 봤어요. 아직 괜찮아요.", "빙하가 녹고 있어요. 슬슬 마무리해 볼까요?"];
   function onAdvance(prev, now) {
     let line = null;
-    (S.th || []).forEach((t, i) => {
-      if (prev < t && now >= t && !S.fired.includes("t" + i)) {
-        S.fired.push("t" + i);
-        line = TH_LINES[i](t);
-      }
+    [S.session / 2, S.session - 2].forEach((t, i) => {
+      if (t > 0 && prev < t && now >= t && !(S.fired || []).includes("t" + i)) { (S.fired = S.fired || []).push("t" + i); line = TH_LINES[i]; }
     });
     const L = limit();
     if (prev <= L && now > L && !S.overAck) { showSheet(); return; }
@@ -1307,64 +1297,63 @@ details.dev summary { font-size: 14px; }
     rig.s.set("melt", 0.35);
     const own = S.reason && S.reason !== "다른 거";
     const more = canExtend();
-    $("s-title").textContent = !S.extra ? "목표 " + S.budget + "분이 끝났어요." : more ? "연장한 " + S.extra + "분도 끝났어요." : "오늘은 여기까지예요.";
-    $("s-quote").textContent = (own ? "아침에 ‘" + S.reason + "’ 하기로 했어요.\n" : "") + (more ? "연장하면 오늘 기록에 남아요." : "연장은 하루 두 번까지예요.");
+    $("s-title").textContent = !S.sExtra ? "이번엔 " + S.session + "분 다 봤어요." : more ? "연장한 " + S.sExtra + "분도 끝났어요." : "이번 시청은 여기까지예요.";
+    $("s-quote").textContent = (own ? "아낀 시간엔 ‘" + S.reason + "’ 하기로 했어요.\n" : "")
+      + "오늘 총 " + usedMin() + "분 사용 · " + (S.sessions || 0) + "회 시청\n"
+      + (more ? BREAK_MIN + "분 쉬고 다시 켜면 새로 시작해요." : "연장은 한 번 볼 때 두 번까지예요.");
     $("s-keep").hidden = !more;
     $("sheet").hidden = false; rig.s.talk(1800); buzz([30, 60, 30]); $("s-leave").focus();
   }
   function hideSheet() { $("sheet").hidden = true; locked = false; reel.style.overflowY = "scroll"; }
-  $("s-keep").dataset.hold = "1"; $("s-keep").classList.add("hold"); $("s-keep").textContent = "길게 눌러 5분 연장";
-  holdable($("s-keep"), 2000, () => { extend(5); hideSheet(); setTimeout(() => toast(EXTEND_MSG(5)), 250); });
-  $("s-leave").onclick = () => { hideSheet(); exitFeed(); };
+  $("s-keep").dataset.hold = "1"; $("s-keep").classList.add("hold"); $("s-keep").textContent = HOLD_LABEL;
+  holdable($("s-keep"), HOLD_MS, () => { extend(); hideSheet(); updateMeter(); setTimeout(() => toast(EXTEND_MSG(EXTEND_MIN)), 250); });
+  $("s-leave").onclick = () => { S.overAck = true; hideSheet(); exitFeed(); };
   $("f-exit").onclick = exitFeed;
   function exitFeed() {
     clearInterval(clock); clock = null;
-    if (practice) {
-      Object.assign(S, practice); practice = null;
-      S.homeMsg = "연습이 끝났어요. 실제 기록은 그대로예요.";
-      save(); go("home"); return;
-    }
-    S.exitedOnce = true;
-    if (isOver()) S.homeMsg = "";
-    else S.homeMsg = S.used < 60 ? "들어갔다 바로 나왔네요? 잘했어요!" : "잘 멈췄어요! 아직 " + (S.budget - usedMin()) + "분 남았어요.";
+    if (practice) { S = practice; practice = null; S.homeMsg = "연습이 끝났어요. 실제 기록은 그대로예요."; save(); go("home"); return; }
+    watchStop();
+    S.homeMsg = overLimit() ? "잘 멈췄어요! " + BREAK_MIN + "분 쉬고 와요."
+      : S.sUsed < 60 ? "들어갔다 바로 나왔네요? 잘했어요!" : "잘 멈췄어요! 이번 세션은 " + Math.max(0, limit() - minOf(S.sUsed)) + "분 남았어요.";
     save(); go("home");
-    if (!isOver() && S.used >= 60) rig.h.hop(700);
+    if (!isOver() && S.sUsed >= 60) rig.h.hop(700);
   }
 
+  /* ---------- 세션 (웹 미리보기용. 안드로이드에서는 CounterStore 가 같은 규칙으로 판단) ---------- */
+  function watchStart() {
+    if (NATIVE) return;
+    if (!webInSession()) { S.sActive = true; S.sUsed = 0; S.sExtra = 0; S.overAck = false; S.fired = []; S.sessions = (S.sessions || 0) + 1; }
+    S.sLeftAt = 0;
+  }
+  function watchStop() { if (!NATIVE && S.sActive && !S.sLeftAt) S.sLeftAt = Date.now(); }
+
   /* ---------- 하루 넘기기 ---------- */
-  function nextDay() {
-    const kept = !isOver(), um = usedMin();
+  function nextDay(y) {
+    // y: 안드로이드가 넘겨준 어제 값 {used(분), sessions, ext}. 없으면 웹 상태로
+    const um = y ? y.used : usedMin(), sessions = y ? y.sessions : (S.sessions || 0), ext = y ? y.ext : (S.ext || 0);
+    const kept = ext === 0;
     let msg; S.lastMelt = 0; S.lastJoy = kept;
-    if (kept) {
-      // 펭곰이 성장: 최근 7일 평균보다 덜 볼수록 더 큼 (기록이 없으면 그날 약속과 비교)
-      const base = Math.max(5, S.mins.length ? avg(S.mins.slice(-7)) : S.budget);
-      const g = 0.3 + Math.max(0, (base - um) / base) * 3;
-      S.size += g; S.streak += 1;
+    if (kept && sessions > 0) {
+      const base = Math.max(5, S.mins.length ? avg(S.mins.slice(-7)) : um + 5);
+      S.size += 0.3 + Math.max(0, (base - um) / base) * 3; S.streak += 1;
       msg = "어제 빙하를 지켜냈어요! 오늘도 같이 해요.";
-    } else {
+    } else if (!kept) {
       S.streak = 0; S.size = Math.max(6, S.size - 0.6); S.lastMelt = 0.35;
       msg = "어제는 어제예요. 오늘 다시 같이 해요.";
-    }
+    } else msg = "좋은 아침이에요! 오늘도 한 번에 " + S.session + "분씩만 봐요.";
     S.mins.push(um); S.kept.push(kept);
-    // 주간·월간 돌아보기용 하루 기록
-    (S.log = S.log || []).push({ day: S.day, date: S.dateKey || new Date().toISOString().slice(0, 10), budget: S.budget, used: um, reason: S.reason, kept, extra: S.extra || 0, raised: S.raised || 0 });
+    (S.log = S.log || []).push({ day: S.day, date: S.dateKey || new Date().toISOString().slice(0, 10), used: um, sessions, ext, session: S.session, kept });
     S.log = S.log.slice(-120);
-    S.lastBudget = S.budget;
-    Object.assign(S, { day: S.day + 1, used: 0, fired: [], overAck: false, exitedOnce: false, extra: 0, raised: 0, morningMsg: msg, homeMsg: "" });
-    save(); go("promise");
+    Object.assign(S, { day: S.day + 1, used: 0, sUsed: 0, sExtra: 0, sActive: false, sLeftAt: 0, sessions: 0, ext: 0, fired: [], overAck: false, homeMsg: msg, morningMsg: msg });
+    save(); go("home");
   }
 
   /* ---------- 안드로이드 앱 연결 ---------- */
   function nativeState() { try { return JSON.parse(NATIVE.getState()); } catch (e) { return null; } }
-  function pushPromise() {
-    if (!NATIVE || !S.budget) return;
-    try {
-      NATIVE.setPromise(S.budget, S.reason, JSON.stringify(S.th), JSON.stringify(S.overTh));
-      const st = nativeState(); if (st) S.dateKey = st.date;
-    } catch (e) {}
+  function pushSession() {
+    if (!NATIVE || !NATIVE.setSession) return;
+    try { NATIVE.setSession(S.session, S.reason || "다른 거"); const st = nativeState(); if (st) S.dateKey = st.date; } catch (e) {}
   }
-  // 설정이 다 되어 있으면 위에 "준비 완료"만, 빠진 게 있으면 그 카드를 보여준다.
-  // 방금 고쳤으면 카드가 잠깐 초록색 "완료"로 바뀌었다가 사라진다.
   let battWasOff = false, battDoneT = null;
   function nativeUi() {
     const on = !!NATIVE.isCounting();
@@ -1391,36 +1380,31 @@ details.dev summary { font-size: 14px; }
   function nativeSync() {
     if (!NATIVE || !$("feed").hidden) return;
     const st = nativeState(); if (!st) return;
-    if (S.budget && S.dateKey && st.date !== S.dateKey) {
-      // 자정을 넘겼다: 어제 기록으로 하루 정산
-      const y = st.history && st.history[S.dateKey];
-      if (typeof y === "number") S.used = y;
-      S.dateKey = st.date; nextDay(); return;
+    if (!S.dateKey) S.dateKey = st.date;
+    if (st.date !== S.dateKey) {
+      // 하루가 바뀌었다: 어제 기록으로 정산
+      const k = S.dateKey, sec = st.history && st.history[k];
+      const y = { used: typeof sec === "number" ? minOf(sec) : usedMin(),
+        sessions: (st.historySessions && st.historySessions[k]) || 0, ext: (st.historyExtends && st.historyExtends[k]) || 0 };
+      S.dateKey = st.date; nextDay(y); return;
     }
-    if (S.budget && st.budget == null) pushPromise();
-    if (typeof st.extra === "number" && st.extra !== (S.extra || 0)) { S.extra = st.extra; save(); if (!$("home").hidden) homeNums(); }
-    if (st.used !== S.used) {
-      const wasOver = isOver();
-      S.used = st.used; save();
-      if (!$("home").hidden) {
-        homeNums();
-        if (isOver() !== wasOver && isOver()) {
-          S.homeMsg = "목표 " + S.budget + "분이 끝났어요. 여기서 멈춰 볼까요?";
-          say($("h-bubble"), rig.h, S.homeMsg);
-        }
-      }
-    }
+    const before = [S.used, S.sUsed, S.sExtra, S.nIn, S.nBreak > 0, S.sessions, S.ext, S.session].join("|");
+    S.used = st.used; S.sUsed = st.sessionUsed || 0; S.sExtra = st.sessionExtra || 0;
+    S.nIn = !!st.inSession; S.nBreak = st.breakLeft || 0; S.sessions = st.sessions || 0; S.ext = st.extends || 0;
+    if (st.sessionMin) S.session = st.sessionMin;
+    const changed = before !== [S.used, S.sUsed, S.sExtra, S.nIn, S.nBreak > 0, S.sessions, S.ext, S.session].join("|");
+    if (changed) { save(); if (!$("home").hidden) homeNums(); }
     if (!$("home").hidden) nativeUi();
     if (!$("settings").hidden && settingsKey() !== lastSK) renderSettings();
   }
 
   $("h-watch").onclick = () => {
-    if ($("h-watch").dataset.hold === "1") return; // 연장은 길게 눌러야
+    if ($("h-watch").dataset.hold === "1") return; // 연장은 꾹 눌러야
     if (NATIVE && !NATIVE.isCounting()) return NATIVE.openAccessibilitySettings();
   };
-  holdable($("h-watch"), 2000, () => {
-    if (!(S.used >= limit() * 60) || !canExtend()) return;
-    extend(5); S.homeMsg = EXTEND_MSG(5); renderHome();
+  holdable($("h-watch"), HOLD_MS, () => {
+    if (!overLimit() || !canExtend()) return;
+    extend(); S.homeMsg = EXTEND_MSG(EXTEND_MIN); renderHome();
   });
   $("h-perm").onclick = () => NATIVE && NATIVE.openAccessibilitySettings();
   $("h-battery-btn").onclick = () => NATIVE && NATIVE.openBatterySettings && NATIVE.openBatterySettings();
@@ -1431,7 +1415,7 @@ details.dev summary { font-size: 14px; }
   function settingsKey() {
     let on = true, batt = true;
     if (NATIVE) { try { on = !!NATIVE.isCounting(); batt = !NATIVE.batteryOk || NATIVE.batteryOk(); } catch (e) {} }
-    return [on, batt, S.budget, usedMin()].join("|");
+    return [on, batt, S.session, usedMin(), S.sessions].join("|");
   }
   function renderSettings() {
     lastSK = settingsKey();
@@ -1445,7 +1429,7 @@ details.dev summary { font-size: 14px; }
     };
     cell($("s-count"), on, "켜짐 ✓", "켜기", () => NATIVE && NATIVE.openAccessibilitySettings());
     cell($("s-batt"), batt, "허용됨 ✓", "허용하기", () => NATIVE && NATIVE.openBatterySettings && NATIVE.openBatterySettings());
-    $("s-promise").innerHTML = S.budget ? fmtMin(S.budget) + " <small>오늘 사용 " + usedMin() + "분" + (S.extra ? " · 연장 +" + S.extra + "분" : "") + "</small>" : "목표 없음";
+    $("s-promise").innerHTML = fmtMin(S.session) + " <small>오늘 총 " + usedMin() + "분 사용 · " + (S.sessions || 0) + "회 시청</small>";
     let apps = WEB_APPS.map((a) => ({ ...a, on: !(S.offApps || []).includes(a.key), installed: true }));
     if (NATIVE && NATIVE.apps) { try { apps = JSON.parse(NATIVE.apps()); } catch (e) {} }
     const box = $("s-apps"); box.innerHTML = "";
@@ -1467,7 +1451,7 @@ details.dev summary { font-size: 14px; }
     const wake = wakeMinNow();
     $("s-wake-h").value = String(Math.floor(wake / 60)).padStart(2, "0");
     $("s-wake-m").value = String(wake % 60).padStart(2, "0");
-    $("s-reset").textContent = "매일 " + hhmm(wake) + "(일어나는 시간)에 하루 사용량이 초기화돼요.";
+    $("s-reset").textContent = "앱을 나가 " + BREAK_MIN + "분 넘게 쉬면 새 세션이 시작돼요. 하루 기록은 매일 " + hhmm(wake) + "(일어나는 시간)에 초기화돼요.";
   }
   // 기상 시간: 시(0~23)·분(0~59)을 숫자로 직접 입력. 두 자리 치면 다음 칸으로, 칸을 벗어나면 저장.
   function saveWake() {
@@ -1481,7 +1465,7 @@ details.dev summary { font-size: 14px; }
     S.wake = v; save();
     if (NATIVE && NATIVE.setWakeMin) { try { NATIVE.setWakeMin(v); } catch (e) {} }
     hint.className = "hint left"; hint.textContent = hhmm(v) + "로 저장했어요. 다음 날부터 적용돼요.";
-    $("s-reset").textContent = "매일 " + hhmm(v) + "(일어나는 시간)에 하루 사용량이 초기화돼요.";
+    $("s-reset").textContent = "앱을 나가 " + BREAK_MIN + "분 넘게 쉬면 새 세션이 시작돼요. 하루 기록은 매일 " + hhmm(v) + "(일어나는 시간)에 초기화돼요.";
   }
   ["s-wake-h", "s-wake-m"].forEach((id, k) => {
     const el = $(id);
@@ -1518,6 +1502,6 @@ details.dev summary { font-size: 14px; }
   tick(); setInterval(tick, 30000);
 
   window.__pengom = { rig };
-  go(S.budget ? "home" : "promise");
+  go(S.setupDone ? "home" : "promise");
 })();
 </script>

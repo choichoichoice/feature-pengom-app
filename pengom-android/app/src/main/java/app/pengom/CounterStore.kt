@@ -1,22 +1,23 @@
 package app.pengom
 
 import android.content.Context
-import org.json.JSONArray
 import org.json.JSONObject
 import java.time.LocalDateTime
 import java.time.ZoneId
 
 /**
- * 오늘 쇼츠 앱을 본 시간(초), 아침 약속(예산 분·이유·개입 지점 분)을 폰 안에만 저장한다.
- * 날짜가 바뀌면 어제 시간을 기록(history)으로 옮기고 오늘 시간을 0으로 되돌린다.
+ * 1회 시청 세션(1회 시간·연장·쉬는 시간)과 오늘 총 사용 시간(기록용)을 폰 안에만 저장한다.
+ * 날짜(기상 시간 기준)가 바뀌면 어제 기록을 history 로 옮기고 오늘 값을 0으로 되돌린다.
+ * 예전 버전의 "하루 목표" 키(budgetMin 등)는 남아 있어도 더는 쓰지 않는다.
  */
 class CounterStore(context: Context) {
 
     data class Tick(
-        val usedSec: Int,
-        val budgetMin: Int?,
+        val usedSec: Int,          // 오늘 총 사용(초) — 기록용
+        val sessionSec: Int,       // 이번 시청 세션 사용(초)
+        val limitMin: Int,         // 이번 세션 허용(분) = 1회 시간 + 연장
         val line: String?,
-        val crossedBudget: Boolean,
+        val crossedLimit: Boolean, // 이번 틱에 세션 허용 시간을 넘었는가
         val minuteChanged: Boolean,
     )
 
@@ -75,15 +76,13 @@ class CounterStore(context: Context) {
             val keys = hist.keys().asSequence().sorted().toList()
             keys.dropLast(60).forEach { hist.remove(it) }
             e.putString(K_HIST, hist.toString())
+            val hs = jsonOf(K_HIST_SESS); hs.put(cur, p.getInt(K_SESSIONS, 0)); e.putString(K_HIST_SESS, trim(hs).toString())
+            val he = jsonOf(K_HIST_EXT); he.put(cur, p.getInt(K_EXT_TODAY, 0)); e.putString(K_HIST_EXT, trim(he).toString())
         }
-        e.putString(K_DATE, d).putInt(K_USED, 0).putString(K_FIRED, "").putBoolean(K_ACK, false)
-            .remove(K_BUDGET).remove(K_TH).remove(K_OVER_TH).remove(K_EXTRA).putBoolean(K_AUTO, false)
-        // 오늘 약속을 아직 안 했으면 어제 약속을 그대로 쓴다 (앱을 안 열고 쇼츠부터 켜도 끝이 있게)
-        if (p.contains(K_LAST_BUDGET)) {
-            val b = p.getInt(K_LAST_BUDGET, 0)
-            e.putInt(K_BUDGET, b).putString(K_TH, JSONArray(thresholds(b)).toString())
-                .putString(K_OVER_TH, "[]").putBoolean(K_AUTO, true)
-        }
+        e.putInt(K_SESSIONS, 0).putInt(K_EXT_TODAY, 0).putBoolean(K_S_ACTIVE, false)
+        e.putString(K_DATE, d).putInt(K_USED, 0)
+        // 예전 버전(하루 목표 방식)의 값은 더 쓰지 않으니 지운다
+        LEGACY_KEYS.forEach { e.remove(it) }
         e.apply()
     }
 
@@ -92,49 +91,83 @@ class CounterStore(context: Context) {
 
     fun usedSec(): Int { roll(); return p.getInt(K_USED, 0) }
     fun usedMin(): Int = usedSec() / 60
-    fun budget(): Int? { roll(); return if (p.contains(K_BUDGET)) p.getInt(K_BUDGET, 0) else null }
     fun reason(): String = p.getString(K_REASON, "다른 거") ?: "다른 거"
-    /** 아침에 한 약속을 넘겼는가 (더 받은 시간과 상관없이) */
-    fun isOver(): Boolean { val b = budget() ?: return false; return usedSec() > b * 60 }
-    /** 약속을 다 쓴 뒤 "5분 더"로 더 받은 시간(분) */
-    fun extra(): Int { roll(); return p.getInt(K_EXTRA, 0) }
-    /** 오늘 볼 수 있는 끝: 약속 + 더 받은 시간 */
-    fun limit(): Int? = budget()?.let { it + extra() }
-    fun overLimit(): Boolean { val l = limit() ?: return false; return usedSec() > l * 60 }
-    /** 더 받기는 하루 MAX_EXTRA 분(5분씩 두 번)까지 */
-    fun canExtend(): Boolean = extra() < MAX_EXTRA
-    /** 시간을 다 쓴 뒤에만 더 받는다 */
-    @Synchronized
-    fun extend(min: Int) {
+
+    // ================= 1회 시청 세션 =================
+    // 대상 앱을 켜면 세션이 시작된다. 앱을 나가 BREAK_MIN 분 이상 쉬면 다음에 켤 때 새 세션.
+    // 그보다 빨리 돌아오면 같은 세션이 이어진다. 하루 총 사용 시간은 기록용일 뿐 막지 않는다.
+
+    private fun jsonOf(key: String): JSONObject =
+        try { JSONObject(p.getString(key, "{}") ?: "{}") } catch (e: Exception) { JSONObject() }
+    private fun trim(o: JSONObject): JSONObject { o.keys().asSequence().sorted().toList().dropLast(60).forEach { o.remove(it) }; return o }
+
+    fun sessionMin(): Int = p.getInt(K_SESSION_MIN, DEFAULT_SESSION_MIN)
+    fun sessionSec(): Int { roll(); return p.getInt(K_S_USED, 0) }
+    fun sessionExtra(): Int { roll(); return p.getInt(K_S_EXTRA, 0) }
+    fun sessionLimit(): Int = sessionMin() + sessionExtra()
+    fun sessionsToday(): Int { roll(); return p.getInt(K_SESSIONS, 0) }
+    fun extendsToday(): Int { roll(); return p.getInt(K_EXT_TODAY, 0) }
+    /** 이번 세션이 1회 시간을 넘었는가 (연장 포함 여부와 상관없이) — 펭곰이 녹는 표정용 */
+    fun sessionPastBase(): Boolean = sessionSec() > sessionMin() * 60
+    /** 이번 세션 허용 시간(1회 + 연장)을 넘었는가 */
+    fun sessionOver(): Boolean = inSession() && sessionSec() > sessionLimit() * 60
+    /** 연장은 세션당 MAX_EXTENDS 번 */
+    fun canExtend(): Boolean = sessionExtra() < MAX_EXTENDS * EXTEND_MIN
+
+    /** 앱을 나간 뒤 쉰 시간을 따져 아직 같은 세션인가 */
+    fun inSession(now: Long = System.currentTimeMillis()): Boolean {
         roll()
-        if (!canExtend()) return
-        p.edit().putInt(K_EXTRA, p.getInt(K_EXTRA, 0) + min).putBoolean(K_ACK, false).apply()
+        if (!p.getBoolean(K_S_ACTIVE, false)) return false
+        val left = p.getLong(K_S_LEFT_AT, 0L)
+        return left == 0L || now - left < BREAK_MIN * 60_000L
+    }
+    /** 새 세션까지 더 쉬어야 하는 시간(초). 쉬는 중이 아니면 0 */
+    fun breakLeftSec(now: Long = System.currentTimeMillis()): Int {
+        val left = p.getLong(K_S_LEFT_AT, 0L)
+        if (!inSession(now) || left == 0L) return 0
+        return ((BREAK_MIN * 60_000L - (now - left)) / 1000).toInt().coerceAtLeast(0)
     }
 
-    private fun ints(key: String): List<Int> = try {
-        val a = JSONArray(p.getString(key, "[]")); List(a.length()) { a.getInt(it) }
-    } catch (e: Exception) { emptyList() }
-
-    /**
-     * 아침 약속 또는 하루 중 약속 시간 변경. 변경 때는 이미 지난 개입 지점만 "이미 울림"으로 두고,
-     * 새 약속이 지금 쓴 시간보다 크면 초과 시트가 다시 뜰 수 있게 한다.
-     */
     @Synchronized
-    fun setPromise(budgetMin: Int, reason: String, th: String, overTh: String) {
+    fun onWatchStart(now: Long = System.currentTimeMillis()) {
         roll()
-        p.edit().putInt(K_BUDGET, budgetMin).putString(K_REASON, reason)
-            .putString(K_TH, th).putString(K_OVER_TH, overTh)
-            .putInt(K_LAST_BUDGET, budgetMin).putBoolean(K_AUTO, false).apply()
-        val usedMin = p.getInt(K_USED, 0) / 60.0
-        val fired = ints(K_TH).withIndex().filter { usedMin >= it.value }.map { "t${it.index}" } +
-            ints(K_OVER_TH).withIndex().filter { usedMin >= it.value }.map { "o${it.index}" }
-        val e = p.edit().putString(K_FIRED, fired.joinToString(","))
-        // 총 허용 시간(목표 + 연장)보다 덜 썼으면 다시 끝날 때 시트가 뜨게
-        if (usedMin <= budgetMin + p.getInt(K_EXTRA, 0)) e.putBoolean(K_ACK, false)
+        val e = p.edit()
+        if (!inSession(now)) {
+            e.putBoolean(K_S_ACTIVE, true).putInt(K_S_USED, 0).putInt(K_S_EXTRA, 0)
+                .putBoolean(K_S_ACK, false).putString(K_S_FIRED, "")
+                .putInt(K_SESSIONS, p.getInt(K_SESSIONS, 0) + 1)
+        }
+        e.putLong(K_S_LEFT_AT, 0L).apply()
+    }
+
+    @Synchronized
+    fun onWatchStop(now: Long = System.currentTimeMillis()) {
+        if (p.getBoolean(K_S_ACTIVE, false) && p.getLong(K_S_LEFT_AT, 0L) == 0L) p.edit().putLong(K_S_LEFT_AT, now).apply()
+    }
+
+    /** 1회 시청 시간 설정. 지금 세션에도 바로 적용된다 */
+    @Synchronized
+    fun setSession(min: Int, reason: String) {
+        roll()
+        val m = min.coerceIn(5, 120)
+        val e = p.edit().putInt(K_SESSION_MIN, m).putString(K_REASON, reason)
+        // 새 허용 시간보다 덜 봤으면 다시 끝날 때 시트가 뜨게
+        if (p.getInt(K_S_USED, 0) <= (m + p.getInt(K_S_EXTRA, 0)) * 60) e.putBoolean(K_S_ACK, false)
         e.apply()
     }
 
-    fun ackOver() { p.edit().putBoolean(K_ACK, true).apply() }
+    /** 세션 시간을 다 쓴 뒤에만 +5분 (세션당 두 번까지) */
+    @Synchronized
+    fun extend(min: Int = EXTEND_MIN) {
+        roll()
+        if (!canExtend()) return
+        p.edit().putInt(K_S_EXTRA, p.getInt(K_S_EXTRA, 0) + min).putBoolean(K_S_ACK, false)
+            .putInt(K_EXT_TODAY, p.getInt(K_EXT_TODAY, 0) + 1).apply()
+    }
+
+
+
+    fun ackOver() { p.edit().putBoolean(K_S_ACK, true).apply() }
 
     /** 서비스가 다시 시작됐을 때, 시스템 기록으로 계산한 오늘 시간이 더 크면 그 값으로 맞춘다 */
     @Synchronized
@@ -146,53 +179,53 @@ class CounterStore(context: Context) {
     @Synchronized
     fun addSeconds(sec: Int): Tick {
         roll()
-        val prev = p.getInt(K_USED, 0)
+        val day = p.getInt(K_USED, 0) + sec
+        val prev = p.getInt(K_S_USED, 0)
         val now = prev + sec
-        val b = budget()
-        val lim = limit()
+        val base = sessionMin()
+        val lim = base + p.getInt(K_S_EXTRA, 0)
         val pm = prev / 60.0
         val nm = now / 60.0
-        val fired = (p.getString(K_FIRED, "") ?: "").split(',').filter { it.isNotEmpty() }.toMutableSet()
+        val fired = (p.getString(K_S_FIRED, "") ?: "").split(',').filter { it.isNotEmpty() }.toMutableSet()
         var line: String? = null
-        var crossed = false
-        if (b != null) {
-            ints(K_TH).forEachIndexed { i, t ->
-                if (pm < t && nm >= t && "t$i" !in fired) {
-                    fired += "t$i"
-                    line = thLine(i, t, b)
-                }
-            }
-            if (lim != null && pm <= lim && nm > lim && !p.getBoolean(K_ACK, false)) crossed = true
+        // 세션 중 개입: 절반, 끝나기 2분 전 (1회 시간 기준)
+        sessionThresholds(base).forEachIndexed { i, t ->
+            if (pm < t && nm >= t && "t$i" !in fired) { fired += "t$i"; line = thLine(i, t, base) }
         }
-        p.edit().putInt(K_USED, now).putString(K_FIRED, fired.joinToString(",")).apply()
-        return Tick(now, b, line, crossed, prev / 60 != now / 60)
+        val crossed = pm <= lim && nm > lim && !p.getBoolean(K_S_ACK, false)
+        p.edit().putInt(K_USED, day).putInt(K_S_USED, now).putString(K_S_FIRED, fired.joinToString(",")).apply()
+        return Tick(day, now, lim, line, crossed, prev / 60 != now / 60)
     }
 
-    // 웹 setBudget 과 같은 개입 지점: 41%, 72%, 2분 전 (5의 배수는 피함)
-    private fun thresholds(b: Int): List<Int> {
-        fun noRound(v: Double): Int { var x = Math.round(v).toInt(); while (x % 5 == 0) x += 1; return x }
-        return listOf(noRound(b * 0.41), noRound(b * 0.72), maxOf(1, b - 2)).filter { it < b }
-    }
+    private fun sessionThresholds(b: Int): List<Double> =
+        listOf(b / 2.0, (b - 2).toDouble()).filter { it > 0 && it < b }.distinct()
+
 
     // 웹(scroll-melt/index.html)의 TH_LINES 와 같은 말
-    private fun thLine(i: Int, t: Int, b: Int): String = when (i) {
-        0 -> "벌써 ${t}분 봤어요."
-        1 -> "${t}분째예요. 빙하가 녹고 있어요."
-        else -> "${b - t}분 남았어요. 슬슬 마무리해 볼까요?"
+    private fun thLine(i: Int, t: Double, b: Int): String = when (i) {
+        0 -> "벌써 절반 봤어요. 아직 괜찮아요."
+        else -> "빙하가 녹고 있어요. 슬슬 마무리해 볼까요?"
     }
 
-    /** 웹 화면으로 넘기는 상태 (used, history 는 초 단위) */
+    /** 웹 화면으로 넘기는 상태 (used, sessionUsed, history 는 초 단위) */
     fun stateJson(): String {
         roll()
+        val now = System.currentTimeMillis()
         return JSONObject()
             .put("date", p.getString(K_DATE, today()))
             .put("used", p.getInt(K_USED, 0))
-            .put("budget", budget() ?: JSONObject.NULL)
-            .put("extra", p.getInt(K_EXTRA, 0))
+            .put("sessionMin", sessionMin())
+            .put("sessionUsed", if (inSession(now)) p.getInt(K_S_USED, 0) else 0)
+            .put("sessionExtra", if (inSession(now)) p.getInt(K_S_EXTRA, 0) else 0)
+            .put("inSession", inSession(now))
+            .put("breakLeft", breakLeftSec(now))
+            .put("sessions", p.getInt(K_SESSIONS, 0))
+            .put("extends", p.getInt(K_EXT_TODAY, 0))
             .put("canExtend", canExtend())
-            .put("auto", p.getBoolean(K_AUTO, false))
             .put("wake", wakeMin())
             .put("history", history())
+            .put("historySessions", jsonOf(K_HIST_SESS))
+            .put("historyExtends", jsonOf(K_HIST_EXT))
             .toString()
     }
 
@@ -200,15 +233,9 @@ class CounterStore(context: Context) {
         private const val K_DATE = "date"
         private const val K_USED = "usedSec"
         private const val K_HIST = "historySec"
-        private const val K_BUDGET = "budgetMin"
         private const val K_REASON = "reason"
-        private const val K_TH = "thMin"
-        private const val K_OVER_TH = "overThMin"
-        private const val K_FIRED = "fired"
-        private const val K_ACK = "overAck"
-        private const val K_EXTRA = "extraMin"
-        private const val K_LAST_BUDGET = "lastBudgetMin"
-        private const val K_AUTO = "autoBudget"
+        /** 예전 "하루 목표" 방식의 키 (하루가 바뀔 때 정리) */
+        private val LEGACY_KEYS = listOf("budgetMin", "thMin", "overThMin", "fired", "overAck", "extraMin", "lastBudgetMin", "autoBudget")
         private const val K_WAKE = "wakeMin"
         const val DEFAULT_WAKE_MIN = 7 * 60
         private const val K_OFF_APPS = "offApps"
@@ -217,6 +244,22 @@ class CounterStore(context: Context) {
             App("youtube", "유튜브", setOf("com.google.android.youtube")),
             App("tiktok", "틱톡", setOf("com.zhiliaoapp.musically", "com.ss.android.ugc.trill")),
         )
-        const val MAX_EXTRA = 10
+        // 1회 시청 세션
+        private const val K_SESSION_MIN = "sessionMin"
+        private const val K_S_USED = "sessionUsedSec"
+        private const val K_S_EXTRA = "sessionExtraMin"
+        private const val K_S_ACTIVE = "sessionActive"
+        private const val K_S_LEFT_AT = "sessionLeftAt"
+        private const val K_S_ACK = "sessionAck"
+        private const val K_S_FIRED = "sessionFired"
+        private const val K_SESSIONS = "sessionsToday"
+        private const val K_EXT_TODAY = "extendsToday"
+        private const val K_HIST_SESS = "historySessions"
+        private const val K_HIST_EXT = "historyExtends"
+        const val DEFAULT_SESSION_MIN = 15
+        /** 앱을 나가 이만큼(분) 쉬면 다음에 켤 때 새 세션 */
+        const val BREAK_MIN = 10
+        const val EXTEND_MIN = 5
+        const val MAX_EXTENDS = 2
     }
 }

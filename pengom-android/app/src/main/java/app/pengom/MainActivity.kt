@@ -68,6 +68,7 @@ class MainActivity : Activity() {
 
         @JavascriptInterface fun isCounting(): Boolean = Perms.all(this@MainActivity)
 
+        /** 세션 시간을 다 쓴 뒤 +5분 (세션당 두 번까지) */
         @JavascriptInterface fun extend(min: Int) = store.extend(min)
 
         /** 설정: 잴 앱 목록 [{key, label, on, installed}] */
@@ -110,8 +111,8 @@ class MainActivity : Activity() {
         @JavascriptInterface fun appVersion(): String =
             try { packageManager.getPackageInfo(packageName, 0).versionName ?: "" } catch (e: Exception) { "" }
 
-        @JavascriptInterface fun setPromise(budgetMin: Int, reason: String, th: String, overTh: String) =
-            store.setPromise(budgetMin, reason, th, overTh)
+        /** 1회 시청 시간(분)과 아낀 시간에 할 일 */
+        @JavascriptInterface fun setSession(min: Int, reason: String) = store.setSession(min, reason)
 
         /** 이름은 웹 화면과 맞추느라 그대로 둠: 필요한 권한 화면을 차례로 연다 */
         @JavascriptInterface fun openAccessibilitySettings() = runOnUiThread { askNextPermission() }
