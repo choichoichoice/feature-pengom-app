@@ -328,6 +328,12 @@ details.dev button { font-size: 13px; padding: 10px; border-radius: 12px; backgr
 .perm-text { font-size: 16px; }
 .label { font-size: 14px; }
 details.dev summary { font-size: 14px; }
+/* 준비 상태 */
+.topbar { justify-content: space-between; }
+.ready { font-size: 15px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 4px 2px; }
+.ready::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+.ready.ok { color: #1f9d63; } .ready.need { color: #d9770b; cursor: pointer; }
+.perm.done { background: #e3f6ec; } .perm.done .label { color: #1f9d63; }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -366,6 +372,7 @@ details.dev summary { font-size: 14px; }
     <section class="screen" id="home" hidden>
       <div class="scroll">
         <div class="topbar">
+          <span class="ready" id="h-ready" hidden></span>
           <span class="cnt fire" title="연속으로 약속을 지킨 날"><svg class="i"><use href="#i-fire"/></svg><span id="h-streak">0</span>일</span>
         </div>
         <div class="hero">
@@ -382,9 +389,9 @@ details.dev summary { font-size: 14px; }
           <div class="cap" id="h-cap"></div>
         </div>
         <div class="card perm" id="h-battery" hidden>
-          <span class="label">폰이 시간 재기를 끌 수 있어</span>
-          <p class="perm-text">배터리를 아끼려고 폰이 펭곰이를 멈추면 시간이 안 재져. 배터리 최적화 목록에서 펭곰이를 빼줘.</p>
-          <button class="btn ghost" id="h-battery-btn">배터리 설정 열기</button>
+          <span class="label" id="h-battery-title">배터리 설정이 필요해</span>
+          <p class="perm-text" id="h-battery-text">안 하면 폰이 배터리를 아끼려고 시간 재기를 멈출 수 있어. 버튼 누르고 ‘허용’만 누르면 끝.</p>
+          <button class="btn" id="h-battery-btn">허용하러 가기</button>
         </div>
         <button class="rv-open" id="h-review-open"><span id="r-sum">이번 주 돌아보기</span><span aria-hidden="true">›</span></button>
         <details class="dev">
@@ -977,11 +984,33 @@ details.dev summary { font-size: 14px; }
       const st = nativeState(); if (st) S.dateKey = st.date;
     } catch (e) {}
   }
+  // 설정이 다 되어 있으면 위에 "준비 완료"만, 빠진 게 있으면 그 카드를 보여준다.
+  // 방금 고쳤으면 카드가 잠깐 초록색 "완료"로 바뀌었다가 사라진다.
+  let battWasOff = false, battDoneT = null;
   function nativeUi() {
     const on = !!NATIVE.isCounting();
     $("h-perm").hidden = on;
     let batt = true; try { batt = !NATIVE.batteryOk || NATIVE.batteryOk(); } catch (e) {}
-    $("h-battery").hidden = !on || batt;
+    const card = $("h-battery");
+    if (on && !batt) {
+      battWasOff = true; clearTimeout(battDoneT);
+      card.hidden = false; card.classList.remove("done");
+      $("h-battery-title").textContent = "배터리 설정이 필요해";
+      $("h-battery-text").hidden = false; $("h-battery-btn").hidden = false;
+    } else if (on && batt && battWasOff) {
+      battWasOff = false;
+      card.hidden = false; card.classList.add("done");
+      $("h-battery-title").textContent = "배터리 설정 완료 ✓";
+      $("h-battery-text").hidden = true; $("h-battery-btn").hidden = true;
+      battDoneT = setTimeout(() => { card.hidden = true; }, 4000);
+    } else if (!battDoneT || !on) {
+      card.hidden = true;
+    }
+    const ready = $("h-ready");
+    ready.hidden = false;
+    const okAll = on && batt;
+    ready.className = "ready " + (okAll ? "ok" : "need");
+    ready.textContent = okAll ? "준비 완료" : !on ? "시간 재기 꺼짐" : "배터리 설정 필요";
     homeButton();
   }
   function nativeSync() {
@@ -1019,6 +1048,11 @@ details.dev summary { font-size: 14px; }
   };
   $("h-perm-btn").onclick = () => NATIVE && NATIVE.openAccessibilitySettings();
   $("h-battery-btn").onclick = () => NATIVE && NATIVE.openBatterySettings && NATIVE.openBatterySettings();
+  $("h-ready").onclick = () => {
+    if (!$("h-ready").classList.contains("need")) return;
+    const c = !$("h-perm").hidden ? $("h-perm") : $("h-battery");
+    c.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
   $("d-practice").onclick = openFeed;
   $("d-next").onclick = nextDay;
   $("d-reset").onclick = () => { S = fresh(); save(); go("promise"); };

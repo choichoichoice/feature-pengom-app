@@ -87,9 +87,14 @@ class MainActivity : Activity() {
         @JavascriptInterface fun batteryOk(): Boolean =
             (getSystemService(POWER_SERVICE) as android.os.PowerManager).isIgnoringBatteryOptimizations(packageName)
 
+        /** 시스템 "허용/거부" 창을 바로 띄운다. 안 되는 폰이면 배터리 최적화 목록으로 */
         @JavascriptInterface fun openBatterySettings() = runOnUiThread {
-            try { startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }
-            catch (e: Exception) { startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))) }
+            @SuppressLint("BatteryLife")
+            val ask = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName"))
+            try { startActivity(ask) } catch (e: Exception) {
+                try { startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }
+                catch (e2: Exception) { startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))) }
+            }
         }
     }
 }
