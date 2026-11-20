@@ -15,8 +15,6 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
-import java.time.LocalDate
-import java.time.ZoneId
 
 /**
  * 인스타·유튜브·틱톡이 화면 맨 앞에 떠 있는 시간을 잰다.
@@ -72,8 +70,8 @@ class UsageWatchService : Service() {
     /** 서비스가 꺼져 있던 동안의 오늘 사용 시간을 시스템 기록으로 다시 계산한다 */
     private fun catchUpToday() {
         val now = System.currentTimeMillis()
-        val midnight = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-        val events = usm.queryEvents(midnight, now)
+        val events = usm.queryEvents(store.dayStartMillis(), now)
+        val targets = store.targets()
         val e = UsageEvents.Event()
         var openPkg: String? = null
         var openAt = 0L
@@ -83,7 +81,7 @@ class UsageWatchService : Service() {
             when (e.eventType) {
                 RESUMED -> {
                     if (openPkg != null) total += e.timeStamp - openAt
-                    openPkg = if (e.packageName in TARGETS) e.packageName else null
+                    openPkg = if (e.packageName in targets) e.packageName else null
                     openAt = e.timeStamp
                     foreground = e.packageName
                 }
@@ -106,7 +104,7 @@ class UsageWatchService : Service() {
         }
         lastQuery = now
 
-        val watching = power.isInteractive && foreground in TARGETS
+        val watching = power.isInteractive && foreground in store.targets()
         if (watching != lastWatching) { lastWatching = watching; updateNotification() }
         if (watching) overlay.show() else if (foreground != null && foreground != "com.android.systemui") overlay.hide()
 
@@ -183,12 +181,6 @@ class UsageWatchService : Service() {
     }
 
     companion object {
-        val TARGETS = setOf(
-            "com.instagram.android",
-            "com.google.android.youtube",
-            "com.zhiliaoapp.musically",
-            "com.ss.android.ugc.trill",
-        )
         @Suppress("DEPRECATION") private const val RESUMED = UsageEvents.Event.MOVE_TO_FOREGROUND
         @Suppress("DEPRECATION") private const val PAUSED = UsageEvents.Event.MOVE_TO_BACKGROUND
         private const val TICK_MS = 1_000L

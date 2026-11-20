@@ -4,6 +4,7 @@ import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 /**
  * 오늘 쇼츠 앱을 본 시간(초), 아침 약속(예산 분·이유·개입 지점 분)을 폰 안에만 저장한다.
@@ -23,6 +24,31 @@ class CounterStore(context: Context) {
 
     /** 하루는 새벽 4시에 바뀐다 (자정 넘어 보는 쇼츠도 그날 기록) */
     private fun today(): String = LocalDateTime.now().minusHours(DAY_START_HOUR).toLocalDate().toString()
+
+    /** 오늘이 시작된 시각 (새벽 4시) */
+    fun dayStartMillis(): Long =
+        LocalDateTime.now().minusHours(DAY_START_HOUR).toLocalDate().atTime(DAY_START_HOUR.toInt(), 0)
+            .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+    // ---------- 잴 앱 ----------
+    data class App(val key: String, val label: String, val pkgs: Set<String>)
+
+    private fun offApps(): Set<String> =
+        (p.getString(K_OFF_APPS, "") ?: "").split(',').filter { it.isNotEmpty() }.toSet()
+
+    /** 사용자가 끄지 않은 앱들의 패키지 이름 */
+    fun targets(): Set<String> { val off = offApps(); return APPS.filter { it.key !in off }.flatMap { it.pkgs }.toSet() }
+
+    fun isAppOn(key: String): Boolean = key !in offApps()
+
+    fun setApp(key: String, on: Boolean) {
+        val off = offApps().toMutableSet()
+        if (on) off -= key else off += key
+        p.edit().putString(K_OFF_APPS, off.joinToString(",")).apply()
+    }
+
+    /** 기록 지우기: 이 폰에 저장한 모든 것을 지운다 */
+    fun clearAll() { p.edit().clear().apply() }
 
     @Synchronized
     private fun roll() {
@@ -169,6 +195,12 @@ class CounterStore(context: Context) {
         private const val K_LAST_BUDGET = "lastBudgetMin"
         private const val K_AUTO = "autoBudget"
         private const val DAY_START_HOUR = 4L
+        private const val K_OFF_APPS = "offApps"
+        val APPS = listOf(
+            App("instagram", "인스타그램", setOf("com.instagram.android")),
+            App("youtube", "유튜브", setOf("com.google.android.youtube")),
+            App("tiktok", "틱톡", setOf("com.zhiliaoapp.musically", "com.ss.android.ugc.trill")),
+        )
         const val MAX_EXTRA = 10
     }
 }

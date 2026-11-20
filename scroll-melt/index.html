@@ -334,9 +334,38 @@ details.dev summary { font-size: 14px; }
 .ready::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
 .ready.ok { color: #1f9d63; } .ready.need { color: #d9770b; cursor: pointer; }
 .perm.done { background: #e3f6ec; } .perm.done .label { color: #1f9d63; }
+/* ---------- 탭: 홈 / 기록 / 설정 ---------- */
+.phone.tabs-on .screens { bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
+.tabs { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; display: flex; background: var(--screen);
+  border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); height: calc(68px + env(safe-area-inset-bottom, 0px)); }
+.tabs button { flex: 1; border: 0; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  font-size: 13px; font-weight: 700; color: var(--muted); }
+.tabs button svg.i { width: 26px; height: 26px; }
+.tabs button.on { color: var(--accent); }
+.dock:has(#h-watch[hidden]) { display: none; }
+.pg { font-family: var(--f-display); font-size: 28px; margin: 6px 0 2px; }
+.group { display: flex; flex-direction: column; gap: 2px; }
+.gtitle { font-size: 14px; font-weight: 700; color: var(--muted); padding: 10px 2px 6px; }
+.srow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 4px; font-size: 18px; border-bottom: 1px solid var(--line); }
+.sval { color: var(--muted); font-weight: 600; font-size: 17px; }
+.sval.ok { color: #1f9d63; }
+.link { border: 0; background: var(--accent-soft); color: var(--accent-deep); font-weight: 700; font-size: 16px; padding: 8px 14px; border-radius: 12px; }
+.link.danger { background: #fdecea; color: #c2412b; }
+.note { font-size: 15px; color: var(--muted); margin: 8px 2px 0; line-height: 1.5; }
+.sw { position: relative; width: 52px; height: 30px; flex: none; }
+.sw input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.sw i { position: absolute; inset: 0; border-radius: 99px; background: var(--line); transition: background .2s; pointer-events: none; }
+.sw i::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .2s; }
+.sw input:checked + i { background: var(--accent); }
+.sw input:checked + i::after { transform: translateX(22px); }
+.srow small { display: block; font-size: 13px; color: var(--muted); font-weight: 500; }
+#history .rv-top { align-items: flex-end; }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M5 20V11M12 20V5M19 20v-6"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2.2"/><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M5.5 18.5l1.8-1.8M16.7 7.3l1.8-1.8"/></symbol>
   <symbol id="i-fire" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2c.6 3.2 4.8 5.3 4.8 10.2A4.8 4.8 0 0 1 12 17a4.8 4.8 0 0 1-4.8-4.8c0-2.2 1.2-3.6 2.3-4.6.1 1.9.9 3 2 3.3-.5-3 .1-5.9.5-8.9z"/><path fill="currentColor" opacity=".55" d="M12 22a5 5 0 0 1-5-4.2A6.6 6.6 0 0 0 12 20a6.6 6.6 0 0 0 5-2.2A5 5 0 0 1 12 22z"/></symbol>
   <symbol id="i-close" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2.6" stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></symbol>
   <symbol id="i-heart" viewBox="0 0 24 24"><path fill="currentColor" d="M12 21s-7.5-4.6-9.5-9.3C1.1 8.3 3.3 4.5 7 4.5c2.1 0 3.6 1.2 5 3 1.4-1.8 2.9-3 5-3 3.7 0 5.9 3.8 4.5 7.2C19.5 16.4 12 21 12 21z"/></symbol>
@@ -394,21 +423,15 @@ details.dev summary { font-size: 14px; }
           <button class="btn" id="h-battery-btn">허용하러 가기</button>
         </div>
         <button class="rv-open" id="h-review-open"><span id="r-sum">이번 주 돌아보기</span><span aria-hidden="true">›</span></button>
-        <details class="dev">
-          <summary>테스트 도구 <span id="d-ver"></span></summary>
-          <div class="row">
-            <button id="d-next">다음 날로 넘기기</button>
-            <button id="d-reset">처음부터 다시</button>
-          </div>
-          <div class="row"><button id="d-practice">연습 피드</button></div>
-        </details>
       </div>
-      <div class="dock"><button class="btn ghost" id="h-watch">약속 줄이기</button></div>
-      <div class="sheet-wrap" id="review" hidden>
-        <div class="sheet review">
-          <span class="grab"></span>
-          <div class="rv-top">
-            <h2>돌아보기</h2>
+      <div class="dock" id="h-dock"><button class="btn" id="h-watch" hidden></button></div>
+    </section>
+
+    <!-- 기록 -->
+    <section class="screen" id="history" hidden>
+      <div class="scroll review">
+        <div class="rv-top">
+            <h1 class="pg">기록</h1>
             <div class="seg" role="tablist">
               <button role="tab" data-r="7" class="on">이번 주</button>
               <button role="tab" data-r="30">이번 달</button>
@@ -418,23 +441,48 @@ details.dev summary { font-size: 14px; }
           <div class="rv-line" id="r-kept"></div>
           <ul class="rv-reasons" id="r-reasons"></ul>
           <div class="rv-line rv-muted" id="r-extra"></div>
-          <button class="btn ghost" id="r-close">닫기</button>
-        </div>
       </div>
-      <div class="sheet-wrap" id="change" hidden>
-        <div class="sheet">
-          <span class="grab"></span>
-          <h2>약속 줄이기</h2>
-          <div class="budget-row">
-            <input id="c-num" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" aria-label="새 약속 시간(분)">
-            <span class="unit">분</span>
-          </div>
-          <div class="hint" id="c-hint"></div>
-          <div class="row">
-            <button class="btn ghost" id="c-cancel">그대로</button>
-            <button class="btn" id="c-ok">줄이기</button>
-          </div>
+    </section>
+
+    <!-- 설정 -->
+    <section class="screen" id="settings" hidden>
+      <div class="scroll">
+        <h1 class="pg">설정</h1>
+        <div class="group">
+          <div class="gtitle">준비 상태</div>
+          <div class="srow"><span>시간 재기</span><span class="sval" id="s-count"></span></div>
+          <div class="srow"><span>배터리 설정</span><span class="sval" id="s-batt"></span></div>
         </div>
+        <div class="group">
+          <div class="gtitle">오늘 약속</div>
+          <div class="srow"><span id="s-promise">-</span><button class="link" id="s-reduce">줄이기</button></div>
+        </div>
+        <div class="group">
+          <div class="gtitle">잴 앱</div>
+          <div id="s-apps"></div>
+          <p class="note">켜 둔 앱이 화면 맨 앞에 있는 시간을 재. 앱 안에서 쇼츠를 보는지 긴 영상을 보는지는 몰라.</p>
+        </div>
+        <div class="group">
+          <div class="gtitle">하루 기준</div>
+          <div class="srow"><span>새 하루 시작</span><span class="sval">새벽 4시</span></div>
+        </div>
+        <div class="group">
+          <div class="gtitle">기록</div>
+          <div class="srow"><span id="s-clear-text">기록 모두 지우기</span><button class="link danger" id="s-clear">지우기</button></div>
+        </div>
+        <div class="group">
+          <div class="gtitle">정보</div>
+          <p class="note">화면 속 글자나 영상은 보지 않아. 기록은 이 폰에만 저장돼.</p>
+          <div class="srow"><span>버전</span><span class="sval" id="s-ver">-</span></div>
+        </div>
+        <details class="dev">
+          <summary>테스트 도구 <span id="d-ver"></span></summary>
+          <div class="row">
+            <button id="d-next">다음 날로 넘기기</button>
+            <button id="d-reset">처음부터 다시</button>
+          </div>
+          <div class="row"><button id="d-practice">연습 피드</button></div>
+        </details>
       </div>
     </section>
 
@@ -465,6 +513,26 @@ details.dev summary { font-size: 14px; }
     </section>
 
   </div>
+  <nav class="tabs" id="tabs" hidden>
+    <button data-go="home" class="on"><svg class="i"><use href="#i-home"/></svg>홈</button>
+    <button data-go="history"><svg class="i"><use href="#i-chart"/></svg>기록</button>
+    <button data-go="settings"><svg class="i"><use href="#i-gear"/></svg>설정</button>
+  </nav>
+  <div class="sheet-wrap" id="change" hidden>
+        <div class="sheet">
+          <span class="grab"></span>
+          <h2>약속 줄이기</h2>
+          <div class="budget-row">
+            <input id="c-num" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" aria-label="새 약속 시간(분)">
+            <span class="unit">분</span>
+          </div>
+          <div class="hint" id="c-hint"></div>
+          <div class="row">
+            <button class="btn ghost" id="c-cancel">그대로</button>
+            <button class="btn" id="c-ok">줄이기</button>
+          </div>
+        </div>
+      </div>
   <div class="statusbar"><span id="clock">9:41</span><span>82%</span></div>
 </div>
 
@@ -676,12 +744,19 @@ details.dev summary { font-size: 14px; }
     });
   });
 
+  const TABBED = ["home", "history", "settings"];
   function go(id) {
-    ["promise", "home", "feed"].forEach((s) => ($(s).hidden = s !== id));
+    ["promise", "home", "feed", "history", "settings"].forEach((s) => ($(s).hidden = s !== id));
     $("phone").classList.toggle("dark-top", id === "feed");
+    const tabbed = TABBED.includes(id);
+    $("tabs").hidden = !tabbed; $("phone").classList.toggle("tabs-on", tabbed);
+    document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.go === id));
     if (id === "promise") renderPromise();
     if (id === "home") renderHome();
+    if (id === "history") { reviewDays = 7; document.querySelectorAll("#history .seg button").forEach((x) => x.classList.toggle("on", x.dataset.r === "7")); renderReview(); }
+    if (id === "settings") renderSettings();
   }
+  document.querySelectorAll("#tabs button").forEach((b) => { b.onclick = () => go(b.dataset.go); });
 
   /* ---------- 아침 약속 (분) ---------- */
   const noRound = (v) => { v = Math.round(v); while (v % 5 === 0) v += 1; return v; };
@@ -746,7 +821,8 @@ details.dev summary { font-size: 14px; }
     if (v < minAllowed()) { h.className = "hint warn"; h.textContent = "벌써 " + usedMin() + "분 봤어. " + minAllowed() + "분부터 돼."; buzz(15); return; }
     setBudget(v);
     S.homeMsg = v + "분으로 줄였어. 좋다.";
-    pushPromise(); save(); closeChange(); renderHome();
+    pushPromise(); save(); closeChange();
+    if (!$("settings").hidden) renderSettings(); else renderHome();
   };
   function extend(min) {
     if (!canExtend()) return;
@@ -767,10 +843,10 @@ details.dev summary { font-size: 14px; }
   function homeButton() {
     const b = $("h-watch");
     if (NATIVE && !NATIVE.isCounting()) { b.hidden = false; b.textContent = "시간 재기 켜기"; b.classList.remove("ghost"); return; }
-    const timeUp = S.used >= limit() * 60, inExtra = isOver() && !timeUp;
-    b.hidden = inExtra || (timeUp && !canExtend());
-    b.textContent = timeUp ? "5분만 더 받기" : "약속 줄이기";
-    b.classList.toggle("ghost", !timeUp);
+    // 시간이 남았을 땐 버튼 없음. 다 썼을 때만 "5분만 더" (약속 줄이기는 설정으로)
+    const timeUp = S.budget && S.used >= limit() * 60;
+    b.hidden = !timeUp || !canExtend();
+    b.textContent = "5분만 더 받기"; b.classList.remove("ghost");
   }
   function setMood() {
     const frac = S.budget ? S.used / (S.budget * 60) : 0;
@@ -846,13 +922,11 @@ details.dev summary { font-size: 14px; }
     $("r-extra").textContent = extra ? "다 쓰고 더 받은 시간 " + fmtMin(extra) : "";
     if (n === 7) $("r-sum").textContent = "이번 주 " + fmtMin(total) + (diffEl.classList.contains("down") ? " · " + diffEl.textContent : "");
   }
-  $("h-review-open").onclick = () => { reviewDays = 7; document.querySelectorAll("#review .seg button").forEach((x) => x.classList.toggle("on", x.dataset.r === "7")); renderReview(); $("review").hidden = false; };
-  $("r-close").onclick = () => { $("review").hidden = true; reviewDays = 7; renderReview(); };
-  $("review").addEventListener("click", (e) => { if (e.target.id === "review") $("r-close").onclick(); });
-  document.querySelectorAll("#review .seg button").forEach((b) => {
+  $("h-review-open").onclick = () => go("history");
+  document.querySelectorAll("#history .seg button").forEach((b) => {
     b.onclick = () => {
       reviewDays = +b.dataset.r;
-      document.querySelectorAll("#review .seg button").forEach((x) => x.classList.toggle("on", x === b));
+      document.querySelectorAll("#history .seg button").forEach((x) => x.classList.toggle("on", x === b));
       renderReview();
     };
   });
@@ -1036,6 +1110,7 @@ details.dev summary { font-size: 14px; }
       }
     }
     if (!$("home").hidden) nativeUi();
+    if (!$("settings").hidden && settingsKey() !== lastSK) renderSettings();
   }
 
   $("h-watch").onclick = () => {
@@ -1044,15 +1119,59 @@ details.dev summary { font-size: 14px; }
       if (!canExtend()) return;
       extend(5); S.homeMsg = "5분 더. 기록엔 남아."; renderHome(); return;
     }
-    openChange();
   };
   $("h-perm-btn").onclick = () => NATIVE && NATIVE.openAccessibilitySettings();
   $("h-battery-btn").onclick = () => NATIVE && NATIVE.openBatterySettings && NATIVE.openBatterySettings();
-  $("h-ready").onclick = () => {
-    if (!$("h-ready").classList.contains("need")) return;
-    const c = !$("h-perm").hidden ? $("h-perm") : $("h-battery");
-    c.scrollIntoView({ behavior: "smooth", block: "center" });
+  $("h-ready").onclick = () => go("settings");
+  /* ---------- 설정 ---------- */
+  const WEB_APPS = [{ key: "instagram", label: "인스타그램" }, { key: "youtube", label: "유튜브" }, { key: "tiktok", label: "틱톡" }];
+  let lastSK = "";
+  function settingsKey() {
+    let on = true, batt = true;
+    if (NATIVE) { try { on = !!NATIVE.isCounting(); batt = !NATIVE.batteryOk || NATIVE.batteryOk(); } catch (e) {} }
+    return [on, batt, S.budget, usedMin()].join("|");
+  }
+  function renderSettings() {
+    lastSK = settingsKey();
+    let on = true, batt = true;
+    if (NATIVE) { try { on = !!NATIVE.isCounting(); batt = !NATIVE.batteryOk || NATIVE.batteryOk(); } catch (e) {} }
+    const cell = (el, ok, okText, btnText, fn) => {
+      el.innerHTML = "";
+      if (ok) { el.className = "sval ok"; el.textContent = okText; return; }
+      el.className = "sval";
+      const b = document.createElement("button"); b.className = "link"; b.textContent = btnText; b.onclick = fn; el.appendChild(b);
+    };
+    cell($("s-count"), on, "켜짐 ✓", "켜기", () => NATIVE && NATIVE.openAccessibilitySettings());
+    cell($("s-batt"), batt, "허용됨 ✓", "허용하기", () => NATIVE && NATIVE.openBatterySettings && NATIVE.openBatterySettings());
+    $("s-promise").innerHTML = S.budget ? S.budget + "분 <small>지금까지 " + usedMin() + "분 봤어</small>" : "아직 약속 전";
+    $("s-reduce").hidden = !S.budget || S.used >= S.budget * 60 - 60;
+    let apps = WEB_APPS.map((a) => ({ ...a, on: !(S.offApps || []).includes(a.key), installed: true }));
+    if (NATIVE && NATIVE.apps) { try { apps = JSON.parse(NATIVE.apps()); } catch (e) {} }
+    const box = $("s-apps"); box.innerHTML = "";
+    apps.forEach((a) => {
+      const row = document.createElement("label"); row.className = "srow";
+      const name = document.createElement("span"); name.textContent = a.label;
+      if (!a.installed) { const sm = document.createElement("small"); sm.textContent = "이 폰에 없음"; name.appendChild(sm); }
+      const sw = document.createElement("span"); sw.className = "sw";
+      const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = a.on; cb.setAttribute("aria-label", a.label + " 재기");
+      cb.onchange = () => {
+        if (NATIVE && NATIVE.setApp) NATIVE.setApp(a.key, cb.checked);
+        const off = new Set(S.offApps || []); cb.checked ? off.delete(a.key) : off.add(a.key); S.offApps = [...off]; save();
+      };
+      sw.append(cb, document.createElement("i"));
+      row.append(name, sw); box.appendChild(row);
+    });
+    clearArmed = false; $("s-clear").textContent = "지우기"; $("s-clear-text").textContent = "기록 모두 지우기";
+    try { $("s-ver").textContent = NATIVE && NATIVE.appVersion ? NATIVE.appVersion() : "웹 미리보기"; } catch (e) {}
+  }
+  $("s-reduce").onclick = openChange;
+  let clearArmed = false;
+  $("s-clear").onclick = () => {
+    if (!clearArmed) { clearArmed = true; $("s-clear").textContent = "정말 지우기"; $("s-clear-text").textContent = "되돌릴 수 없어. 한 번 더 누르면 지워져."; buzz(15); return; }
+    if (NATIVE && NATIVE.clearAll) { try { NATIVE.clearAll(); } catch (e) {} }
+    S = fresh(); save(); go("promise");
   };
+
   $("d-practice").onclick = openFeed;
   $("d-next").onclick = nextDay;
   $("d-reset").onclick = () => { S = fresh(); save(); go("promise"); };

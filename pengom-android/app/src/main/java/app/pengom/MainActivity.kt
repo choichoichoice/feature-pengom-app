@@ -70,6 +70,23 @@ class MainActivity : Activity() {
 
         @JavascriptInterface fun extend(min: Int) = store.extend(min)
 
+        /** 설정: 잴 앱 목록 [{key, label, on, installed}] */
+        @JavascriptInterface fun apps(): String {
+            val a = org.json.JSONArray()
+            for (app in CounterStore.APPS) {
+                val installed = app.pkgs.any { pkg ->
+                    try { packageManager.getPackageInfo(pkg, 0); true } catch (e: Exception) { false }
+                }
+                a.put(org.json.JSONObject().put("key", app.key).put("label", app.label)
+                    .put("on", store.isAppOn(app.key)).put("installed", installed))
+            }
+            return a.toString()
+        }
+
+        @JavascriptInterface fun setApp(key: String, on: Boolean) = store.setApp(key, on)
+
+        @JavascriptInterface fun clearAll() = store.clearAll()
+
         @JavascriptInterface fun appVersion(): String =
             try { packageManager.getPackageInfo(packageName, 0).versionName ?: "" } catch (e: Exception) { "" }
 
